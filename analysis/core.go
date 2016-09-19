@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"time"
 )
 
 // Dataset struct represents a dataset object.
@@ -97,6 +98,7 @@ func DatasetPartition(original Dataset, copies int) []Dataset {
 		f.WriteString(header + "\n")
 	}
 
+	rand.Seed(int64(time.Now().Nanosecond()))
 	for scanner.Scan() {
 		fileChosen := rand.Int() % copies
 		newFiles[fileChosen].WriteString(scanner.Text() + "\n")
