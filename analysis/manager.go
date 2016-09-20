@@ -29,9 +29,9 @@ func (m *Manager) Concurrency() int {
 // Function used to begin the in-parallel analysis of the different datasets.
 // The concurrency factor is set during the manager initialization
 func (m *Manager) Analyze() {
-	analyzers := make([]RAnalyzer, len(m.datasets))
+	analyzers := make([]ScriptAnalyzer, len(m.datasets))
 	for i, d := range m.datasets {
-		analyzers[i] = *NewRAnalyzer(d, m.analysisScript)
+		analyzers[i] = *NewScriptAnalyzer(d, m.analysisScript)
 		analyzers[i].script = m.analysisScript
 	}
 

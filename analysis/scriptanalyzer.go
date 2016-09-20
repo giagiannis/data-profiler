@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-// RAnalyzer implements the Analyzer interface and executes an R script in order
-// to run the analysis
-type RAnalyzer struct {
+// ScriptAnalyzer implements the Analyzer interface and executes any exec script
+// in order to run the analysis
+type ScriptAnalyzer struct {
 	dataset  Dataset    // dataset object
 	started  time.Time  // timestamp when analysis started
 	finished time.Time  // timestamp when analysis finished
@@ -20,24 +20,24 @@ type RAnalyzer struct {
 	script   string     // path of the R script to execute for analysis
 }
 
-// NewRAnalyzer is a constructor for RAnalyzer
+// NewScriptAnalyzer is a constructor for ScriptAnalyzer
 // returns a reference to the newly allocated object
-func NewRAnalyzer(dataset Dataset, script string) *RAnalyzer {
-	return &RAnalyzer{dataset, time.Time{}, time.Time{}, PENDING, nil, sync.Mutex{}, script}
+func NewScriptAnalyzer(dataset Dataset, script string) *ScriptAnalyzer {
+	return &ScriptAnalyzer{dataset, time.Time{}, time.Time{}, PENDING, nil, sync.Mutex{}, script}
 }
 
 // Dataset is a getter for the dataset object
-func (a *RAnalyzer) Dataset() Dataset {
+func (a *ScriptAnalyzer) Dataset() Dataset {
 	return a.dataset
 }
 
-// Analyze method for the RAnalyzer. False is returned if the analysis fails
-func (a *RAnalyzer) Analyze() bool {
+// Analyze method for the ScriptAnalyzer. False is returned if the analysis fails
+func (a *ScriptAnalyzer) Analyze() bool {
 	a.mutex.Lock()
 	a.status = ANALYZING
 	a.started = time.Now()
 	a.mutex.Unlock()
-	cmd := exec.Command("Rscript", a.script, a.dataset.Path())
+	cmd := exec.Command(a.script, a.dataset.Path())
 	out, er := cmd.Output()
 	if er != nil { // if the command is not executed, return false
 		return false
@@ -57,14 +57,6 @@ func (a *RAnalyzer) Analyze() bool {
 		if e != nil {
 			return false
 		}
-		//		i, j := k/nComponents, k%nComponents
-		//		if a.result.Eigenvectors[i] == nil {
-		//			a.result.Eigenvectors[i] = make([]float64, nComponents)
-		//		}
-		//		a.result.Eigenvectors[i][j], e = strconv.ParseFloat(v, 64)
-		//		if e != nil {
-		//			return false
-		//		}
 	}
 
 	a.mutex.Lock()
@@ -75,12 +67,12 @@ func (a *RAnalyzer) Analyze() bool {
 }
 
 // Result function is used to fetch the results of the analysis.
-func (a *RAnalyzer) Result() Result {
+func (a *ScriptAnalyzer) Result() Result {
 	return a.result
 }
 
 // Status returns the status of the Analyzer
-func (a *RAnalyzer) Status() Status {
+func (a *ScriptAnalyzer) Status() Status {
 	a.mutex.Lock()
 	res := a.status
 	a.mutex.Unlock()
@@ -88,11 +80,11 @@ func (a *RAnalyzer) Status() Status {
 }
 
 // String method override
-func (a RAnalyzer) String() string {
+func (a ScriptAnalyzer) String() string {
 	return "(" + a.dataset.Id() + ")"
 }
 
 // Duration returns the elapsed time for the analysis
-func (a *RAnalyzer) Duration() float64 {
+func (a *ScriptAnalyzer) Duration() float64 {
 	return a.finished.Sub(a.started).Seconds()
 }

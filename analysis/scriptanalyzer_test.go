@@ -45,7 +45,7 @@ func createRandomDataset(rows int, col int) string {
 
 func TestRAnalyze(t *testing.T) {
 	filename := createRandomDataset(100, 4)
-	rAnalyzer := NewRAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
+	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
 
 	ok := rAnalyzer.Analyze()
 
@@ -63,7 +63,7 @@ func TestRAnalyze(t *testing.T) {
 
 func TestRAnalyzerStatus(t *testing.T) {
 	filename := createRandomDataset(500, 3)
-	rAnalyzer := NewRAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
+	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
 	if rAnalyzer.Status() != PENDING {
 		t.Log("Status should be pending")
 		t.Fail()

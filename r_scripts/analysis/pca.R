@@ -1,3 +1,4 @@
+#!/usr/bin/Rscript
 args <- commandArgs(trailingOnly=TRUE)
 datafile <- args[1]
 dataset <- read.csv(datafile)
