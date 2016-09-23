@@ -2,4 +2,8 @@ language: go
 
 go:
         - 1.7.1
+        - tip
 
+before_install:
+        - sudo apt-get -qq update
+        - apt-get install -y r-base
