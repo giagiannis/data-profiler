@@ -1,15 +1,8 @@
 package analysis
 
 import (
-	"fmt"
 	"os"
 	"testing"
-)
-
-const (
-	TESTSET         = "../datasets/shuttle-test.csv"
-	TRAINSET        = "../datasets/shuttle-train.csv"
-	ANALYSIS_SCRIPT = "../r_scripts/pca.R"
 )
 
 // Function used to return an array of datasets based on their filenames
@@ -42,9 +35,8 @@ func TestManagerAnalyze(t *testing.T) {
 	for i := 0; i < d; i++ {
 		fileNames[i] = createRandomDataset(rows, cols)
 	}
-	fmt.Println("Created datasets")
 	datasets := createDatasets(fileNames)
-	m := NewManager(datasets, 8, "../r_scripts/pca.R")
+	m := NewManager(datasets, 8, ANALYSIS_SCRIPT)
 	m.Analyze()
 
 	for _, f := range datasets {
