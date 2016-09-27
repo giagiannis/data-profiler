@@ -17,7 +17,6 @@ type Configuration struct {
 	Datasets struct {
 		Training *string
 		Testing  *string
-		Copies   *int
 	}
 	Scripts struct {
 		Ml       *string
@@ -39,11 +38,11 @@ type Configuration struct {
 func (c Configuration) String() string {
 	buffer := ""
 	buffer += fmt.Sprintf(
-		"(datasets.training, %s) (datasets.testing, %s) (datasets.copies, %d) "+
+		"(datasets.training, %s) (datasets.testing, %s) "+
 			"(sa.iterations, %d) (sa.tempInit, %.5f) (sa.tempDecay, %.5f) "+
 			"(scripts.Ml, %s) (scripts.Analysis, %s) "+
 			"(other.threads, %d) (other.optimizations, %b)",
-		*c.Datasets.Training, *c.Datasets.Testing, *c.Datasets.Copies,
+		*c.Datasets.Training, *c.Datasets.Testing,
 		*c.SA.Iterations, *c.SA.TempInit, *c.SA.TempDecay,
 		*c.Scripts.Ml, *c.Scripts.Analysis,
 		*c.Other.Threads, *c.Other.Optimizations)
@@ -56,9 +55,6 @@ func (c *Configuration) ApplyDiffs(other Configuration) {
 	}
 	if *other.Datasets.Testing != "" {
 		c.Datasets.Testing = other.Datasets.Testing
-	}
-	if *other.Datasets.Copies != -1 {
-		c.Datasets.Copies = other.Datasets.Copies
 	}
 	if *other.Other.Optimizations != "" {
 		c.Other.Optimizations = other.Other.Optimizations
@@ -91,8 +87,6 @@ func parseParams() (*string, *Configuration) {
 		flag.String("datasets.training", "", "The path of the dataset to be analyzed")
 	cliConf.Datasets.Testing =
 		flag.String("datasets.testing", "", "The test set used to extract the classification score")
-	cliConf.Datasets.Copies =
-		flag.Int("datasets.copies", -1, "Number of subsets to break the original dataset")
 	cliConf.Scripts.Analysis =
 		flag.String("scripts.analysis", "", "The analysis script to be executed")
 	cliConf.Scripts.Ml =
@@ -122,9 +116,7 @@ func main() {
 	gcfg.ReadFileInto(cfg, *confFile)
 	cfg.ApplyDiffs(*cliCfg)
 
-	datasets := analysis.DatasetPartition(
-		*analysis.NewDataset(*cfg.Datasets.Training),
-		*cfg.Datasets.Copies)
+	datasets := analysis.DiscoverDatasets(*cfg.Datasets.Training)
 	m := analysis.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
 	m.Analyze()
 	if *cfg.Other.Optimizations == "true" {
@@ -138,6 +130,4 @@ func main() {
 		*cfg.SA.TempInit,
 		m.Results())
 	optimizer.Run()
-	// cleanup before exiting
-	analysis.DatasetPartitionCleanup(datasets)
 }

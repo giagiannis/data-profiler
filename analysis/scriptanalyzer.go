@@ -11,13 +11,13 @@ import (
 // ScriptAnalyzer implements the Analyzer interface and executes any exec script
 // in order to run the analysis
 type ScriptAnalyzer struct {
-	dataset  Dataset    // dataset object
-	started  time.Time  // timestamp when analysis started
-	finished time.Time  // timestamp when analysis finished
-	status   Status     // status of the analyzer
-	result   Result     // the result of the analysis
-	mutex    sync.Mutex // Mutex used to protect the status variable
-	script   string     // path of the R script to execute for analysis
+	dataset  Dataset        // dataset object
+	started  time.Time      // timestamp when analysis started
+	finished time.Time      // timestamp when analysis finished
+	status   AnalyzerStatus // status of the analyzer
+	result   Result         // the result of the analysis
+	mutex    sync.Mutex     // Mutex used to protect the status variable
+	script   string         // path of the R script to execute for analysis
 }
 
 // NewScriptAnalyzer is a constructor for ScriptAnalyzer
@@ -72,7 +72,7 @@ func (a *ScriptAnalyzer) Result() Result {
 }
 
 // Status returns the status of the Analyzer
-func (a *ScriptAnalyzer) Status() Status {
+func (a *ScriptAnalyzer) Status() AnalyzerStatus {
 	a.mutex.Lock()
 	res := a.status
 	a.mutex.Unlock()

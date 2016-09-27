@@ -1,11 +1,8 @@
 package analysis
 
 import (
-	"bufio"
 	"fmt"
 	"math/rand"
-	"os"
-	"time"
 )
 
 // Dataset struct represents a dataset object.
@@ -44,7 +41,7 @@ type Analyzer interface {
 	// executes the analysis - blocking process
 	Analyze() bool
 	// returns the status of the Analyzer
-	Status() Status
+	Status() AnalyzerStatus
 	// returns the result of the analyzer - a serialized version of it
 	Result() Result
 	//returns the duration of the analysis
@@ -54,17 +51,17 @@ type Analyzer interface {
 }
 
 // Status is the type representing the domain of the Analyzer's status
-type Status uint8
+type AnalyzerStatus uint8
 
 // Values of the AnalyzerStatus type
 const (
-	PENDING Status = iota + 1
+	PENDING AnalyzerStatus = iota + 1
 	ANALYZING
 	ANALYZED
 )
 
 // String method is used to print the Status enum in a pretty manner
-func (s Status) String() string {
+func (s AnalyzerStatus) String() string {
 	switch s {
 	case PENDING:
 		return "PENDING"
@@ -78,42 +75,3 @@ func (s Status) String() string {
 
 // Result struct holds the results of the analysis
 type Result []float64
-
-// Utility function used to partition a dataset into multiple disjoint subsets
-// in a uniform manner
-func DatasetPartition(original Dataset, copies int) []Dataset {
-	// init new files
-	newFiles := make([]*os.File, copies)
-	results := make([]Dataset, copies)
-	for i := 0; i < copies; i++ {
-		fileName := fmt.Sprintf("%s-split-%d", original.Path(), i)
-		newFiles[i], _ = os.Create(fileName)
-		results[i] = *NewDataset(fileName)
-	}
-	file, _ := os.Open(original.Path())
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	header := scanner.Text()
-	for _, f := range newFiles {
-		f.WriteString(header + "\n")
-	}
-
-	rand.Seed(int64(time.Now().Nanosecond()))
-	for scanner.Scan() {
-		fileChosen := rand.Int() % copies
-		newFiles[fileChosen].WriteString(scanner.Text() + "\n")
-	}
-	for _, f := range newFiles {
-		f.Close()
-	}
-	file.Close()
-
-	return results
-}
-
-// Function used to cleanup the file partitions
-func DatasetPartitionCleanup(datasets []Dataset) {
-	for _, d := range datasets {
-		os.Remove(d.Path())
-	}
-}

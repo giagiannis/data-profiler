@@ -8,7 +8,9 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	datasets := analysis.DatasetPartition(*analysis.NewDataset(TRAINSET), 100)
+	partitioner := analysis.NewDatasetPartitioner(TESTSET, TESTSET+"-splits", 100, analysis.UNIFORM)
+	partitioner.Partition()
+	datasets := analysis.DiscoverDatasets(TESTSET + "-splits")
 	manager := analysis.NewManager(datasets, 8, ANALYSIS_SCRIPT)
 	manager.Analyze()
 	o := NewSimulatedAnnealingOptimizer(
