@@ -64,10 +64,11 @@ func TestManagetOptimizationResultsPruning(t *testing.T) {
 	partitioner.Partition()
 	datasets := DiscoverDatasets(TRAINSET + "-splits")
 
-	//
 	manager := NewManager(datasets, 8, ANALYSIS_SCRIPT)
 	manager.Analyze()
 
 	manager.OptimizationResultsPruning()
+
+	partitioner.Delete()
 
 }

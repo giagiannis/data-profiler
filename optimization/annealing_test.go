@@ -1,6 +1,8 @@
 package optimization
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 
@@ -8,6 +10,7 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	partitioner := analysis.NewDatasetPartitioner(TESTSET, TESTSET+"-splits", 100, analysis.UNIFORM)
 	partitioner.Partition()
 	datasets := analysis.DiscoverDatasets(TESTSET + "-splits")
