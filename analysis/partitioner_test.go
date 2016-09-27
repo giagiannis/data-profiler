@@ -10,9 +10,9 @@ import (
 )
 
 func TestUniformPartition(t *testing.T) {
-	numberOfDatasets := rand.Int() % 200
+	numberOfDatasets := rand.Int()%200 + 1
 	rand.Seed(int64(time.Now().Nanosecond()))
-	part := NewDatasetPartitioner(TESTSET, TESTSET+"-splits/", numberOfDatasets, UNIFORM)
+	part := NewDatasetPartitioner(TRAINSET, TRAINSET+"-splits/", numberOfDatasets, UNIFORM)
 	part.Partition()
 
 	files := DiscoverDatasets(part.output)
