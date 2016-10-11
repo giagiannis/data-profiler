@@ -11,8 +11,15 @@
 #let CLASS_INDEX=CLASS_INDEX+1
 
 
+
 library(nnet)
 args <- commandArgs(trailingOnly=TRUE)
+
+if (length(args) < 2 ) { 
+	cat("Please provide the training set and test sets.\n") 
+	quit()
+}
+
 datafile <- args[1]
 testfile <- args[2]
 train.data <- read.csv(datafile)

@@ -31,9 +31,9 @@ func (d Dataset) Path() string {
 	return d.path
 }
 
-// String method for dataset object - only returns its id
+// String method for dataset object - returns the path of the dataset
 func (d Dataset) String() string {
-	return d.Id()
+	return d.path
 }
 
 // Analyzer interface that expresses the Analyzer's functionality

@@ -7,8 +7,13 @@
 # starting from 1 (not 0) & their class attribute must be named "class" 
 # and be positioned as the last column on the csv files.
 
+
 library(rpart)
 args <- commandArgs(trailingOnly=TRUE)
+if (length(args) < 2 ) { 
+	cat("Please provide the training set and test sets.\n") 
+	quit()
+}
 datafile <- args[1]
 testfile <- args[2]
 train.data <- read.csv(datafile)
