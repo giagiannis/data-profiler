@@ -9,11 +9,11 @@ import (
 	"github.com/giagiannis/data-profiler/analysis"
 )
 
-func TestRun(t *testing.T) {
+func TestAnnealingRun(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
-	partitioner := analysis.NewDatasetPartitioner(TESTSET, TESTSET+"-splits", 100, analysis.UNIFORM)
+	partitioner := analysis.NewDatasetPartitioner(TRAINSET, TRAINSET+"-splits", 100, analysis.UNIFORM)
 	partitioner.Partition()
-	datasets := analysis.DiscoverDatasets(TESTSET + "-splits")
+	datasets := analysis.DiscoverDatasets(TRAINSET + "-splits")
 	manager := analysis.NewManager(datasets, 8, ANALYSIS_SCRIPT)
 	manager.Analyze()
 	o := NewSimulatedAnnealingOptimizer(
@@ -22,7 +22,8 @@ func TestRun(t *testing.T) {
 		50,
 		0.95,
 		10,
-		manager.Results())
+		manager.Results(),
+		analysis.EUCLIDEAN)
 	o.Run()
 
 	// cleanup actions
