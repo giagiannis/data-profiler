@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/giagiannis/data-profiler/analysis"
-	"github.com/giagiannis/data-profiler/optimization"
+	"github.com/giagiannis/data-profiler/apps/optimization"
 
 	"gopkg.in/gcfg.v1"
 )
