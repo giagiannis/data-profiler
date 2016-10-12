@@ -17,6 +17,7 @@ type SimulatedAnnealingOptimizer struct {
 	tempInit      float64                              // initial temperature (of first iteration
 	coefficients  map[analysis.Dataset]analysis.Result // coefficients of the datasets
 	datasets      []analysis.Dataset                   // list of datasets
+	distanceType  analysis.DistanceType                // type of distance to use
 }
 
 // NewSimulatedAnnealingOptimizer is  the default constructor used to allocate
@@ -27,7 +28,8 @@ func NewSimulatedAnnealingOptimizer(
 	maxIterations int,
 	tempDecay float64,
 	tempInit float64,
-	coefficients map[analysis.Dataset]analysis.Result) *SimulatedAnnealingOptimizer {
+	coefficients map[analysis.Dataset]analysis.Result,
+	distanceType analysis.DistanceType) *SimulatedAnnealingOptimizer {
 
 	o := new(SimulatedAnnealingOptimizer)
 	o.OptimizerBase = *new(OptimizerBase)
@@ -38,6 +40,7 @@ func NewSimulatedAnnealingOptimizer(
 	o.tempInit = tempInit
 	o.coefficients = coefficients
 	o.datasets = make([]analysis.Dataset, len(coefficients))
+	o.distanceType = distanceType
 	i := 0
 	for k := range o.coefficients {
 		o.datasets[i] = k
@@ -147,12 +150,7 @@ func (o *SimulatedAnnealingOptimizer) neighbor(
 // datasetDistance is used to measure the distance between two datasets
 func (o *SimulatedAnnealingOptimizer) datasetsDistance(d1 analysis.Dataset, d2 analysis.Dataset) float64 {
 	v1, v2 := o.coefficients[d1], o.coefficients[d2]
-	// Eucledian distance
-	sum := 0.0
-	for i := 0; i < len(v1); i++ {
-		sum += math.Pow(v1[i]-v2[i], 2)
-	}
-	return math.Sqrt(sum)
+	return analysis.Distance(v1, v2, o.distanceType)
 }
 
 // Represents the acceptance probability

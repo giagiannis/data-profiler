@@ -32,6 +32,7 @@ type Configuration struct {
 	Other struct {
 		Threads       *int
 		Optimizations *string
+		Distance      *string
 	}
 }
 
@@ -41,11 +42,11 @@ func (c Configuration) String() string {
 		"(datasets.training, %s) (datasets.testing, %s) "+
 			"(sa.iterations, %d) (sa.tempInit, %.5f) (sa.tempDecay, %.5f) "+
 			"(scripts.Ml, %s) (scripts.Analysis, %s) "+
-			"(other.threads, %d) (other.optimizations, %b)",
+			"(other.threads, %d) (other.optimizations, %b) (other.distance, %s)",
 		*c.Datasets.Training, *c.Datasets.Testing,
 		*c.SA.Iterations, *c.SA.TempInit, *c.SA.TempDecay,
 		*c.Scripts.Ml, *c.Scripts.Analysis,
-		*c.Other.Threads, *c.Other.Optimizations)
+		*c.Other.Threads, *c.Other.Optimizations, *c.Other.Distance)
 	return buffer
 }
 
@@ -62,6 +63,10 @@ func (c *Configuration) ApplyDiffs(other Configuration) {
 	if *other.Other.Threads != -1 {
 		c.Other.Threads = other.Other.Threads
 	}
+	if *other.Other.Distance != "" {
+		c.Other.Distance = other.Other.Distance
+	}
+
 	if *other.SA.Iterations != -1 {
 		c.SA.Iterations = other.SA.Iterations
 	}
@@ -95,6 +100,8 @@ func parseParams() (*string, *Configuration) {
 		flag.String("other.optimizations", "", "Sets optimizations")
 	cliConf.Other.Threads =
 		flag.Int("other.threads", -1, "Number of threads to spawn for parallel tasks")
+	cliConf.Other.Distance =
+		flag.String("other.distance", "euclidean", "Norm to use for distance")
 	cliConf.SA.Iterations =
 		flag.Int("sa.iterations", -1, "Max iterations for the optimizer")
 	cliConf.SA.TempDecay =
@@ -128,6 +135,7 @@ func main() {
 		*cfg.SA.Iterations,
 		*cfg.SA.TempDecay,
 		*cfg.SA.TempInit,
-		m.Results())
+		m.Results(),
+		analysis.DistanceParsers(*cfg.Other.Distance))
 	optimizer.Run()
 }
