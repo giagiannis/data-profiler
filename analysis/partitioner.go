@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -76,6 +77,7 @@ func (a *DatasetPartitioner) uniform(scanner *bufio.Scanner, newFiles []*os.File
 // DiscoverDatasets is used to return a slice of Datasets when a new
 // splits directory is provided
 func DiscoverDatasets(inputDir string) []Dataset {
+	log.Println("Discovering datasets")
 	files, err := ioutil.ReadDir(inputDir)
 	if err != nil {
 		return nil

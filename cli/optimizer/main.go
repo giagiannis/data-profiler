@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/giagiannis/data-profiler/analysis"
@@ -33,6 +34,7 @@ type Configuration struct {
 		Threads       *int
 		Optimizations *string
 		Distance      *string
+		Logfile       *string
 	}
 }
 
@@ -42,11 +44,14 @@ func (c Configuration) String() string {
 		"(datasets.training, %s) (datasets.testing, %s) "+
 			"(sa.iterations, %d) (sa.tempInit, %.5f) (sa.tempDecay, %.5f) "+
 			"(scripts.Ml, %s) (scripts.Analysis, %s) "+
-			"(other.threads, %d) (other.optimizations, %b) (other.distance, %s)",
+			"(other.threads, %d) (other.optimizations, %b) (other.distance, %s) (other.logfile, %s)",
 		*c.Datasets.Training, *c.Datasets.Testing,
 		*c.SA.Iterations, *c.SA.TempInit, *c.SA.TempDecay,
 		*c.Scripts.Ml, *c.Scripts.Analysis,
-		*c.Other.Threads, *c.Other.Optimizations, *c.Other.Distance)
+		*c.Other.Threads,
+		*c.Other.Optimizations,
+		*c.Other.Distance,
+		*c.Other.Logfile)
 	return buffer
 }
 
@@ -66,6 +71,12 @@ func (c *Configuration) ApplyDiffs(other Configuration) {
 	if *other.Other.Distance != "" {
 		c.Other.Distance = other.Other.Distance
 	}
+	if *other.Other.Logfile != "" {
+		c.Other.Logfile = other.Other.Logfile
+	} else if c.Other.Logfile == nil {
+		s := ""
+		c.Other.Logfile = &s
+	}
 
 	if *other.SA.Iterations != -1 {
 		c.SA.Iterations = other.SA.Iterations
@@ -82,6 +93,7 @@ func (c *Configuration) ApplyDiffs(other Configuration) {
 	if *other.Scripts.Ml != "" {
 		c.Scripts.Ml = other.Scripts.Ml
 	}
+
 }
 
 func parseParams() (*string, *Configuration) {
@@ -98,6 +110,8 @@ func parseParams() (*string, *Configuration) {
 		flag.String("scripts.ml", "", "The ML script to be executed")
 	cliConf.Other.Optimizations =
 		flag.String("other.optimizations", "", "Sets optimizations")
+	cliConf.Other.Logfile =
+		flag.String("other.logfile", "", "Sets the logfile")
 	cliConf.Other.Threads =
 		flag.Int("other.threads", -1, "Number of threads to spawn for parallel tasks")
 	cliConf.Other.Distance =
@@ -123,6 +137,19 @@ func main() {
 	gcfg.ReadFileInto(cfg, *confFile)
 	cfg.ApplyDiffs(*cliCfg)
 
+	// init logger
+	if *cfg.Other.Logfile != "" {
+		f, er := os.OpenFile(*cfg.Other.Logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if er != nil {
+			fmt.Println(er)
+			os.Exit(1)
+		} else {
+			log.SetOutput(f)
+		}
+	}
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+	log.Printf("Configuration: %s\n", (*cfg).String())
+
 	datasets := analysis.DiscoverDatasets(*cfg.Datasets.Training)
 	m := analysis.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
 	m.Analyze()
@@ -138,4 +165,5 @@ func main() {
 		m.Results(),
 		analysis.DistanceParsers(*cfg.Other.Distance))
 	optimizer.Run()
+	fmt.Printf("%.5f %s\n", optimizer.Result().Score, optimizer.Result().Dataset)
 }

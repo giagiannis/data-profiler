@@ -51,26 +51,24 @@ func NewSimulatedAnnealingOptimizer(
 
 // Run executes the optimizer
 func (o *SimulatedAnnealingOptimizer) Run() {
-	log.Print("Optimizer execution started")
-	log.Print("\tPicking initial dataset")
+	log.Println("Optimizer execution started")
 	currentState := o.initialDataset()
-	log.Printf("\tDataset picked: (%s)\n", currentState)
-	log.Printf("\tObtaining dataset value\n")
 	currentScore, _ := o.Execute(currentState)
-	log.Printf("\tValue obtained: %.5f\n", currentScore)
+	log.Printf("Initial dataset picked: (%s, %.5f)\n", currentState, currentScore)
 	for i := 0; i < o.maxIterations; i++ {
 		t := o.temperature(i)
 		candidateState := o.neighbor(currentState, t)
 		candidateScore, _ := o.Execute(candidateState)
-		log.Printf("\t\t(it %d) - candidate status: (%s, %.5f)\n", i, candidateState, candidateScore)
+		log.Printf("\t(it %d) - candidate: (%s, %.5f)\n", i+1, candidateState, candidateScore)
 
 		if o.acceptance(currentScore, candidateScore, t) {
 			currentState = candidateState
 			currentScore = candidateScore
 		}
-		log.Printf("\t\t(it %d) - picked state: (%s, %.5f)\n", i, currentState, currentScore)
+		log.Printf("\t(it %d) - picked:    (%s, %.5f)\n", i+1, currentState, currentScore)
 	}
 	o.result = OptimizerResult{currentState, currentScore}
+	log.Println("Optimizer finished")
 }
 
 // Returns a random initial dataset

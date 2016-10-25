@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"log"
 	"math"
 	"sort"
 )
@@ -34,9 +35,10 @@ func (m *Manager) Analyze() {
 		analyzers[i] = *NewScriptAnalyzer(d, m.analysisScript)
 		analyzers[i].script = m.analysisScript
 	}
+	log.Printf("Starting analysis (thread pool size: %d)\n", m.concurrency)
 
 	//the finished threads post here
-	done := make(chan bool, 1)
+	done := make(chan bool)
 	// represent the available exec slots
 	cookies := make(chan bool, m.concurrency+1)
 
@@ -47,7 +49,11 @@ func (m *Manager) Analyze() {
 		// in parallel analysis of the datasets
 		go func(i int, done chan bool, cookie chan bool) {
 			<-cookie
-			analyzers[i].Analyze()
+			log.Printf("\tAnalysis thread %d started\n", i)
+			exitStatus := analyzers[i].Analyze()
+			if !exitStatus {
+				log.Printf("\tERROR: Analysis thread %d failed\n", i)
+			}
 			cookie <- true
 			done <- true
 		}(i, done, cookies)
@@ -57,6 +63,7 @@ func (m *Manager) Analyze() {
 	for i := 0; i < len(analyzers); i++ {
 		<-done
 	}
+	log.Printf("Analysis finished")
 
 	// write results here
 	m.results = make(map[Dataset]Result)
