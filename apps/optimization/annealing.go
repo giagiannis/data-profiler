@@ -127,21 +127,9 @@ func (o *SimulatedAnnealingOptimizer) neighbor(
 				} else {
 					stop = mid
 				}
-
 			}
 			return len(cummulative) - 1
 		}(rand.Float64(), cummulative)
-
-		//	for i, v := range cummulative {
-		//		if o.datasets[i] == current {
-		//			log.Printf("\t\tC\t%s) %.5f\t[%.5f]\n", o.datasets[i].Id(), v, distances[i])
-		//		} else if i == ind {
-		//			log.Printf("\t\tc\t%s) %.5f\t[%.5f]\n", o.datasets[i].Id(), v, distances[i])
-		//		} else {
-		//			log.Printf("\t\t\t%s) %.5f\t[%.5f]\n", o.datasets[i].Id(), v, distances[i])
-		//		}
-		//	}
-
 	return o.datasets[ind]
 }
 
