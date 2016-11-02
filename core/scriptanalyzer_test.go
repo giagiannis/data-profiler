@@ -1,6 +1,10 @@
-package analysis
+package core
 
-import "testing"
+import (
+	"io/ioutil"
+	"log"
+	"testing"
+)
 
 import "math/rand"
 import "fmt"
@@ -44,6 +48,7 @@ func createRandomDataset(rows int, col int) string {
 }
 
 func TestRAnalyze(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	filename := createRandomDataset(100, 4)
 	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
 
@@ -62,6 +67,7 @@ func TestRAnalyze(t *testing.T) {
 }
 
 func TestRAnalyzerStatus(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	filename := createRandomDataset(500, 3)
 	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
 	if rAnalyzer.Status() != PENDING {

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/giagiannis/data-profiler/analysis"
+	"github.com/giagiannis/data-profiler/core"
 )
 
 var (
 	input         *string
 	output        *string
 	splits        *int
-	partitionType *analysis.PartitionerType
+	partitionType *core.PartitionerType
 )
 
 func parseParams() {
@@ -21,8 +21,8 @@ func parseParams() {
 	splits = flag.Int("c", 0, "Number of splits to create")
 	part := flag.String("t", "UNIFORM", "Type of partitioning")
 	if *part == "UNIFORM" {
-		partitionType = new(analysis.PartitionerType)
-		*partitionType = analysis.UNIFORM
+		partitionType = new(core.PartitionerType)
+		*partitionType = core.UNIFORM
 	}
 	flag.Parse()
 	if *input == "" || *output == "" || *splits == 0 || *part == "" {
@@ -32,7 +32,7 @@ func parseParams() {
 }
 func main() {
 	parseParams()
-	partitioner := analysis.NewDatasetPartitioner(
+	partitioner := core.NewDatasetPartitioner(
 		*input,
 		*output,
 		*splits,

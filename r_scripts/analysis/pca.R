@@ -25,6 +25,7 @@ for (i in 1:(cols)) {
 	variances[i] = (fit$sd[i]^2)/sumOfVariances
 }
 
+#print(variances)
 # prints the eigenvectors
 for (i in 1:(cols*cols)) {
 	cat(as.numeric(variances[(i-1)%/%cols + 1])*fit$loadings[i])

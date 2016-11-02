@@ -1,4 +1,4 @@
-package analysis
+package core
 
 const (
 	TRAINSET        = "../_testdata/datatraining.csv"

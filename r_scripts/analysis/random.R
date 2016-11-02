@@ -15,5 +15,5 @@ fit <- princomp(dataset, cor=TRUE)
 # prints the number of the eigenvalues/vectors
 cat(cols^2)
 cat("\n")
-cat(runif(cols^2,0,1))
+cat(runif(cols,0,1))
 cat("\n")

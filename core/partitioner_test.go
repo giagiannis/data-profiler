@@ -1,8 +1,10 @@
-package analysis
+package core
 
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"testing"
@@ -10,6 +12,7 @@ import (
 )
 
 func TestUniformPartition(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	numberOfDatasets := rand.Int()%200 + 1
 	rand.Seed(int64(time.Now().Nanosecond()))
 	part := NewDatasetPartitioner(TRAINSET, TRAINSET+"-splits/", numberOfDatasets, UNIFORM)

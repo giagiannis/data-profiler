@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/giagiannis/data-profiler/analysis"
 	"github.com/giagiannis/data-profiler/apps/optimization"
+	"github.com/giagiannis/data-profiler/core"
 
 	"gopkg.in/gcfg.v1"
 )
@@ -150,20 +150,20 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 	log.Printf("Configuration: %s\n", (*cfg).String())
 
-	datasets := analysis.DiscoverDatasets(*cfg.Datasets.Training)
-	m := analysis.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
+	datasets := core.DiscoverDatasets(*cfg.Datasets.Training)
+	m := core.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
 	m.Analyze()
 	if *cfg.Other.Optimizations == "true" {
 		m.OptimizationResultsPruning()
 	}
 	optimizer := optimization.NewSimulatedAnnealingOptimizer(
 		*cfg.Scripts.Ml,
-		*analysis.NewDataset(*cfg.Datasets.Testing),
+		*core.NewDataset(*cfg.Datasets.Testing),
 		*cfg.SA.Iterations,
 		*cfg.SA.TempDecay,
 		*cfg.SA.TempInit,
 		m.Results(),
-		analysis.DistanceParsers(*cfg.Other.Distance))
+		core.DistanceParsers(*cfg.Other.Distance))
 	optimizer.Run()
 	fmt.Printf("%.5f %s\n", optimizer.Result().Score, optimizer.Result().Dataset)
 }

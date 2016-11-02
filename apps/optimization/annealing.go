@@ -5,31 +5,31 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/giagiannis/data-profiler/analysis"
+	"github.com/giagiannis/data-profiler/core"
 )
 
 // SimulatedAnnealingOptimizer executes the Simaluted Annealing optimization
 // algorithm
 type SimulatedAnnealingOptimizer struct {
-	OptimizerBase                                      // Anonymous field, used to extend OptimizerBase
-	maxIterations int                                  // max iterations of SA
-	tempDecay     float64                              // decay of the temperature factor
-	tempInit      float64                              // initial temperature (of first iteration
-	coefficients  map[analysis.Dataset]analysis.Result // coefficients of the datasets
-	datasets      []analysis.Dataset                   // list of datasets
-	distanceType  analysis.DistanceType                // type of distance to use
+	OptimizerBase                              // Anonymous field, used to extend OptimizerBase
+	maxIterations int                          // max iterations of SA
+	tempDecay     float64                      // decay of the temperature factor
+	tempInit      float64                      // initial temperature (of first iteration
+	coefficients  map[core.Dataset]core.Result // coefficients of the datasets
+	datasets      []core.Dataset               // list of datasets
+	distanceType  core.DistanceType            // type of distance to use
 }
 
 // NewSimulatedAnnealingOptimizer is  the default constructor used to allocate
 // a new SimulatedAnnealingOptimizer instance.
 func NewSimulatedAnnealingOptimizer(
 	scriptName string,
-	testDataset analysis.Dataset,
+	testDataset core.Dataset,
 	maxIterations int,
 	tempDecay float64,
 	tempInit float64,
-	coefficients map[analysis.Dataset]analysis.Result,
-	distanceType analysis.DistanceType) *SimulatedAnnealingOptimizer {
+	coefficients map[core.Dataset]core.Result,
+	distanceType core.DistanceType) *SimulatedAnnealingOptimizer {
 
 	o := new(SimulatedAnnealingOptimizer)
 	o.OptimizerBase = *new(OptimizerBase)
@@ -39,7 +39,7 @@ func NewSimulatedAnnealingOptimizer(
 	o.tempDecay = tempDecay
 	o.tempInit = tempInit
 	o.coefficients = coefficients
-	o.datasets = make([]analysis.Dataset, len(coefficients))
+	o.datasets = make([]core.Dataset, len(coefficients))
 	o.distanceType = distanceType
 	i := 0
 	for k := range o.coefficients {
@@ -72,7 +72,7 @@ func (o *SimulatedAnnealingOptimizer) Run() {
 }
 
 // Returns a random initial dataset
-func (o *SimulatedAnnealingOptimizer) initialDataset() analysis.Dataset {
+func (o *SimulatedAnnealingOptimizer) initialDataset() core.Dataset {
 	randomIndex := rand.Int() % len(o.datasets)
 	return o.datasets[randomIndex]
 }
@@ -84,8 +84,8 @@ func (o *SimulatedAnnealingOptimizer) temperature(currentIteration int) float64 
 
 // Returns a neighbor of the current state - relevant to the temperature
 func (o *SimulatedAnnealingOptimizer) neighbor(
-	current analysis.Dataset,
-	temperature float64) analysis.Dataset {
+	current core.Dataset,
+	temperature float64) core.Dataset {
 	probabilities := make([]float64, len(o.datasets))
 	distances := make([]float64, len(o.datasets))
 	sum := 0.0
@@ -134,9 +134,9 @@ func (o *SimulatedAnnealingOptimizer) neighbor(
 }
 
 // datasetDistance is used to measure the distance between two datasets
-func (o *SimulatedAnnealingOptimizer) datasetsDistance(d1 analysis.Dataset, d2 analysis.Dataset) float64 {
+func (o *SimulatedAnnealingOptimizer) datasetsDistance(d1 core.Dataset, d2 core.Dataset) float64 {
 	v1, v2 := o.coefficients[d1], o.coefficients[d2]
-	return analysis.Distance(v1, v2, o.distanceType)
+	return core.Distance(v1, v2, o.distanceType)
 }
 
 // Represents the acceptance probability

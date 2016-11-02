@@ -1,6 +1,8 @@
-package analysis
+package core
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 )
@@ -30,6 +32,7 @@ func createDatasets(fileNames []string) []Dataset {
 }
 
 func TestManagerAnalyze(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	rows, cols, d := 1000, 3, 20
 	fileNames := make([]string, d)
 	for i := 0; i < d; i++ {
@@ -60,6 +63,7 @@ func TestManagerAnalyze(t *testing.T) {
 }
 
 func TestManagetOptimizationResultsPruning(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
 	partitioner := NewDatasetPartitioner(TRAINSET, TRAINSET+"-splits", 100, UNIFORM)
 	partitioner.Partition()
 	datasets := DiscoverDatasets(TRAINSET + "-splits")
