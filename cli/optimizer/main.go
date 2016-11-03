@@ -162,6 +162,7 @@ func main() {
 		*cfg.SA.Iterations,
 		*cfg.SA.TempDecay,
 		*cfg.SA.TempInit,
+		datasets,
 		m.Results(),
 		core.DistanceParsers(*cfg.Other.Distance))
 	optimizer.Run()

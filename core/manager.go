@@ -10,10 +10,10 @@ import (
 // analysis tasks. It also exports the coordinates of each dataset file to
 // to the rest of the packages
 type Manager struct {
-	datasets       []Dataset          // dataset slice
-	concurrency    int                // number of concurrent threads for the analysis
-	analysisScript string             // script to execute for analysis
-	results        map[Dataset]Result // contains the results for the datasets
+	datasets       []Dataset         // dataset slice
+	concurrency    int               // number of concurrent threads for the analysis
+	analysisScript string            // script to execute for analysis
+	results        map[string]Result // contains the results for the datasets
 }
 
 // NewManager is a constructor for the Manager class.
@@ -66,17 +66,17 @@ func (m *Manager) Analyze() {
 	log.Printf("Analysis finished")
 
 	// write results here
-	m.results = make(map[Dataset]Result)
+	m.results = make(map[string]Result)
 	avg := 0.0
 	for _, v := range analyzers {
 		avg += v.Duration()
-		m.results[v.Dataset()] = v.Result()
+		m.results[v.Dataset().Id()] = v.Result()
 	}
 
 }
 
 // Results method is getter  for the results object
-func (m *Manager) Results() map[Dataset]Result {
+func (m *Manager) Results() map[string]Result {
 	return m.results
 }
 
@@ -97,7 +97,7 @@ func (m *Manager) OptimizationResultsPruning() bool {
 	sort.Sort(sort.Reverse(kv))
 	indices := kv.Cutoff()
 
-	newResults := make(map[Dataset]Result, len(m.results))
+	newResults := make(map[string]Result, len(m.results))
 	for d, r := range m.results {
 		newResults[d] = make([]float64, len(indices))
 		for i, v := range indices {

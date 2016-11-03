@@ -11,13 +11,13 @@ import (
 // SimulatedAnnealingOptimizer executes the Simaluted Annealing optimization
 // algorithm
 type SimulatedAnnealingOptimizer struct {
-	OptimizerBase                              // Anonymous field, used to extend OptimizerBase
-	maxIterations int                          // max iterations of SA
-	tempDecay     float64                      // decay of the temperature factor
-	tempInit      float64                      // initial temperature (of first iteration
-	coefficients  map[core.Dataset]core.Result // coefficients of the datasets
-	datasets      []core.Dataset               // list of datasets
-	distanceType  core.DistanceType            // type of distance to use
+	OptimizerBase                        // Anonymous field, used to extend OptimizerBase
+	maxIterations int                    // max iterations of SA
+	tempDecay     float64                // decay of the temperature factor
+	tempInit      float64                // initial temperature (of first iteration
+	coefficients  map[string]core.Result // coefficients of the datasets
+	datasets      []core.Dataset         // list of datasets
+	distanceType  core.DistanceType      // type of distance to use
 }
 
 // NewSimulatedAnnealingOptimizer is  the default constructor used to allocate
@@ -28,7 +28,8 @@ func NewSimulatedAnnealingOptimizer(
 	maxIterations int,
 	tempDecay float64,
 	tempInit float64,
-	coefficients map[core.Dataset]core.Result,
+	datasets []core.Dataset,
+	coefficients map[string]core.Result,
 	distanceType core.DistanceType) *SimulatedAnnealingOptimizer {
 
 	o := new(SimulatedAnnealingOptimizer)
@@ -39,13 +40,8 @@ func NewSimulatedAnnealingOptimizer(
 	o.tempDecay = tempDecay
 	o.tempInit = tempInit
 	o.coefficients = coefficients
-	o.datasets = make([]core.Dataset, len(coefficients))
+	o.datasets = datasets
 	o.distanceType = distanceType
-	i := 0
-	for k := range o.coefficients {
-		o.datasets[i] = k
-		i++
-	}
 	return o
 }
 
@@ -90,7 +86,7 @@ func (o *SimulatedAnnealingOptimizer) neighbor(
 	distances := make([]float64, len(o.datasets))
 	sum := 0.0
 	for i, d := range o.datasets {
-		if d != current {
+		if d.Id() != current.Id() {
 			distances[i] = o.datasetsDistance(current, d)
 			probabilities[i] =
 				o.probabilityDensityFunction(
@@ -135,7 +131,7 @@ func (o *SimulatedAnnealingOptimizer) neighbor(
 
 // datasetDistance is used to measure the distance between two datasets
 func (o *SimulatedAnnealingOptimizer) datasetsDistance(d1 core.Dataset, d2 core.Dataset) float64 {
-	v1, v2 := o.coefficients[d1], o.coefficients[d2]
+	v1, v2 := o.coefficients[d1.Id()], o.coefficients[d2.Id()]
 	return core.Distance(v1, v2, o.distanceType)
 }
 

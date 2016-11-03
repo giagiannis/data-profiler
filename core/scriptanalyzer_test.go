@@ -3,54 +3,14 @@ package core
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"testing"
 )
 
-import "math/rand"
-import "fmt"
-import "time"
-import "os"
-
-// Function used to generate a random dataset - to be used for testing
-// returns the path of the created dataset
-func createRandomDataset(rows int, col int) string {
-	t := time.Now()
-	rand.Seed(int64(t.Nanosecond()))
-	buffer := make([]byte, 5)
-	rand.Read(buffer)
-	filename := "/tmp/dataset-" + fmt.Sprintf("%x", buffer) + ".dat"
-	file_content := ""
-	for j := 0; j < col; j++ {
-		file_content += fmt.Sprintf("%d", j)
-		if j != col-1 {
-			file_content += ","
-		}
-	}
-	file_content += fmt.Sprintf("\n")
-	for i := 0; i < rows; i++ {
-		for j := 0; j < col; j++ {
-			file_content += fmt.Sprintf("%.5f", rand.Float64())
-			if j != col-1 {
-				file_content += ","
-			}
-		}
-		file_content += fmt.Sprintf("\n")
-	}
-	buffer = []byte(file_content)
-	f, e := os.Create(filename)
-	if e != nil {
-		return ""
-	}
-	f.Write(buffer)
-	f.Sync()
-	f.Close()
-	return filename
-}
-
 func TestRAnalyze(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
-	filename := createRandomDataset(100, 4)
-	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
+	dataset := createPoolBasedDatasets(1000, 1, 5)[0]
+	rAnalyzer := NewScriptAnalyzer(dataset, ANALYSIS_SCRIPT)
 
 	ok := rAnalyzer.Analyze()
 
@@ -63,13 +23,13 @@ func TestRAnalyze(t *testing.T) {
 		t.Fail()
 	}
 
-	os.Remove(filename)
+	os.Remove(dataset.Path())
 }
 
 func TestRAnalyzerStatus(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
-	filename := createRandomDataset(500, 3)
-	rAnalyzer := NewScriptAnalyzer(*NewDataset(filename), ANALYSIS_SCRIPT)
+	dataset := createPoolBasedDatasets(1000, 1, 5)[0]
+	rAnalyzer := NewScriptAnalyzer(dataset, ANALYSIS_SCRIPT)
 	if rAnalyzer.Status() != PENDING {
 		t.Log("Status should be pending")
 		t.Fail()
@@ -79,5 +39,5 @@ func TestRAnalyzerStatus(t *testing.T) {
 		t.Log("Error status")
 		t.Fail()
 	}
-	os.Remove(filename)
+	os.Remove(dataset.Path())
 }

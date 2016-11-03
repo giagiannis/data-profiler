@@ -1,41 +1,5 @@
 package core
 
-import (
-	"fmt"
-	"math/rand"
-)
-
-// Dataset struct represents a dataset object.
-type Dataset struct {
-	id   string
-	path string
-}
-
-// NewDataset is the constructor for the Dataset struct. A random ID is assigned
-// to a new dataset
-func NewDataset(path string) *Dataset {
-	buffer := make([]byte, 4)
-	rand.Read(buffer)
-	id := fmt.Sprintf("%x", buffer)
-	d := Dataset{id, path}
-	return &d
-}
-
-// Id getter for dataset
-func (d Dataset) Id() string {
-	return d.id
-}
-
-// Path getter for dataset
-func (d Dataset) Path() string {
-	return d.path
-}
-
-// String method for dataset object - returns the path of the dataset
-func (d Dataset) String() string {
-	return d.path
-}
-
 // Analyzer interface that expresses the Analyzer's functionality
 type Analyzer interface {
 	// executes the analysis - blocking process

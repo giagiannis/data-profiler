@@ -22,6 +22,7 @@ func TestAnnealingRun(t *testing.T) {
 		50,
 		0.95,
 		10,
+		datasets,
 		manager.Results(),
 		core.EUCLIDEAN)
 	o.Run()
