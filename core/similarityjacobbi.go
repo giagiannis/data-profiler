@@ -10,7 +10,7 @@ import (
 // the cardinality of the intersection divided by the cardinality of the
 // union of the two datasets.
 type JacobbiEstimator struct {
-	datasets     []Dataset            // the slice of datasets
+	datasets     []*Dataset           // the slice of datasets
 	similarities *DatasetSimilarities // holds the similarities
 	concurrency  int                  // max threads running in parallel
 }
@@ -56,9 +56,9 @@ func (e *JacobbiEstimator) calculateLine(lineNo int) {
 	a := e.datasets[lineNo]
 	for i := lineNo + 1; i < len(e.datasets); i++ {
 		b := e.datasets[i]
-		inter := len(DatasetsIntersection(&a, &b))
-		union := len(DatasetsUnion(&a, &b))
+		inter := len(DatasetsIntersection(a, b))
+		union := len(DatasetsUnion(a, b))
 		value := float64(inter) / float64(union)
-		e.similarities.Set(a, b, value)
+		e.similarities.Set(*a, *b, value)
 	}
 }

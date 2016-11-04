@@ -7,7 +7,11 @@ import (
 
 func TestBhattacharyyaCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(BHATTACHARYYA, datasets)
+	newDatasets := make([]*Dataset, len(datasets))
+	for i := 0; i < len(datasets); i++ {
+		newDatasets[i] = &datasets[i]
+	}
+	est := NewDatasetSimilarityEstimator(BHATTACHARYYA, newDatasets)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)

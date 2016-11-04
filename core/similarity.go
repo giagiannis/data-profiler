@@ -16,7 +16,7 @@ const (
 // Factory method for creating a DatasetSimilarityEstimator
 func NewDatasetSimilarityEstimator(
 	estType DatasetSimilarityEstimatorType,
-	datasets []Dataset) DatasetSimilarityEstimator {
+	datasets []*Dataset) DatasetSimilarityEstimator {
 	if estType == JACOBBI {
 		a := new(JacobbiEstimator)
 		a.datasets = datasets
@@ -35,13 +35,13 @@ func NewDatasetSimilarityEstimator(
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarities struct {
-	datasets     []Dataset      // the datasets slice
+	datasets     []*Dataset     // the datasets slice
 	inverseIndex map[string]int // the inverse index
 	similarities [][]float64    // the actual similarities holder
 }
 
 // NewDatasetSimilarities is the constructor for the DatasetSimilarities struct
-func NewDatasetSimilarities(datasets []Dataset) *DatasetSimilarities {
+func NewDatasetSimilarities(datasets []*Dataset) *DatasetSimilarities {
 	r := new(DatasetSimilarities)
 	r.datasets = datasets
 	r.inverseIndex = make(map[string]int)
