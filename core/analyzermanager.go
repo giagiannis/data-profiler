@@ -9,7 +9,7 @@ import (
 // Manager is responsible for synchronizing and managing the the
 // analysis tasks. It also exports the coordinates of each dataset file to
 // to the rest of the packages
-type Manager struct {
+type AnalyzerManager struct {
 	datasets       []Dataset         // dataset slice
 	concurrency    int               // number of concurrent threads for the analysis
 	analysisScript string            // script to execute for analysis
@@ -17,19 +17,19 @@ type Manager struct {
 }
 
 // NewManager is a constructor for the Manager class.
-func NewManager(datasets []Dataset, concurrency int, analysisScript string) *Manager {
-	m := Manager{datasets, concurrency, analysisScript, nil}
+func NewManager(datasets []Dataset, concurrency int, analysisScript string) *AnalyzerManager {
+	m := AnalyzerManager{datasets, concurrency, analysisScript, nil}
 	return &m
 }
 
 // Concurrency getter for Manager instance
-func (m *Manager) Concurrency() int {
+func (m *AnalyzerManager) Concurrency() int {
 	return m.concurrency
 }
 
 // Function used to begin the in-parallel analysis of the different datasets.
 // The concurrency factor is set during the manager initialization
-func (m *Manager) Analyze() {
+func (m *AnalyzerManager) Analyze() {
 	analyzers := make([]ScriptAnalyzer, len(m.datasets))
 	for i, d := range m.datasets {
 		analyzers[i] = *NewScriptAnalyzer(d, m.analysisScript)
@@ -76,14 +76,14 @@ func (m *Manager) Analyze() {
 }
 
 // Results method is getter  for the results object
-func (m *Manager) Results() map[string]Result {
+func (m *AnalyzerManager) Results() map[string]Result {
 	return m.results
 }
 
 // OptimizationResultsPruning is used to prune the output dimension of each
 // dataset according to the vector's energy (or information). Returns true
 // if pruning was succesful.
-func (m *Manager) OptimizationResultsPruning() bool {
+func (m *AnalyzerManager) OptimizationResultsPruning() bool {
 	var energy []float64
 	for _, v := range m.results {
 		if energy == nil {

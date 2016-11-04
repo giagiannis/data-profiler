@@ -1,85 +1,78 @@
 package core
 
-import (
-	"errors"
-	"log"
-)
-
+// DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
-	Compute() error                     // computes the similarity matrix
-	GetSimilarity(a, b Dataset) float64 // returns the similarity
+	Compute() error                        // computes the similarity matrix
+	GetSimilarities() *DatasetSimilarities // returns the similarity struct
 }
+
+type DatasetSimilarityEstimatorType uint
+
+const (
+	JACOBBI DatasetSimilarityEstimatorType = iota + 1
+	BHATTACHARYYA
+)
 
 // Factory method for creating a DatasetSimilarityEstimator
 func NewDatasetSimilarityEstimator(
-	estimatorType string,
+	estType DatasetSimilarityEstimatorType,
 	datasets []Dataset) DatasetSimilarityEstimator {
-	if estimatorType == "jacobbi" {
+	if estType == JACOBBI {
 		a := new(JacobbiEstimator)
 		a.datasets = datasets
 		a.concurrency = 8
 		return a
+	} else if estType == BHATTACHARYYA {
+		a := new(BhattacharyyaEstimator)
+		a.datasets = datasets
+		a.concurrency = 8
+		return a
 	}
+
 	return nil
 }
 
-// JacobbiEstimator estimates the Jacobbi coefficients between the different
-// datasets. The Jacobbi coefficient between two datasets is defined as
-// the cardinality of the intersection divided by the cardinality of the
-// union of the two datasets.
-type JacobbiEstimator struct {
-	datasets     []Dataset      // the slice of datasets
-	coefficients [][]float64    // holds the coefficients
-	inverseIndex map[string]int // inverse index of datasets slice
-	concurrency  int            // max threads running in parallel
+// DatasetSimilarities represent the struct that holds the results of  a
+// dataset similarity estimation. It also provides the necessary
+type DatasetSimilarities struct {
+	datasets     []Dataset      // the datasets slice
+	inverseIndex map[string]int // the inverse index
+	similarities [][]float64    // the actual similarities holder
 }
 
-func (e *JacobbiEstimator) Compute() error {
-	log.Println("Calculating the inverse dataset index")
-	if e.datasets == nil || len(e.datasets) == 0 {
-		log.Println("No datasets were given")
-		return errors.New("Empty dataset slice")
+// NewDatasetSimilarities is the constructor for the DatasetSimilarities struct
+func NewDatasetSimilarities(datasets []Dataset) *DatasetSimilarities {
+	r := new(DatasetSimilarities)
+	r.datasets = datasets
+	r.inverseIndex = make(map[string]int)
+	for i := 0; i < len(r.datasets); i++ {
+		r.inverseIndex[r.datasets[i].Id()] = i
 	}
-	e.inverseIndex = make(map[string]int)
-	for i := 0; i < len(e.datasets); i++ {
-		e.inverseIndex[e.datasets[i].Id()] = i
+	r.similarities = make([][]float64, len(r.datasets)-1)
+	for i := 0; i < len(r.datasets)-1; i++ {
+		r.similarities[i] = make([]float64, len(r.datasets)-i-1)
 	}
-
-	log.Println("Fetching datasets in memory")
-	for _, d := range e.datasets {
-		d.ReadFromFile()
-	}
-
-	log.Println("Starting Jacobbi computation (parallel)")
-	e.coefficients = make([][]float64, len(e.datasets)-1)
-	for i := 0; i < len(e.datasets)-1; i++ {
-		e.coefficients[i] = make([]float64, len(e.datasets)-i-1)
-	}
-	c := make(chan bool, len(e.datasets)+1)
-	done := make(chan bool)
-	for j := 0; j < e.concurrency; j++ {
-		c <- true
-	}
-
-	for i := 0; i < len(e.datasets)-1; i++ {
-		go func(c, done chan bool, i int) {
-			<-c
-			e.calculateLine(i)
-			c <- true
-			done <- true
-		}(c, done, i)
-	}
-	for j := 0; j < 8; j++ {
-		<-done
-	}
-
-	log.Println("Done")
-	return nil
+	return r
 }
 
-func (e *JacobbiEstimator) GetSimilarity(a, b Dataset) float64 {
-	idxA := e.inverseIndex[a.Id()]
-	idxB := e.inverseIndex[b.Id()]
+// SetSimilarity is a setter function for the similarity between two datasets
+func (s *DatasetSimilarities) Set(a, b Dataset, value float64) {
+	idxA := s.inverseIndex[a.Id()]
+	idxB := s.inverseIndex[b.Id()]
+	if idxA == idxB { // do nothing
+	} else if idxA > idxB { //we only want to fill the upper diagonal elems
+		t := idxB
+		idxB = idxA
+		idxA = t
+	}
+	s.similarities[idxA][idxB-idxA-1] = value
+
+}
+
+// GetSimilarity is a getter function for the simil
+func (s *DatasetSimilarities) Get(a, b Dataset) float64 {
+	idxA := s.inverseIndex[a.Id()]
+	idxB := s.inverseIndex[b.Id()]
 	if idxA == idxB {
 		return 1.0
 	} else if idxA > idxB {
@@ -87,16 +80,5 @@ func (e *JacobbiEstimator) GetSimilarity(a, b Dataset) float64 {
 		idxB = idxA
 		idxA = t
 	}
-	return e.coefficients[idxA][idxB-idxA-1]
-}
-
-// calculates a table line
-func (e *JacobbiEstimator) calculateLine(lineNo int) {
-	a := e.datasets[lineNo]
-	for i := lineNo + 1; i < len(e.datasets); i++ {
-		b := e.datasets[i]
-		inter := len(DatasetsIntersection(&a, &b))
-		union := len(DatasetsUnion(&a, &b))
-		e.coefficients[lineNo][i-1-lineNo] = float64(inter) / float64(union)
-	}
+	return s.similarities[idxA][idxB-idxA-1]
 }
