@@ -1,5 +1,10 @@
 package core
 
+import (
+	"bytes"
+	"fmt"
+)
+
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
 	Compute() error                        // computes the similarity matrix
@@ -81,4 +86,15 @@ func (s *DatasetSimilarities) Get(a, b Dataset) float64 {
 		idxA = t
 	}
 	return s.similarities[idxA][idxB-idxA-1]
+}
+
+func (s DatasetSimilarities) String() string {
+	var buf bytes.Buffer
+	for i := 0; i < len(s.datasets); i++ {
+		for j := 0; j < len(s.datasets); j++ {
+			buf.WriteString(fmt.Sprintf("%.5f ", s.Get(*s.datasets[i], *s.datasets[j])))
+		}
+		buf.WriteString("\n")
+	}
+	return buf.String()
 }

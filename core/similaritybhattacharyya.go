@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"sort"
 )
 
 type BhattacharyyaEstimator struct {
-	datasets     []*Dataset           // datasets slice
-	concurrency  int                  // the max number of threads that run in parallel
+	datasets    []*Dataset // datasets slice
+	concurrency int        // the max number of threads that run in parallel
+	//	kdTreeLen    int                  // indicates the height of the KDTree
 	similarities *DatasetSimilarities // the similarities struct
 }
 
@@ -25,11 +27,30 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		d.ReadFromFile()
 	}
 
-	root := new(kdTreeNode)
-	kdTreePartition(e.datasets[0].Data(), 0, root)
-	fmt.Println(root)
-	fmt.Println(root.Height())
-	// FIXME: the created partitions need to mean something here
+	log.Println("Estimating a KD-tree partition")
+	tree := NewKDTreePartition(e.datasets[0].Data())
+	tree.Prune(tree.Height() / 2)
+	indices := make(map[string][]int)
+
+	log.Println("Counting the number of tuples per partition for each dataset")
+	for _, d := range e.datasets {
+		indices[d.Id()] = tree.GetLeafIndex(d.Data())
+	}
+
+	log.Println("Computing the distances")
+	for i := 0; i < len(e.datasets); i++ {
+		for j := i + 1; j < len(e.datasets); j++ {
+			a, b := e.datasets[i], e.datasets[j]
+			r1, r2 := indices[a.Id()], indices[b.Id()]
+			sum := 0.0
+			for k := 0; k < len(r1); k++ {
+				sum += math.Sqrt(float64(r1[k] * r2[k]))
+			}
+			sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
+			e.similarities.Set(*a, *b, sum)
+		}
+	}
+	log.Println("Done")
 	return nil
 }
 
@@ -44,7 +65,7 @@ type kdTreeNode struct {
 	left  *kdTreeNode
 }
 
-func (r kdTreeNode) Height() int {
+func (r *kdTreeNode) Height() int {
 	var treeHeight func(*kdTreeNode) int
 	treeHeight = func(node *kdTreeNode) int {
 		if node == nil {
@@ -58,7 +79,42 @@ func (r kdTreeNode) Height() int {
 			return right
 		}
 	}
-	return treeHeight(&r)
+	return treeHeight(r)
+}
+
+func (r *kdTreeNode) Prune(level int) {
+	target := level - 1
+	var dfs func(*kdTreeNode, int)
+	dfs = func(node *kdTreeNode, level int) {
+		if level == target {
+			node.left = nil
+			node.right = nil
+		} else {
+			dfs(node.left, level+1)
+			dfs(node.right, level+1)
+		}
+	}
+	dfs(r, 0)
+}
+
+func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
+	var dfs func(*kdTreeNode, int, DatasetTuple) int
+	dfs = func(node *kdTreeNode, id int, tup DatasetTuple) int {
+		if node == nil { // leaf
+			return id
+		}
+		if tup.Data[node.dim] <= node.value {
+			return dfs(node.left, (id<<1)|0, tup)
+		} else {
+			return dfs(node.right, (id<<1)|1, tup)
+		}
+	}
+	results := make([]int, 2<<uint(r.Height()-1))
+	for _, tup := range tuples {
+		results[dfs(r, 0, tup)] += 1
+	}
+	return results
+
 }
 
 func (r kdTreeNode) String() string {
@@ -78,11 +134,10 @@ func (r kdTreeNode) String() string {
 }
 
 // partitions the tuples and stores the tree structure in the kdTreeNode ptr
-func kdTreePartition(tuples []DatasetTuple, dim int, node *kdTreeNode) {
-	tupSize := len(tuples[0].Data)
+func NewKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 	findMedian :=
-		// FIXME: this can be downgraded to O(n) time
 		func(tuples []DatasetTuple, dim int) (float64, []DatasetTuple, []DatasetTuple) {
+			// FIXME: this can be downgraded to O(n) time
 			values := make([]float64, 0)
 			for _, t := range tuples {
 				values = append(values, t.Data[dim])
@@ -97,17 +152,22 @@ func kdTreePartition(tuples []DatasetTuple, dim int, node *kdTreeNode) {
 					right = append(right, t)
 				}
 			}
-
 			return median, left, right
-
 		}
-	median, left, right := findMedian(tuples, dim%tupSize)
-	node.dim = dim % tupSize
-	node.value = median
-	if len(left) > 1 && len(right) > 1 {
-		node.right = new(kdTreeNode)
-		node.left = new(kdTreeNode)
-		kdTreePartition(left, dim+1, node.left)
-		kdTreePartition(right, dim+1, node.right)
+	var partition func([]DatasetTuple, int, *kdTreeNode)
+	partition = func(tuples []DatasetTuple, dim int, node *kdTreeNode) {
+		tupSize := len(tuples[0].Data)
+		median, left, right := findMedian(tuples, dim%tupSize)
+		node.dim = dim % tupSize
+		node.value = median
+		if len(left) > 0 && len(right) > 0 {
+			node.right = new(kdTreeNode)
+			node.left = new(kdTreeNode)
+			partition(left, dim+1, node.left)
+			partition(right, dim+1, node.right)
+		}
 	}
+	node := new(kdTreeNode)
+	partition(tuples, 0, node)
+	return node
 }
