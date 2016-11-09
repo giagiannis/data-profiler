@@ -57,7 +57,9 @@ type DatasetSimilarities struct {
 func NewDatasetSimilarities(datasets []*Dataset) *DatasetSimilarities {
 	r := new(DatasetSimilarities)
 	r.datasets = datasets
-	r.allocateStructs()
+	if datasets != nil {
+		r.allocateStructs()
+	}
 	return r
 }
 
