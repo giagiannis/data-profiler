@@ -3,13 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-
-	"github.com/giagiannis/data-profiler/apps/optimization"
-	"github.com/giagiannis/data-profiler/core"
-
-	"gopkg.in/gcfg.v1"
 )
 
 var confFile *string
@@ -127,44 +120,44 @@ func parseParams() (*string, *Configuration) {
 }
 
 func main() {
-	confFile, cliCfg := parseParams()
-	if *confFile == "" {
-		fmt.Println("Error in argument parsing, please provide conf file or see help")
-		os.Exit(1)
-	}
-
-	cfg := new(Configuration)
-	gcfg.ReadFileInto(cfg, *confFile)
-	cfg.ApplyDiffs(*cliCfg)
-
-	// init logger
-	if *cfg.Other.Logfile != "" {
-		f, er := os.OpenFile(*cfg.Other.Logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if er != nil {
-			fmt.Println(er)
-			os.Exit(1)
-		} else {
-			log.SetOutput(f)
-		}
-	}
-	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
-	log.Printf("Configuration: %s\n", (*cfg).String())
-
-	datasets := core.DiscoverDatasets(*cfg.Datasets.Training)
-	m := core.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
-	m.Analyze()
-	if *cfg.Other.Optimizations == "true" {
-		m.OptimizationResultsPruning()
-	}
-	optimizer := optimization.NewSimulatedAnnealingOptimizer(
-		*cfg.Scripts.Ml,
-		*core.NewDataset(*cfg.Datasets.Testing),
-		*cfg.SA.Iterations,
-		*cfg.SA.TempDecay,
-		*cfg.SA.TempInit,
-		datasets,
-		m.Results(),
-		core.DistanceParsers(*cfg.Other.Distance))
-	optimizer.Run()
-	fmt.Printf("%.5f %s\n", optimizer.Result().Score, optimizer.Result().Dataset)
+	//	confFile, cliCfg := parseParams()
+	//	if *confFile == "" {
+	//		fmt.Println("Error in argument parsing, please provide conf file or see help")
+	//		os.Exit(1)
+	//	}
+	//
+	//	cfg := new(Configuration)
+	//	gcfg.ReadFileInto(cfg, *confFile)
+	//	cfg.ApplyDiffs(*cliCfg)
+	//
+	//	// init logger
+	//	if *cfg.Other.Logfile != "" {
+	//		f, er := os.OpenFile(*cfg.Other.Logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	//		if er != nil {
+	//			fmt.Println(er)
+	//			os.Exit(1)
+	//		} else {
+	//			log.SetOutput(f)
+	//		}
+	//	}
+	//	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+	//	log.Printf("Configuration: %s\n", (*cfg).String())
+	//
+	//	datasets := core.DiscoverDatasets(*cfg.Datasets.Training)
+	//	m := core.NewManager(datasets, *cfg.Other.Threads, *cfg.Scripts.Analysis)
+	//	m.Analyze()
+	//	if *cfg.Other.Optimizations == "true" {
+	//		m.OptimizationResultsPruning()
+	//	}
+	//	optimizer := optimization.NewSimulatedAnnealingOptimizer(
+	//		*cfg.Scripts.Ml,
+	//		*core.NewDataset(*cfg.Datasets.Testing),
+	//		*cfg.SA.Iterations,
+	//		*cfg.SA.TempDecay,
+	//		*cfg.SA.TempInit,
+	//		datasets,
+	//		m.Results(),
+	//		core.DistanceParsers(*cfg.Other.Distance))
+	//	optimizer.Run()
+	//	fmt.Printf("%.5f %s\n", optimizer.Result().Score, optimizer.Result().Dataset)
 }

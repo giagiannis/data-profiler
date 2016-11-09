@@ -10,7 +10,7 @@ import (
 func TestRAnalyze(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
 	dataset := createPoolBasedDatasets(1000, 1, 5)[0]
-	rAnalyzer := NewScriptAnalyzer(dataset, ANALYSIS_SCRIPT)
+	rAnalyzer := NewScriptAnalyzer(*dataset, ANALYSIS_SCRIPT)
 
 	ok := rAnalyzer.Analyze()
 
@@ -29,7 +29,7 @@ func TestRAnalyze(t *testing.T) {
 func TestRAnalyzerStatus(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
 	dataset := createPoolBasedDatasets(1000, 1, 5)[0]
-	rAnalyzer := NewScriptAnalyzer(dataset, ANALYSIS_SCRIPT)
+	rAnalyzer := NewScriptAnalyzer(*dataset, ANALYSIS_SCRIPT)
 	if rAnalyzer.Status() != PENDING {
 		t.Log("Status should be pending")
 		t.Fail()

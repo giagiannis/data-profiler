@@ -10,14 +10,14 @@ import (
 // analysis tasks. It also exports the coordinates of each dataset file to
 // to the rest of the packages
 type AnalyzerManager struct {
-	datasets       []Dataset         // dataset slice
+	datasets       []*Dataset        // dataset slice
 	concurrency    int               // number of concurrent threads for the analysis
 	analysisScript string            // script to execute for analysis
 	results        map[string]Result // contains the results for the datasets
 }
 
 // NewManager is a constructor for the Manager class.
-func NewManager(datasets []Dataset, concurrency int, analysisScript string) *AnalyzerManager {
+func NewManager(datasets []*Dataset, concurrency int, analysisScript string) *AnalyzerManager {
 	m := AnalyzerManager{datasets, concurrency, analysisScript, nil}
 	return &m
 }
@@ -32,7 +32,7 @@ func (m *AnalyzerManager) Concurrency() int {
 func (m *AnalyzerManager) Analyze() {
 	analyzers := make([]ScriptAnalyzer, len(m.datasets))
 	for i, d := range m.datasets {
-		analyzers[i] = *NewScriptAnalyzer(d, m.analysisScript)
+		analyzers[i] = *NewScriptAnalyzer(*d, m.analysisScript)
 		analyzers[i].script = m.analysisScript
 	}
 	log.Printf("Starting analysis (thread pool size: %d)\n", m.concurrency)

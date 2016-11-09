@@ -6,13 +6,14 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strconv"
 )
 
 type BhattacharyyaEstimator struct {
-	datasets    []*Dataset // datasets slice
-	concurrency int        // the max number of threads that run in parallel
-	//	kdTreeLen    int                  // indicates the height of the KDTree
-	similarities *DatasetSimilarities // the similarities struct
+	datasets          []*Dataset           // datasets slice
+	similarities      *DatasetSimilarities // the similarities struct
+	concurrency       int                  // the max number of threads that run in parallel
+	kdTreeScaleFactor float64              // determines the height of the kd tree to be used
 }
 
 func (e *BhattacharyyaEstimator) Compute() error {
@@ -29,33 +30,79 @@ func (e *BhattacharyyaEstimator) Compute() error {
 
 	log.Println("Estimating a KD-tree partition")
 	tree := NewKDTreePartition(e.datasets[0].Data())
-	tree.Prune(tree.Height() / 2)
+	newHeight := int(float64(tree.Height()) * e.kdTreeScaleFactor)
+	log.Println("Pruning the tree - new height: ", newHeight)
+	tree.Prune(newHeight)
 	indices := make(map[string][]int)
-
-	log.Println("Counting the number of tuples per partition for each dataset")
 	for _, d := range e.datasets {
 		indices[d.Id()] = tree.GetLeafIndex(d.Data())
 	}
 
-	log.Println("Computing the distances")
+	log.Println("Computing the distances using", e.concurrency, "threads")
 	for i := 0; i < len(e.datasets); i++ {
-		for j := i + 1; j < len(e.datasets); j++ {
-			a, b := e.datasets[i], e.datasets[j]
-			r1, r2 := indices[a.Id()], indices[b.Id()]
-			sum := 0.0
-			for k := 0; k < len(r1); k++ {
-				sum += math.Sqrt(float64(r1[k] * r2[k]))
-			}
-			sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
-			e.similarities.Set(*a, *b, sum)
-		}
+		e.computeLine(i, indices)
 	}
+	c := make(chan bool, e.concurrency)
+	done := make(chan bool)
+	for j := 0; j < e.concurrency; j++ {
+		c <- true
+	}
+	for i := 0; i < len(e.datasets)-1; i++ {
+		go func(c, done chan bool, i int) {
+			<-c
+			e.computeLine(i, indices)
+			c <- true
+			done <- true
+		}(c, done, i)
+	}
+	for j := 0; j < len(e.datasets)-1; j++ {
+		<-done
+	}
+
 	log.Println("Done")
 	return nil
 }
 
 func (e *BhattacharyyaEstimator) GetSimilarities() *DatasetSimilarities {
 	return e.similarities
+}
+
+func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
+	if val, ok := conf["concurrency"]; ok {
+		conv, err := strconv.ParseInt(val, 10, 32)
+		e.concurrency = int(conv)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	if val, ok := conf["tree.scale"]; ok {
+		//conv, err := strconv.ParseInt(val, 10, 32)
+		conv, err := strconv.ParseFloat(val, 64)
+		e.kdTreeScaleFactor = conv
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func (e *BhattacharyyaEstimator) Options() map[string]string {
+	return map[string]string{
+		"concurrency": "max num of threads used (int)",
+		"tree.scale":  "determines the portion of the kd-tree to be used",
+	}
+}
+
+func (e *BhattacharyyaEstimator) computeLine(i int, indices map[string][]int) {
+	for j := i + 1; j < len(e.datasets); j++ {
+		a, b := e.datasets[i], e.datasets[j]
+		r1, r2 := indices[a.Id()], indices[b.Id()]
+		sum := 0.0
+		for k := 0; k < len(r1); k++ {
+			sum += math.Sqrt(float64(r1[k] * r2[k]))
+		}
+		sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
+		e.similarities.Set(a, b, sum)
+	}
 }
 
 type kdTreeNode struct {
@@ -82,7 +129,27 @@ func (r *kdTreeNode) Height() int {
 	return treeHeight(r)
 }
 
+func (r *kdTreeNode) MinHeight() int {
+	var treeHeight func(*kdTreeNode) int
+	treeHeight = func(node *kdTreeNode) int {
+		if node == nil {
+			return 0
+		}
+		left := 1 + treeHeight(node.left)
+		right := 1 + treeHeight(node.right)
+		if left < right {
+			return left
+		} else {
+			return right
+		}
+	}
+	return treeHeight(r)
+}
+
 func (r *kdTreeNode) Prune(level int) {
+	if level >= r.MinHeight() {
+		return
+	}
 	target := level - 1
 	var dfs func(*kdTreeNode, int)
 	dfs = func(node *kdTreeNode, level int) {

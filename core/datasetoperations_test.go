@@ -13,7 +13,7 @@ import (
 
 func TestDatatesetIntersection(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 2, 10)
-	res := DatasetsIntersection(&datasets[0], &datasets[1])
+	res := DatasetsIntersection(datasets[0], datasets[1])
 	if len(datasets[0].Data()) < len(res) ||
 		len(datasets[1].Data()) < len(res) {
 		t.Log(len(datasets[0].Data()))
@@ -28,7 +28,7 @@ func TestDatatesetIntersection(t *testing.T) {
 
 func TestDatasetUnion(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 2, 10)
-	res := DatasetsUnion(&datasets[0], &datasets[1])
+	res := DatasetsUnion(datasets[0], datasets[1])
 	if len(datasets[0].Data()) > len(res) ||
 		len(datasets[1].Data()) > len(res) {
 		t.Log(len(datasets[0].Data()))

@@ -25,7 +25,7 @@ func randomTupleGenerator(fields int) []float64 {
 
 // Creates a pool of tuples (its sizeis determined by poolSize) and a number of
 // datasets each containing tuples with the specified number of attributes.
-func createPoolBasedDatasets(poolSize, datasets, attributes int) []Dataset {
+func createPoolBasedDatasets(poolSize, datasets, attributes int) []*Dataset {
 	pool := *new([][]float64)
 	for i := 0; i < poolSize; i++ {
 		pool = append(pool, randomTupleGenerator(attributes))
@@ -62,9 +62,9 @@ func createPoolBasedDatasets(poolSize, datasets, attributes int) []Dataset {
 		}
 		f.Write(builder.Bytes())
 	}
-	result := make([]Dataset, len(fileNames))
+	result := make([]*Dataset, len(fileNames))
 	for i, f := range fileNames {
-		result[i] = *NewDataset(f)
+		result[i] = NewDataset(f)
 	}
 
 	return result

@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"log"
+	"strconv"
 )
 
 // JacobbiEstimator estimates the Jacobbi coefficients between the different
@@ -26,8 +27,8 @@ func (e *JacobbiEstimator) Compute() error {
 		d.ReadFromFile()
 	}
 
-	log.Println("Starting Jacobbi computation (parallel)")
-	c := make(chan bool, len(e.datasets)+1)
+	log.Printf("Starting Jacobbi computation (%d threads)", e.concurrency)
+	c := make(chan bool, e.concurrency)
 	done := make(chan bool)
 	for j := 0; j < e.concurrency; j++ {
 		c <- true
@@ -40,7 +41,7 @@ func (e *JacobbiEstimator) Compute() error {
 			done <- true
 		}(c, done, i)
 	}
-	for j := 0; j < 8; j++ {
+	for j := 0; j < len(e.datasets)-1; j++ {
 		<-done
 	}
 	log.Println("Done")
@@ -51,6 +52,23 @@ func (e *JacobbiEstimator) GetSimilarities() *DatasetSimilarities {
 	return e.similarities
 }
 
+func (e *JacobbiEstimator) Configure(conf map[string]string) {
+	if val, ok := conf["concurrency"]; ok {
+		conv, err := strconv.ParseInt(val, 10, 32)
+		if err != nil {
+			log.Println(err)
+		} else {
+			e.concurrency = int(conv)
+		}
+	}
+}
+
+func (e *JacobbiEstimator) Options() map[string]string {
+	return map[string]string{
+		"concurrency": "max num of threads used (int)",
+	}
+}
+
 // calculates a table line
 func (e *JacobbiEstimator) calculateLine(lineNo int) {
 	a := e.datasets[lineNo]
@@ -59,6 +77,6 @@ func (e *JacobbiEstimator) calculateLine(lineNo int) {
 		inter := len(DatasetsIntersection(a, b))
 		union := len(DatasetsUnion(a, b))
 		value := float64(inter) / float64(union)
-		e.similarities.Set(*a, *b, value)
+		e.similarities.Set(a, b, value)
 	}
 }

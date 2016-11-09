@@ -30,6 +30,8 @@ func main() {
 		partitionerRun()
 	} else if command == "smap" {
 		smapRun()
+	} else if command == "similarities" {
+		similaritiesRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
