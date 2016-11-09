@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/giagiannis/data-profiler/core"
@@ -65,16 +64,7 @@ func similaritiesParseParams() *similaritiesParams {
 
 func similaritiesRun() {
 	params := similaritiesParseParams()
-	if *params.logfile != "" {
-		f, er := os.OpenFile(*params.logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-		if er != nil {
-			fmt.Println(er)
-			os.Exit(1)
-		} else {
-			log.SetOutput(f)
-		}
-	}
-	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+	setLogger(*params.logfile)
 	datasets := core.DiscoverDatasets(*params.input)
 	est := core.NewDatasetSimilarityEstimator(*params.simType, datasets)
 	est.Configure(parseOptions(*params.options))

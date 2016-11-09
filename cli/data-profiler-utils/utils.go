@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -26,4 +27,18 @@ func parseOptions(optString string) map[string]string {
 	}
 	fmt.Println(opts)
 	return opts
+}
+
+func setLogger(logfile string) {
+	if logfile != "" {
+		f, er := os.OpenFile(logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if er != nil {
+			fmt.Println(er)
+			os.Exit(1)
+		} else {
+			log.SetOutput(f)
+		}
+	}
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+
 }

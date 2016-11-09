@@ -32,6 +32,8 @@ func main() {
 		smapRun()
 	} else if command == "similarities" {
 		similaritiesRun()
+	} else if command == "train" {
+		trainRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
