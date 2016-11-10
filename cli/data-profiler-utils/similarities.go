@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/giagiannis/data-profiler/core"
@@ -71,11 +72,12 @@ func similaritiesRun() {
 	est.Configure(parseOptions(*params.options))
 	est.Compute()
 
-	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if er != nil {
 		fmt.Fprintln(os.Stderr, er)
 		os.Exit(1)
 	}
-	outfile.Write(est.GetSimilarities().Serialize())
 	defer outfile.Close()
+	outfile.Write(est.GetSimilarities().Serialize())
+	log.Println(est.GetSimilarities())
 }

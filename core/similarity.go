@@ -76,9 +76,9 @@ func (s *DatasetSimilarities) allocateStructs() {
 }
 
 // Set is a setter function for the similarity between two datasets
-func (s *DatasetSimilarities) Set(a, b *Dataset, value float64) {
-	idxA := s.inverseIndex[a.Path()]
-	idxB := s.inverseIndex[b.Path()]
+func (s *DatasetSimilarities) Set(a, b string, value float64) {
+	idxA := s.inverseIndex[a]
+	idxB := s.inverseIndex[b]
 	if idxA == idxB { // do nothing
 	} else if idxA > idxB { //we only want to fill the upper diagonal elems
 		t := idxB
@@ -89,10 +89,10 @@ func (s *DatasetSimilarities) Set(a, b *Dataset, value float64) {
 
 }
 
-// Get returns the similarity between two datasets
-func (s *DatasetSimilarities) Get(a, b *Dataset) float64 {
-	idxA := s.inverseIndex[a.Path()]
-	idxB := s.inverseIndex[b.Path()]
+// Get returns the similarity between two dataset paths
+func (s *DatasetSimilarities) Get(a, b string) float64 {
+	idxA := s.inverseIndex[a]
+	idxB := s.inverseIndex[b]
 	if idxA == idxB {
 		return 1.0
 	} else if idxA > idxB {
@@ -107,7 +107,8 @@ func (s DatasetSimilarities) String() string {
 	var buf bytes.Buffer
 	for i := 0; i < len(s.datasets); i++ {
 		for j := 0; j < len(s.datasets); j++ {
-			buf.WriteString(fmt.Sprintf("%.5f ", s.Get(s.datasets[i], s.datasets[j])))
+			buf.WriteString(fmt.Sprintf("%.5f ",
+				s.Get(s.datasets[i].Path(), s.datasets[j].Path())))
 		}
 		buf.WriteString("\n")
 	}

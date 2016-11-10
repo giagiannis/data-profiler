@@ -101,7 +101,7 @@ func (e *BhattacharyyaEstimator) computeLine(i int, indices map[string][]int) {
 			sum += math.Sqrt(float64(r1[k] * r2[k]))
 		}
 		sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
-		e.similarities.Set(a, b, sum)
+		e.similarities.Set(a.Path(), b.Path(), sum)
 	}
 }
 

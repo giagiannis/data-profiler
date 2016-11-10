@@ -8,15 +8,15 @@ import (
 	"github.com/giagiannis/data-profiler/core"
 )
 
-type PartitionerParams struct {
+type partitionerParams struct {
 	input         *string
 	output        *string
 	splits        *int
 	partitionType *core.PartitionerType
 }
 
-func partitionerParseParams() *PartitionerParams {
-	params := new(PartitionerParams)
+func partitionerParseParams() *partitionerParams {
+	params := new(partitionerParams)
 	params.input = flag.String("i", "", "Input file to partition")
 	params.output = flag.String("o", "", "Input file to partition")
 	params.splits = flag.Int("c", 0, "Number of splits to create")

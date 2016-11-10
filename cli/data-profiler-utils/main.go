@@ -8,7 +8,7 @@ import (
 var utilsDescription = map[string]string{
 	"help":         "prints this help message",
 	"partition":    "split a dataset file into more smaller files",
-	"smap":         "creates a heatmap of the datasets according to their accuracy",
+	"heat":         "creates a heatmap of the datasets according to their accuracy",
 	"similarities": "calculates and stores the similarity matrix of the specified datasets",
 	"train":        "exhaustively trains the specified ML job with the datasets and creates a scores matrix",
 }
@@ -28,8 +28,8 @@ func main() {
 
 	if command == "partition" {
 		partitionerRun()
-	} else if command == "smap" {
-		smapRun()
+	} else if command == "heatmap" {
+		heatmapRun()
 	} else if command == "similarities" {
 		similaritiesRun()
 	} else if command == "train" {

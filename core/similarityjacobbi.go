@@ -77,6 +77,6 @@ func (e *JacobbiEstimator) calculateLine(lineNo int) {
 		inter := len(DatasetsIntersection(a, b))
 		union := len(DatasetsUnion(a, b))
 		value := float64(inter) / float64(union)
-		e.similarities.Set(a, b, value)
+		e.similarities.Set(a.Path(), b.Path(), value)
 	}
 }

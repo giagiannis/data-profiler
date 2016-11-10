@@ -81,7 +81,7 @@ func trainRun() {
 		<-done
 	}
 	log.Println("Serializing output to ", *params.output)
-	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	defer outfile.Close()
 
 	if er != nil {
