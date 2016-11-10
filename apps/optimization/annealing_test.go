@@ -1,13 +1,6 @@
 package optimization
 
-import (
-	"io/ioutil"
-	"log"
-	"os"
-	"testing"
-
-	"github.com/giagiannis/data-profiler/core"
-)
+import "testing"
 
 func TestAnnealingRun(t *testing.T) {
 	//	log.SetOutput(ioutil.Discard)

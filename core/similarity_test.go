@@ -28,8 +28,10 @@ func TestDatasetSerialize(t *testing.T) {
 
 	for _, d1 := range datasets {
 		for _, d2 := range datasets {
-			if sim.Get(d1, d2) != s.Get(d1, d2) {
-				log.Printf("(%.5f vs %.5f)\n", sim.Get(d1, d2), s.Get(d1, d2))
+			if sim.Get(d1.Path(), d2.Path()) != s.Get(d1.Path(), d2.Path()) {
+				log.Printf("(%.5f vs %.5f)\n",
+					sim.Get(d1.Path(), d2.Path()),
+					s.Get(d1.Path(), d2.Path()))
 				//				t.FailNow()
 			}
 		}

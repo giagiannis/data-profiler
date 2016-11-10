@@ -20,8 +20,8 @@ func TestBhattacharyyaCompute(t *testing.T) {
 	}
 	for _, d1 := range datasets {
 		for _, d2 := range datasets {
-			t.Log(s.Get(d1, d2))
-			if s.Get(d1, d2) != s.Get(d2, d1) {
+			//t.Log(s.Get(d1.Path(), d2.Path()))
+			if s.Get(d1.Path(), d2.Path()) != s.Get(d2.Path(), d1.Path()) {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
 			}
