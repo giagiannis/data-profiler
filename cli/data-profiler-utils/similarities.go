@@ -38,13 +38,6 @@ func similaritiesParseParams() *similaritiesParams {
 		*params.simType = core.JACOBBI
 	}
 
-	if *params.input == "" ||
-		*params.output == "" ||
-		params.simType == nil {
-		fmt.Fprintf(os.Stderr,
-			"Needed arguments not provided: type -h to see usage\n")
-		os.Exit(1)
-	}
 	if *params.options == "list" {
 		fmt.Println("Jacobbi")
 		a := core.NewDatasetSimilarityEstimator(core.JACOBBI, nil)
@@ -58,6 +51,14 @@ func similaritiesParseParams() *similaritiesParams {
 		}
 
 		os.Exit(0)
+	}
+
+	if *params.input == "" ||
+		*params.output == "" ||
+		params.simType == nil {
+		fmt.Fprintf(os.Stderr,
+			"Needed arguments not provided: type -h to see usage\n")
+		os.Exit(1)
 	}
 	return params
 }

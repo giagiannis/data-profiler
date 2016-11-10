@@ -75,7 +75,7 @@ func (s *DatasetSimilarities) allocateStructs() {
 
 }
 
-// SetSimilarity is a setter function for the similarity between two datasets
+// Set is a setter function for the similarity between two datasets
 func (s *DatasetSimilarities) Set(a, b *Dataset, value float64) {
 	idxA := s.inverseIndex[a.Path()]
 	idxB := s.inverseIndex[b.Path()]
@@ -89,7 +89,7 @@ func (s *DatasetSimilarities) Set(a, b *Dataset, value float64) {
 
 }
 
-// GetSimilarity is a getter function for the simil
+// Get returns the similarity between two datasets
 func (s *DatasetSimilarities) Get(a, b *Dataset) float64 {
 	idxA := s.inverseIndex[a.Path()]
 	idxB := s.inverseIndex[b.Path()]
