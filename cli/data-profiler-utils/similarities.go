@@ -30,6 +30,7 @@ func similaritiesParseParams() *similaritiesParams {
 	params.options =
 		flag.String("opt", "", "options in the form val1=key1,val2=key2 (list for opts list)")
 	flag.Parse()
+	setLogger(*params.logfile)
 
 	if *estType == "BHATTACHARYYA" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
@@ -66,7 +67,6 @@ func similaritiesParseParams() *similaritiesParams {
 
 func similaritiesRun() {
 	params := similaritiesParseParams()
-	setLogger(*params.logfile)
 	datasets := core.DiscoverDatasets(*params.input)
 	est := core.NewDatasetSimilarityEstimator(*params.simType, datasets)
 	est.Configure(parseOptions(*params.options))

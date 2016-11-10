@@ -23,37 +23,36 @@ type trainParams struct {
 }
 
 func trainParseParams() *trainParams {
-	res := new(trainParams)
+	params := new(trainParams)
 	testset :=
 		flag.String("t", "", "path of the test set")
-	res.script =
+	params.script =
 		flag.String("s", "", "path of the ML script")
 	input :=
 		flag.String("i", "", "path of the datasets dir")
-	res.output =
+	params.output =
 		flag.String("o", "", "path of the output file")
-	res.logfile =
+	params.logfile =
 		flag.String("l", "", "path of the log file")
-	res.concurrency =
+	params.concurrency =
 		flag.Int("p", 1, "number of threads")
 	flag.Parse()
-
+	setLogger(*params.logfile)
 	if *testset == "" ||
-		*res.script == "" ||
-		*res.output == "" ||
+		*params.script == "" ||
+		*params.output == "" ||
 		*input == "" {
 		fmt.Fprintf(os.Stderr,
 			"Needed arguments not provided: type -h to see usage\n")
 		os.Exit(1)
 	}
-	res.datasets = core.DiscoverDatasets(*input)
-	res.testset = core.NewDataset(*testset)
-	return res
+	params.datasets = core.DiscoverDatasets(*input)
+	params.testset = core.NewDataset(*testset)
+	return params
 }
 
 func trainRun() {
 	params := trainParseParams()
-	setLogger(*params.logfile)
 	results := make(map[string]float64)
 	done := make(chan bool)
 	c := make(chan bool, *params.concurrency)
