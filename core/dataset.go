@@ -27,7 +27,7 @@ func NewDataset(path string) *Dataset {
 	d := new(Dataset)
 	buffer := make([]byte, 4)
 	rand.Read(buffer)
-	d.id = fmt.Sprintf("%x", buffer)
+	//d.id = fmt.Sprintf("%x", buffer)
 	d.path = path
 	//	d := Dataset{id, path}
 	return d

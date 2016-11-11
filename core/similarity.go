@@ -80,6 +80,7 @@ func (s *DatasetSimilarities) Set(a, b string, value float64) {
 	idxA := s.inverseIndex[a]
 	idxB := s.inverseIndex[b]
 	if idxA == idxB { // do nothing
+		return
 	} else if idxA > idxB { //we only want to fill the upper diagonal elems
 		t := idxB
 		idxB = idxA
@@ -198,4 +199,10 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 	}
 
 	return nil
+}
+
+// Datasets method returns the datasets that express the specific similarity
+// matrix.
+func (s *DatasetSimilarities) Datasets() []*Dataset {
+	return s.datasets
 }
