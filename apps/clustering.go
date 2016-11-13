@@ -13,6 +13,7 @@ import (
 type Clustering struct {
 	similarities *core.DatasetSimilarities // dataset similarities
 	results      *Dendrogram               // holds the clustering results
+	concurrency  int
 }
 
 // Constructor for creating a Clustering object, providing a DatasetSimilarities
@@ -20,19 +21,19 @@ type Clustering struct {
 func NewClustering(similarities *core.DatasetSimilarities) *Clustering {
 	c := new(Clustering)
 	c.similarities = similarities
+	c.concurrency = 1
 	return c
 }
 
-// Used to configure the clustering object
-func (c *Clustering) Configure(map[string]string) {
-	// does nothing for now
+func (c *Clustering) SetConcurrency(concurrency int) {
+	c.concurrency = concurrency
 }
 
 // Executes the clustering
 func (c *Clustering) Compute() error {
 	c.results = NewDendrogram(c.similarities.Datasets())
-	for c.results.HasUnmerged() {
-		unmerged := c.results.GetUnmerged()
+	for c.results.hasUnmerged() {
+		unmerged := c.results.getUnmerged()
 		c.mergeClosestPairs(unmerged)
 	}
 	return nil
@@ -56,21 +57,46 @@ func (c *Clustering) getClustersSimilarity(a, b []*core.Dataset) float64 {
 
 // Evaluates and merges the most similar clusters at each turn
 func (c *Clustering) mergeClosestPairs(unmerged []*DendrogramNode) {
-	closestNode, maxSimilarity := make(map[int]int), make(map[int]float64)
-	for i := 0; i < len(unmerged); i++ {
+	getDistanceForLine := func(i int) int {
+		maxSimilarity, closestNode := -1.0, -1
 		for j := 0; j < len(unmerged); j++ {
 			n1, n2 := unmerged[i], unmerged[j]
 			val := c.getClustersSimilarity(n1.datasets, n2.datasets)
-			old, ok := maxSimilarity[i]
-			if i != j && (!ok || old < val) {
-				maxSimilarity[i] = val
-				closestNode[i] = j
+			if (i != j) && (maxSimilarity < val) {
+				maxSimilarity = val
+				closestNode = j
 			}
 		}
+		return closestNode
 	}
+
+	// parallel stuff
+	type Pair struct {
+		o, d int
+	}
+	resChannel := make(chan Pair)
+	ch := make(chan bool, c.concurrency)
+	for i := 0; i < c.concurrency; i++ {
+		ch <- true
+	}
+	for i := 0; i < len(unmerged); i++ {
+		go func(i int, done chan Pair, ch chan bool) {
+			<-ch
+			ret := getDistanceForLine(i)
+			ch <- true
+			done <- Pair{i, ret}
+		}(i, resChannel, ch)
+	}
+	closestNode := make(map[int]int)
+	for i := 0; i < len(unmerged); i++ {
+		p := <-resChannel
+		closestNode[p.o] = p.d
+	}
+
+	// serially merge all the unmerged nodes
 	for k, v := range closestNode {
 		if closestNode[v] == k {
-			c.results.Merge(unmerged[k], unmerged[v])
+			c.results.merge(unmerged[k], unmerged[v])
 		}
 	}
 
@@ -116,12 +142,53 @@ func NewDendrogram(datasets []*core.Dataset) *Dendrogram {
 	return d
 }
 
-func (d *Dendrogram) HasUnmerged() bool {
+// GetClusters function returns a slice containing the clusters of datasets
+// for the specified dendrogram level
+func (d *Dendrogram) GetClusters(level int) [][]*core.Dataset {
+	var dfs func(*DendrogramNode, int) [][]*core.Dataset
+	dfs = func(node *DendrogramNode, level int) [][]*core.Dataset {
+		res := make([][]*core.Dataset, 0)
+		if level > 0 && !node.isLeaf() {
+			left := dfs(node.left, level-1)
+			right := dfs(node.right, level-1)
+			res = append(res, left...)
+			res = append(res, right...)
+			return res
+		}
+		res = append(res, node.datasets)
+		return res
+	}
+	return dfs(d.root, level)
+}
+
+// Heights function returns the tree heights (max, min)
+func (d *Dendrogram) Heights() (int, int) {
+	var dfs func(*DendrogramNode) (int, int)
+	dfs = func(node *DendrogramNode) (int, int) {
+		if node.isLeaf() {
+			return 0, 0
+		}
+		leftMax, leftMin := dfs(node.left)
+		rightMax, rightMin := dfs(node.right)
+		totalMax := leftMax
+		if rightMax > leftMax {
+			totalMax = rightMax
+		}
+		totalMin := leftMin
+		if rightMin < leftMin {
+			totalMin = rightMin
+		}
+		return totalMax + 1, totalMin + 1
+	}
+	return dfs(d.root)
+}
+
+func (d *Dendrogram) hasUnmerged() bool {
 	return d.root == nil
 }
 
 // Returns a list of the unmerged nodes.
-func (d *Dendrogram) GetUnmerged() []*DendrogramNode {
+func (d *Dendrogram) getUnmerged() []*DendrogramNode {
 	res := make([]*DendrogramNode, len(d.unmerged))
 	i := 0
 	for _, node := range d.unmerged {
@@ -132,7 +199,7 @@ func (d *Dendrogram) GetUnmerged() []*DendrogramNode {
 }
 
 // Merge method is used to merge nodes of the tree that have not been merged yet
-func (d *Dendrogram) Merge(a, b *DendrogramNode) error {
+func (d *Dendrogram) merge(a, b *DendrogramNode) error {
 	if _, ok := d.unmerged[a.id]; !ok {
 		return errors.New("Node already merged or not known")
 	} else if _, ok := d.unmerged[b.id]; !ok {
@@ -167,4 +234,8 @@ func (d *Dendrogram) String() string {
 	}
 	dfs(d.root, "")
 	return buf.String()
+}
+
+func (n *DendrogramNode) isLeaf() bool {
+	return n.left == nil || n.right == nil
 }
