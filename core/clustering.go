@@ -1,24 +1,22 @@
-package apps
+package core
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-
-	"github.com/giagiannis/data-profiler/core"
 )
 
 // Clustering struct is responsible to execute the necessary actions in order
 // to cluster the datasets based on their availability
 type Clustering struct {
-	similarities *core.DatasetSimilarities // dataset similarities
-	results      *Dendrogram               // holds the clustering results
+	similarities *DatasetSimilarities // dataset similarities
+	results      *Dendrogram          // holds the clustering results
 	concurrency  int
 }
 
 // Constructor for creating a Clustering object, providing a DatasetSimilarities
 // object
-func NewClustering(similarities *core.DatasetSimilarities) *Clustering {
+func NewClustering(similarities *DatasetSimilarities) *Clustering {
 	c := new(Clustering)
 	c.similarities = similarities
 	c.concurrency = 1
@@ -45,7 +43,7 @@ func (c *Clustering) Results() *Dendrogram {
 }
 
 // Returns the similarity between two different clusters of datasets
-func (c *Clustering) getClustersSimilarity(a, b []*core.Dataset) float64 {
+func (c *Clustering) getClustersSimilarity(a, b []*Dataset) float64 {
 	sum := 0.0
 	for _, m1 := range a {
 		for _, m2 := range b {
@@ -110,7 +108,7 @@ type Dendrogram struct {
 
 type DendrogramNode struct {
 	id          int
-	datasets    []*core.Dataset
+	datasets    []*Dataset
 	father      *DendrogramNode
 	left, right *DendrogramNode
 }
@@ -129,13 +127,13 @@ func (n DendrogramNode) String() string {
 }
 
 // Dendrogram constructor
-func NewDendrogram(datasets []*core.Dataset) *Dendrogram {
+func NewDendrogram(datasets []*Dataset) *Dendrogram {
 	d := new(Dendrogram)
 	d.root = nil
 	d.unmerged = make(map[int]*DendrogramNode)
 	for i := 0; i < len(datasets); i++ {
 		d.unmerged[i] = &DendrogramNode{i,
-			[]*core.Dataset{datasets[i]},
+			[]*Dataset{datasets[i]},
 			nil, nil, nil}
 	}
 
@@ -144,10 +142,10 @@ func NewDendrogram(datasets []*core.Dataset) *Dendrogram {
 
 // GetClusters function returns a slice containing the clusters of datasets
 // for the specified dendrogram level
-func (d *Dendrogram) GetClusters(level int) [][]*core.Dataset {
-	var dfs func(*DendrogramNode, int) [][]*core.Dataset
-	dfs = func(node *DendrogramNode, level int) [][]*core.Dataset {
-		res := make([][]*core.Dataset, 0)
+func (d *Dendrogram) GetClusters(level int) [][]*Dataset {
+	var dfs func(*DendrogramNode, int) [][]*Dataset
+	dfs = func(node *DendrogramNode, level int) [][]*Dataset {
+		res := make([][]*Dataset, 0)
 		if level > 0 && !node.isLeaf() {
 			left := dfs(node.left, level-1)
 			right := dfs(node.right, level-1)

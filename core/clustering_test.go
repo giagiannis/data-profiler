@@ -1,4 +1,4 @@
-package apps
+package core
 
 import (
 	"fmt"
@@ -6,17 +6,15 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
-	"github.com/giagiannis/data-profiler/core"
 )
 
 func TestClustering(t *testing.T) {
 	rand.Seed(time.Now().UTC().UnixNano())
-	datasets := make([]*core.Dataset, 500)
+	datasets := make([]*Dataset, 500)
 	for i := 0; i < len(datasets); i++ {
-		datasets[i] = core.NewDataset(fmt.Sprintf("data-%d", i))
+		datasets[i] = NewDataset(fmt.Sprintf("data-%d", i))
 	}
-	sim := core.NewDatasetSimilarities(datasets)
+	sim := NewDatasetSimilarities(datasets)
 	for _, d1 := range datasets {
 		for _, d2 := range datasets {
 			sim.Set(d1.Path(), d2.Path(), rand.Float64())
@@ -31,7 +29,6 @@ func TestClustering(t *testing.T) {
 		t.FailNow()
 	}
 	max, min := cluster.Results().Heights()
-	fmt.Println(max, min)
 	for i := 0; i <= max+10; i++ {
 		sum := 0
 		for _, cl := range cluster.Results().GetClusters(i) {
@@ -62,9 +59,9 @@ func TestClustering(t *testing.T) {
 }
 
 func TestNewDendrogram(t *testing.T) {
-	datasets := make([]*core.Dataset, 40)
+	datasets := make([]*Dataset, 40)
 	for i := 0; i < len(datasets); i++ {
-		datasets[i] = core.NewDataset(fmt.Sprintf("data-%d", i))
+		datasets[i] = NewDataset(fmt.Sprintf("data-%d", i))
 	}
 	d := NewDendrogram(datasets)
 	for unm := d.getUnmerged(); d.root == nil; unm = d.getUnmerged() {

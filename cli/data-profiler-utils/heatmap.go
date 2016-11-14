@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/gob"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +14,7 @@ import (
 
 type heatmapParams struct {
 	similarities core.DatasetSimilarities
-	scores       map[string]float64
+	scores       core.DatasetScores
 	logfile      *string
 	output       *string
 }
@@ -59,13 +58,14 @@ func heatmapParseParams() *heatmapParams {
 		log.Fatalln(err)
 	}
 	// reading scores
+	params.scores = *core.NewDatasetScores()
 	log.Println("Reading", *scoresPath)
 	f, err = os.Open(*scoresPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	d := gob.NewDecoder(f)
-	err = d.Decode(&params.scores)
+	buf, err := ioutil.ReadAll(f)
+	params.scores.Deserialize(buf)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -74,7 +74,7 @@ func heatmapParseParams() *heatmapParams {
 
 func heatmapRun() {
 	params := heatmapParseParams()
-	list := sortScores(params.scores)
+	list := sortScores(params.scores.Scores)
 	log.Println("Creating temp file for heatmap data")
 	fdata, err := ioutil.TempFile("/tmp", "heatmap-data-")
 	if err != nil {
