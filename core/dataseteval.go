@@ -121,6 +121,6 @@ func (s *DatasetScores) Serialize() ([]byte, error) {
 func (s *DatasetScores) Deserialize(buf []byte) error {
 	content := bytes.NewBuffer(buf)
 	d := gob.NewDecoder(content)
-	err := d.Decode(s.Scores)
+	err := d.Decode(&s.Scores)
 	return err
 }

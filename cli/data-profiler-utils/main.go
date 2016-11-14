@@ -11,6 +11,7 @@ var utilsDescription = map[string]string{
 	"heatmap":      "creates a heatmap of the datasets according to their accuracy",
 	"similarities": "calculates and stores the similarity matrix of the specified datasets",
 	"train":        "exhaustively trains the specified ML job with the datasets and creates a scores matrix",
+	"clustering":   "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
 }
 
 func main() {
@@ -34,6 +35,9 @@ func main() {
 		similaritiesRun()
 	} else if command == "train" {
 		trainRun()
+	} else if command == "clustering" {
+		clusteringRun()
+
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
