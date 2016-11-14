@@ -33,12 +33,13 @@ func (e *BhattacharyyaEstimator) Compute() error {
 	newHeight := int(float64(tree.Height()) * e.kdTreeScaleFactor)
 	log.Println("Pruning the tree - new height: ", newHeight)
 	tree.Prune(newHeight)
+	//tree.Prune(1)
 	indices := make(map[string][]int)
 	for _, d := range e.datasets {
-		indices[d.Id()] = tree.GetLeafIndex(d.Data())
+		indices[d.Path()] = tree.GetLeafIndex(d.Data())
 	}
 
-	log.Println("Computing the distances using", e.concurrency, "threads")
+	log.Println("Computing the similarities using", e.concurrency, "threads")
 	for i := 0; i < len(e.datasets); i++ {
 		e.computeLine(i, indices)
 	}
@@ -48,12 +49,12 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		c <- true
 	}
 	for i := 0; i < len(e.datasets)-1; i++ {
-		go func(c, done chan bool, i int) {
+		go func(c, done chan bool, i int, indices map[string][]int) {
 			<-c
 			e.computeLine(i, indices)
 			c <- true
 			done <- true
-		}(c, done, i)
+		}(c, done, i, indices)
 	}
 	for j := 0; j < len(e.datasets)-1; j++ {
 		<-done
@@ -95,7 +96,7 @@ func (e *BhattacharyyaEstimator) Options() map[string]string {
 func (e *BhattacharyyaEstimator) computeLine(i int, indices map[string][]int) {
 	for j := i + 1; j < len(e.datasets); j++ {
 		a, b := e.datasets[i], e.datasets[j]
-		r1, r2 := indices[a.Id()], indices[b.Id()]
+		r1, r2 := indices[a.Path()], indices[b.Path()]
 		sum := 0.0
 		for k := 0; k < len(r1); k++ {
 			sum += math.Sqrt(float64(r1[k] * r2[k]))
@@ -183,7 +184,6 @@ func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
 		results[dfs(r, 0, tup)] += 1
 	}
 	return results
-
 }
 
 func (r kdTreeNode) String() string {
@@ -199,7 +199,6 @@ func (r kdTreeNode) String() string {
 		}
 	}
 	return myString(&r, "")
-
 }
 
 // partitions the tuples and stores the tree structure in the kdTreeNode ptr
