@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"sync"
 
 	"github.com/giagiannis/data-profiler/core"
@@ -17,6 +18,7 @@ type trainParams struct {
 	concurrency *int            // number of threads to be utilized
 	output      *string         // path of the outfile
 	logfile     *string         // logfile path
+	repetition  *int            // times to execute experiments
 }
 
 func trainParseParams() *trainParams {
@@ -33,6 +35,8 @@ func trainParseParams() *trainParams {
 		flag.String("l", "", "path of the log file")
 	params.concurrency =
 		flag.Int("p", 1, "number of threads")
+	params.repetition =
+		flag.Int("r", 1, "times to repeat experiments (prints median if >1)")
 	flag.Parse()
 	setLogger(*params.logfile)
 	if *testset == "" ||
@@ -69,13 +73,18 @@ func trainRun() {
 		go func(d core.Dataset, c, done chan bool) {
 			<-c
 			log.Println("Training with ", d.Path())
-			val, err := eval.Evaluate(d.Path())
-			if err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
-				os.Exit(1)
+			res := make([]float64, 0)
+			for i := 0; i < *params.repetition; i++ {
+				val, err := eval.Evaluate(d.Path())
+				if err != nil {
+					fmt.Fprintf(os.Stderr, err.Error())
+					os.Exit(1)
+				}
+				res = append(res, val)
 			}
+			sort.Float64s(res)
 			lock.Lock()
-			results.Scores[d.Path()] = val
+			results.Scores[d.Path()] = res[len(res)/2]
 			lock.Unlock()
 			c <- true
 			done <- true
