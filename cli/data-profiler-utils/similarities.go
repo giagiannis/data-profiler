@@ -38,6 +38,9 @@ func similaritiesParseParams() *similaritiesParams {
 	} else if *estType == "JACOBBI" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.JACOBBI
+	} else if *estType == "RANDOM" {
+		params.simType = new(core.DatasetSimilarityEstimatorType)
+		*params.simType = core.RANDOM
 	}
 
 	if *params.options == "list" {
@@ -48,6 +51,11 @@ func similaritiesParseParams() *similaritiesParams {
 		}
 		fmt.Println("Bhattacharyya")
 		a = core.NewDatasetSimilarityEstimator(core.BHATTACHARYYA, nil)
+		for k, v := range a.Options() {
+			fmt.Println(k, ":", v)
+		}
+		fmt.Println("Random")
+		a = core.NewDatasetSimilarityEstimator(core.RANDOM, nil)
 		for k, v := range a.Options() {
 			fmt.Println(k, ":", v)
 		}

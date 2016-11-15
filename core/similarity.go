@@ -23,6 +23,7 @@ type DatasetSimilarityEstimatorType uint
 const (
 	JACOBBI DatasetSimilarityEstimatorType = iota + 1
 	BHATTACHARYYA
+	RANDOM
 )
 
 // Factory method for creating a DatasetSimilarityEstimator
@@ -39,6 +40,11 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
+		return a
+	} else if estType == RANDOM {
+		a := new(RandomSimilarityEstimator)
+		a.datasets = datasets
+		a.concurrency = 1
 		return a
 	}
 	return nil

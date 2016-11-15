@@ -19,6 +19,7 @@ type BhattacharyyaEstimator struct {
 func (e *BhattacharyyaEstimator) Compute() error {
 	// allocation of similarities struct
 	e.similarities = NewDatasetSimilarities(e.datasets)
+
 	log.Println("Fetching datasets in memory")
 	if e.datasets == nil || len(e.datasets) == 0 {
 		log.Println("No datasets were given")
@@ -238,4 +239,5 @@ func NewKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 	node := new(kdTreeNode)
 	partition(tuples, 0, node)
 	return node
+
 }

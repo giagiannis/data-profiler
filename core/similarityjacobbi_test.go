@@ -7,10 +7,6 @@ import (
 
 func TestJacobbiCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	//	newDatasets := make([]*Dataset, len(datasets))
-	//	for i := 0; i < len(datasets); i++ {
-	//		newDatasets[i] = &datasets[i]
-	//	}
 	est := NewDatasetSimilarityEstimator(JACOBBI, datasets)
 	err := est.Compute()
 	if err != nil {
