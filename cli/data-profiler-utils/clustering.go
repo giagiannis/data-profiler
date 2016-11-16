@@ -85,7 +85,7 @@ func clusteringRun() {
 	outF := os.Stdout
 	if *params.output != "" {
 		var err error
-		outF, err = os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		outF, err = os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -98,6 +98,7 @@ func clusteringRun() {
 		fmt.Fprintf(outF, "%d %d %.5f %.5f\n", i,
 			len(cls.Results().GetClusters(i)), avg, diff)
 	}
+	fmt.Fprintf(outF, "\n\n") // to be used for different gnuplot indices
 	if outF != os.Stdout {
 		log.Println("Results written to", *params.output)
 	}

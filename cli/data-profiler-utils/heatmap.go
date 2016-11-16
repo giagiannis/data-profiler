@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"sort"
 
 	"github.com/giagiannis/data-profiler/core"
@@ -75,38 +74,22 @@ func heatmapParseParams() *heatmapParams {
 func heatmapRun() {
 	params := heatmapParseParams()
 	list := sortScores(params.scores.Scores)
-	log.Println("Creating temp file for heatmap data")
-	fdata, err := ioutil.TempFile("/tmp", "heatmap-data-")
+	log.Println("Creating file for heatmap data")
+	outfile, err := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer os.Remove(fdata.Name())
+	defer outfile.Close()
 
 	for i := 0; i < len(list); i++ {
 		for j := 0; j < len(list); j++ {
-			fmt.Fprintf(fdata, "%d %d %.5f\n",
+			fmt.Fprintf(outfile, "%d %d %.5f\n",
 				i, j,
 				params.similarities.Get(list[i].path, list[j].path))
 		}
-		fmt.Fprintln(fdata)
+		fmt.Fprintln(outfile)
 	}
-	fdata.Close()
-
-	log.Println("Creating temp file for heatmap gnuplot script")
-	fscript, err := ioutil.TempFile("/tmp", "heatmap-script-")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer os.Remove(fscript.Name())
-	fmt.Fprintln(fscript, gnuplotScript1(fdata.Name(), *params.output, len(list)))
-	fscript.Close()
-
-	log.Println("Creating script")
-	cmd := exec.Command("gnuplot", fscript.Name())
-	_, err = cmd.Output()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	outfile.Close()
 }
 
 type ScoresPair struct {
@@ -138,20 +121,4 @@ func sortScores(scores map[string]float64) ScoresPairList {
 	}
 	sort.Sort(list)
 	return list
-}
-
-func gnuplotScript1(input, output string, nrdatasets int) string {
-	gnuplotScript := `inputFile='%s'
-outputFile='%s.eps'
-nrdatasets=%d
-set title "Similarity Matrix heatmap"
-set terminal postscript eps size 7,5.0 enhanced color font 'Arial,34'
-set output outputFile
-set xlabel "Dataset index"
-set ylabel "Dataset index"
-set xrange [-0.5:nrdatasets-0.5]
-set yrange [-0.5:nrdatasets-0.5]
-plot inputFile u 2:1:3 w image
-system("epstopdf ".outputFile." && rm ".outputFile)`
-	return fmt.Sprintf(gnuplotScript, input, output, nrdatasets)
 }
