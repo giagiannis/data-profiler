@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/giagiannis/data-profiler/core"
 )
@@ -92,11 +93,12 @@ func clusteringRun() {
 		defer outF.Close()
 	}
 	maxTreeHeight, _ := cls.Results().Heights()
-	fmt.Fprintf(outF, "level num_of_clusters avg_error avg_max_min_error\n")
+	fmt.Fprintf(outF, "level num_of_clusters avg_error_diff max_error_diff\n")
+	maxError, _, _ := evaluateClusters(cls.Results().GetClusters(0), params.scores)
 	for i := 0; i <= maxTreeHeight; i++ {
-		avg, diff := evaluateClusters(cls.Results().GetClusters(i), params.scores)
-		fmt.Fprintf(outF, "%d %d %.5f %.5f\n", i,
-			len(cls.Results().GetClusters(i)), avg, diff)
+		diff, maxDiff, medianDiff := evaluateClusters(cls.Results().GetClusters(i), params.scores)
+		fmt.Fprintf(outF, "%d %d %.5f %.5f %.5f\n", i,
+			len(cls.Results().GetClusters(i)), diff/maxError, maxDiff/maxError, medianDiff/maxError)
 	}
 	fmt.Fprintf(outF, "\n\n") // to be used for different gnuplot indices
 	if outF != os.Stdout {
@@ -104,14 +106,16 @@ func clusteringRun() {
 	}
 }
 
-func evaluateClusters(clusters [][]*core.Dataset, scores *core.DatasetScores) (float64, float64) {
-	sumAvgs, sumDiffs := 0.0, 0.0
+func evaluateClusters(clusters [][]*core.Dataset, scores *core.DatasetScores) (float64, float64, float64) {
+	sumDiffs := 0.0
+	differences := make([]float64, 0)
 	for _, c := range clusters {
-		s, d := evaluateCluster(c, scores)
-		sumAvgs += s
+		_, d := evaluateCluster(c, scores)
 		sumDiffs += d
+		differences = append(differences, d)
 	}
-	return sumAvgs / float64(len(clusters)), sumDiffs / float64(len(clusters))
+	sort.Sort(sort.Reverse(sort.Float64Slice(differences)))
+	return sumDiffs / float64(len(clusters)), differences[0], differences[len(differences)/2]
 }
 
 // returns various metrics for the specified clusters
