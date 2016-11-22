@@ -6,7 +6,14 @@ if(!exists("inputFile") || !exists("outputFile") || !exists("nrdatasets")) {
 	exit(0);
 }
 
-set title "Similarity Matrix heatmap"
+if(!exists("titleComment")) {
+	titleComment=""
+} else {
+	titleComment=" (".titleComment.")"
+}
+#set palette gray
+set title "Similarity Matrix heatmap ".titleComment
+print outputFile
 set terminal postscript eps size 7,5.0 enhanced color font 'Arial,34'
 set output outputFile
 set xlabel "Dataset index"

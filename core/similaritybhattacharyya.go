@@ -31,8 +31,9 @@ func (e *BhattacharyyaEstimator) Compute() error {
 
 	log.Println("Estimating a KD-tree partition")
 	tree := NewKDTreePartition(e.datasets[0].Data())
-	newHeight := int(float64(tree.Height()) * e.kdTreeScaleFactor)
-	log.Println("Pruning the tree - new height: ", newHeight)
+	oldHeight := tree.Height()
+	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
+	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
 	tree.Prune(newHeight)
 	//tree.Prune(1)
 	indices := make(map[string][]int)

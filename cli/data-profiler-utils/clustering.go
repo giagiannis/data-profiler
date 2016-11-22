@@ -93,7 +93,7 @@ func clusteringRun() {
 		defer outF.Close()
 	}
 	maxTreeHeight, _ := cls.Results().Heights()
-	fmt.Fprintf(outF, "level num_of_clusters avg_error_diff max_error_diff\n")
+	fmt.Fprintf(outF, "level \"cluster\" \"avg error\" \"max error\" \"median error\"\n")
 	maxError, _, _ := evaluateClusters(cls.Results().GetClusters(0), params.scores)
 	for i := 0; i <= maxTreeHeight; i++ {
 		diff, maxDiff, medianDiff := evaluateClusters(cls.Results().GetClusters(i), params.scores)
