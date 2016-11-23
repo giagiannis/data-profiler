@@ -14,8 +14,8 @@ fit <- princomp(dataset, cor=TRUE)
 
 
 # prints the number of the eigenvalues/vectors
-cat(length(fit$sd)^2)
-cat("\n")
+#cat(length(fit$sd)^2)
+#cat("\n")
 
 # prints the eigenvalues
 
@@ -31,4 +31,3 @@ for (i in 1:(cols*cols)) {
 	cat(as.numeric(variances[(i-1)%/%cols + 1])*fit$loadings[i])
 	cat(" ")
 }
-cat("\n")

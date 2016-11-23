@@ -44,22 +44,16 @@ func similaritiesParseParams() *similaritiesParams {
 	}
 
 	if *params.options == "list" {
-		fmt.Println("Jacobbi")
-		a := core.NewDatasetSimilarityEstimator(core.JACOBBI, nil)
-		for k, v := range a.Options() {
-			fmt.Println(k, ":", v)
+		similarityTypes := []core.DatasetSimilarityEstimatorType{
+			core.JACOBBI, core.BHATTACHARYYA, core.SCRIPT,
 		}
-		fmt.Println("Bhattacharyya")
-		a = core.NewDatasetSimilarityEstimator(core.BHATTACHARYYA, nil)
-		for k, v := range a.Options() {
-			fmt.Println(k, ":", v)
+		for i, v := range similarityTypes {
+			fmt.Println(i+1, v)
+			a := core.NewDatasetSimilarityEstimator(v, nil)
+			for k, v := range a.Options() {
+				fmt.Println("\t", k, ":", v)
+			}
 		}
-		fmt.Println("Random")
-		a = core.NewDatasetSimilarityEstimator(core.RANDOM, nil)
-		for k, v := range a.Options() {
-			fmt.Println(k, ":", v)
-		}
-
 		os.Exit(0)
 	}
 

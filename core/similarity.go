@@ -24,7 +24,21 @@ const (
 	JACOBBI DatasetSimilarityEstimatorType = iota + 1
 	BHATTACHARYYA
 	RANDOM
+	SCRIPT
 )
+
+func (t DatasetSimilarityEstimatorType) String() string {
+	if t == JACOBBI {
+		return "Jacobbi"
+	} else if t == BHATTACHARYYA {
+		return "Bhattacharyya"
+	} else if t == RANDOM {
+		return "Random"
+	} else if t == SCRIPT {
+		return "Script"
+	}
+	return ""
+}
 
 // Factory method for creating a DatasetSimilarityEstimator
 func NewDatasetSimilarityEstimator(
@@ -45,6 +59,12 @@ func NewDatasetSimilarityEstimator(
 		a := new(RandomSimilarityEstimator)
 		a.datasets = datasets
 		a.concurrency = 1
+		return a
+	} else if estType == SCRIPT {
+		a := new(ScriptSimilarityEstimator)
+		a.datasets = datasets
+		a.concurrency = 1
+		a.normDegree = 1
 		return a
 	}
 	return nil
