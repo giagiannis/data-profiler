@@ -23,7 +23,6 @@ type DatasetSimilarityEstimatorType uint
 const (
 	JACOBBI DatasetSimilarityEstimatorType = iota + 1
 	BHATTACHARYYA
-	RANDOM
 	SCRIPT
 )
 
@@ -32,8 +31,6 @@ func (t DatasetSimilarityEstimatorType) String() string {
 		return "Jacobbi"
 	} else if t == BHATTACHARYYA {
 		return "Bhattacharyya"
-	} else if t == RANDOM {
-		return "Random"
 	} else if t == SCRIPT {
 		return "Script"
 	}
@@ -54,11 +51,6 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
-		return a
-	} else if estType == RANDOM {
-		a := new(RandomSimilarityEstimator)
-		a.datasets = datasets
-		a.concurrency = 1
 		return a
 	} else if estType == SCRIPT {
 		a := new(ScriptSimilarityEstimator)

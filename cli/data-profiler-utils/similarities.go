@@ -38,9 +38,9 @@ func similaritiesParseParams() *similaritiesParams {
 	} else if *estType == "JACOBBI" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.JACOBBI
-	} else if *estType == "RANDOM" {
+	} else if *estType == "SCRIPT" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.RANDOM
+		*params.simType = core.SCRIPT
 	}
 
 	if *params.options == "list" {

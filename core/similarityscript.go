@@ -20,7 +20,6 @@ type ScriptSimilarityEstimator struct {
 	normDegree     int                  // defines the degree of the norm
 }
 
-// Compute executes the similarity algorithm in order to provide
 func (s *ScriptSimilarityEstimator) Compute() error {
 	if s.analysisScript == "" {
 		log.Println("Analysis script not defined - exiting")
@@ -100,12 +99,12 @@ func (s *ScriptSimilarityEstimator) analyzeDatasets() [][]float64 {
 		c <- true
 	}
 	for i, d := range s.datasets {
-		go func(c, done chan bool, i int) {
+		go func(c, done chan bool, i int, path string) {
 			<-c
-			coords[i] = s.analyzeDataset(d.Path())
+			coords[i] = s.analyzeDataset(path)
 			c <- true
 			done <- true
-		}(c, done, i)
+		}(c, done, i, d.Path())
 	}
 
 	for i := 0; i < len(s.datasets); i++ {
@@ -116,6 +115,7 @@ func (s *ScriptSimilarityEstimator) analyzeDatasets() [][]float64 {
 
 // analyzeDataset executed the analysis script into the specified dataset
 func (s *ScriptSimilarityEstimator) analyzeDataset(path string) []float64 {
+	log.Println("Analyzing", path)
 	cmd := exec.Command(s.analysisScript, path)
 	out, err := cmd.Output()
 	if err != nil {
@@ -128,6 +128,7 @@ func (s *ScriptSimilarityEstimator) analyzeDataset(path string) []float64 {
 			results = append(results, conv)
 		}
 	}
+	log.Println(path, ":", results)
 	return results
 }
 
@@ -138,14 +139,15 @@ func (s *ScriptSimilarityEstimator) norm(a, b []float64) (float64, error) {
 	}
 	sum := 0.0
 	for i := range a {
-		sum += math.Pow(a[i]-b[i], float64(s.normDegree))
+		dif := math.Abs(a[i] - b[i])
+		sum += math.Pow(dif, float64(s.normDegree))
 	}
 	return math.Pow(sum, 1.0/float64(s.normDegree)), nil
 }
 
 func (s *ScriptSimilarityEstimator) computeLine(coordinates [][]float64, line int) {
 	a := s.datasets[line].Path()
-	for j := line + 1; j < len(coordinates[line]); j++ {
+	for j := line + 1; j < len(s.datasets); j++ {
 		b := s.datasets[j].Path()
 		v, err := s.norm(coordinates[line], coordinates[j])
 		// converting distance to similarity
