@@ -27,7 +27,8 @@ func partitionerParseParams() *partitionerParams {
 	}
 	flag.Parse()
 	if *params.input == "" || *params.output == "" || *params.splits == 0 || *part == "" {
-		fmt.Println("Please type -h to see usage")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 	return params

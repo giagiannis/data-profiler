@@ -43,8 +43,8 @@ func trainParseParams() *trainParams {
 		*params.script == "" ||
 		*params.output == "" ||
 		*input == "" {
-		fmt.Fprintf(os.Stderr,
-			"Needed arguments not provided: type -h to see usage\n")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 	params.datasets = core.DiscoverDatasets(*input)

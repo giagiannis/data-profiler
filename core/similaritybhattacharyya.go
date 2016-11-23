@@ -25,7 +25,8 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		log.Println("No datasets were given")
 		return errors.New("Empty dataset slice")
 	}
-	for _, d := range e.datasets {
+	for i, d := range e.datasets {
+		log.Println(i, d.Path())
 		d.ReadFromFile()
 	}
 

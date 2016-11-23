@@ -34,8 +34,8 @@ func heatmapParseParams() *heatmapParams {
 	if *similaritiesPath == "" ||
 		*params.output == "" ||
 		*scoresPath == "" {
-		fmt.Fprintf(os.Stderr,
-			"Needed arguments not provided: type -h to see usage\n")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 

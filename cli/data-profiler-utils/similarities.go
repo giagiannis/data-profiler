@@ -66,8 +66,8 @@ func similaritiesParseParams() *similaritiesParams {
 	if *params.input == "" ||
 		*params.output == "" ||
 		params.simType == nil {
-		fmt.Fprintf(os.Stderr,
-			"Needed arguments not provided: type -h to see usage\n")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 	return params
@@ -87,5 +87,5 @@ func similaritiesRun() {
 	}
 	defer outfile.Close()
 	outfile.Write(est.GetSimilarities().Serialize())
-	log.Println(est.GetSimilarities())
+	log.Println("\n" + est.GetSimilarities().String())
 }

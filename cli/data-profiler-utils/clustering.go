@@ -23,9 +23,9 @@ func clusteringParseParams() *clusteringParams {
 	params := new(clusteringParams)
 
 	similaritiesFile :=
-		flag.String("si", "", "similarities file")
+		flag.String("si", "", "similarities file - required")
 	scoresFile :=
-		flag.String("sc", "", "scores file")
+		flag.String("sc", "", "scores file - required")
 	params.logfile =
 		flag.String("l", "", "logfile (default: stdout)")
 	params.concurrency =
@@ -36,8 +36,8 @@ func clusteringParseParams() *clusteringParams {
 	setLogger(*params.logfile)
 
 	if *similaritiesFile == "" || *scoresFile == "" {
-		fmt.Fprintln(os.Stderr,
-			"I need both similarities file and scores file")
+		fmt.Println("Options:")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
