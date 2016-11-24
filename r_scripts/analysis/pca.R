@@ -7,27 +7,55 @@
 # the respective eigenvalue)
 
 args <- commandArgs(trailingOnly=TRUE)
-datafile <- args[1]
-dataset <- read.csv(datafile)
+dataset <- read.csv(args[1])
 cols = ncol(dataset)
-fit <- princomp(dataset, cor=TRUE)
-
-
-# prints the number of the eigenvalues/vectors
-#cat(length(fit$sd)^2)
-#cat("\n")
-
-# prints the eigenvalues
-
+fit <- prcomp(dataset)
 variances=c()
-sumOfVariances = sum(as.numeric(fit$sd)^2)
+sumOfVariances = sum(as.numeric(fit$sdev)^2)
 for (i in 1:(cols)) {
-	variances[i] = (fit$sd[i]^2)/sumOfVariances
+	variances[i] = (fit$sdev[i]^2)/sumOfVariances
 }
 
-#print(variances)
-# prints the eigenvectors
+
 for (i in 1:(cols*cols)) {
-	cat(as.numeric(variances[(i-1)%/%cols + 1])*fit$loadings[i])
+	if(i %% cols == 1) {
+		mul=1
+		if (fit$rotation[i]<0) {
+			mul=-1
+			#mul=1
+		}
+	}
+	cat((as.numeric(variances[(i-1)%/%cols + 1])*fit$rotation[i]*mul))
 	cat(" ")
 }
+
+
+#
+#
+#fit <- princomp(dataset, cor=TRUE)
+#
+#
+## prints the number of the eigenvalues/vectors
+##cat(length(fit$sd)^2)
+##cat("\n")
+#
+## prints the eigenvalues
+#
+#variances=c()
+#sumOfVariances = sum(as.numeric(fit$sd)^2)
+#for (i in 1:(cols)) {
+#	variances[i] = (fit$sd[i]^2)/sumOfVariances
+#}
+#
+## prints the eigenvectors
+#for (i in 1:(cols*cols)) {
+#	if(i %% cols == 1) {
+#		mul=1
+#		if (fit$loadings[i]<0) {
+#			mul=-1
+#			#mul=1
+#		}
+#	}
+#	cat((as.numeric(variances[(i-1)%/%cols + 1])*fit$loadings[i]*mul))
+#	cat(" ")
+#}
