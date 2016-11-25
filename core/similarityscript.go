@@ -13,11 +13,12 @@ import (
 // algorithm and utilizes various norms to measure the differences between the
 // analysis outputs.
 type ScriptSimilarityEstimator struct {
-	analysisScript string               // the analysis script to be executed
-	datasets       []*Dataset           // the input datasets
-	concurrency    int                  // max number of threads to run in parallel
-	similarities   *DatasetSimilarities // the similarities struct
-	normDegree     int                  // defines the degree of the norm
+	analysisScript string                            // the analysis script to be executed
+	datasets       []*Dataset                        // the input datasets
+	concurrency    int                               // max number of threads to run in parallel
+	similarities   *DatasetSimilarities              // the similarities struct
+	normDegree     int                               // defines the degree of the norm
+	popPolicy      DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
 }
 
 func (s *ScriptSimilarityEstimator) Compute() error {
@@ -37,22 +38,44 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 	// compare the analysis outcomes
 	log.Println("Calculating similarities")
 	s.similarities = NewDatasetSimilarities(s.datasets)
-	c, done := make(chan bool, s.concurrency), make(chan bool)
-	for i := 0; i < s.concurrency; i++ {
-		c <- true
-	}
-
-	for i := 0; i < len(s.datasets); i++ {
-		go func(c, done chan bool, line int) {
-			<-c
-			s.computeLine(coordinates, line)
+	if s.popPolicy.PolicyType == POPULATION_POL_FULL {
+		s.similarities.IndexDisabled(true) // I don't need the index
+		c, done := make(chan bool, s.concurrency), make(chan bool)
+		for i := 0; i < s.concurrency; i++ {
 			c <- true
-			done <- true
-		}(c, done, i)
-	}
+		}
 
-	for i := 0; i < len(s.datasets); i++ {
-		<-done
+		for i := 0; i < len(s.datasets); i++ {
+			go func(c, done chan bool, line int) {
+				<-c
+				s.computeLine(coordinates, line, line)
+				c <- true
+				done <- true
+			}(c, done, i)
+		}
+
+		for i := 0; i < len(s.datasets); i++ {
+			<-done
+		}
+	} else if s.popPolicy.PolicyType == POPULATION_POL_APRX {
+		s.similarities.IndexDisabled(false) // I need the index
+		if count, ok := s.popPolicy.Parameters["count"]; ok {
+			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
+			for i := 0.0; i < count; i++ {
+				idx, val := s.similarities.LeastSimilar()
+				log.Println("Computing the similarities for ", idx, val)
+				s.computeLine(coordinates, 0, idx)
+			}
+
+		} else if threshold, ok := s.popPolicy.Parameters["threshold"]; ok {
+			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
+			idx, val := s.similarities.LeastSimilar()
+			for val < threshold {
+				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
+				s.computeLine(coordinates, 0, idx)
+				idx, val = s.similarities.LeastSimilar()
+			}
+		}
 	}
 	return nil
 }
@@ -92,6 +115,9 @@ func (s *ScriptSimilarityEstimator) Options() map[string]string {
 	}
 }
 
+func (e *ScriptSimilarityEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+	e.popPolicy = policy
+}
 func (s *ScriptSimilarityEstimator) analyzeDatasets() [][]float64 {
 	c, done := make(chan bool, s.concurrency), make(chan bool)
 	coords := make([][]float64, len(s.datasets))
@@ -145,9 +171,9 @@ func (s *ScriptSimilarityEstimator) norm(a, b []float64) (float64, error) {
 	return math.Pow(sum, 1.0/float64(s.normDegree)), nil
 }
 
-func (s *ScriptSimilarityEstimator) computeLine(coordinates [][]float64, line int) {
+func (s *ScriptSimilarityEstimator) computeLine(coordinates [][]float64, start, line int) {
 	a := s.datasets[line].Path()
-	for j := line + 1; j < len(s.datasets); j++ {
+	for j := start; j < len(s.datasets); j++ {
 		b := s.datasets[j].Path()
 		v, err := s.norm(coordinates[line], coordinates[j])
 		// converting distance to similarity

@@ -8,77 +8,107 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"math/rand"
 )
 
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
-	Compute() error                        // computes the similarity matrix
-	GetSimilarities() *DatasetSimilarities // returns the similarity struct
-	Configure(map[string]string)           // provides configuration options
-	Options() map[string]string            // list of options for the estimator
+	Compute() error                                     // computes the similarity matrix
+	GetSimilarities() *DatasetSimilarities              // returns the similarity struct
+	Configure(map[string]string)                        // provides configuration options
+	Options() map[string]string                         // list of options for the estimator
+	PopulationPolicy(DatasetSimilarityPopulationPolicy) // sets the population policy for the estimator
 }
 
 type DatasetSimilarityEstimatorType uint
 
 const (
-	JACOBBI DatasetSimilarityEstimatorType = iota + 1
-	BHATTACHARYYA
-	SCRIPT
+	SIMILARITY_TYPE_JACOBBI       DatasetSimilarityEstimatorType = iota
+	SIMILARITY_TYPE_BHATTACHARYYA DatasetSimilarityEstimatorType = iota + 1
+	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
 )
 
 func (t DatasetSimilarityEstimatorType) String() string {
-	if t == JACOBBI {
+	if t == SIMILARITY_TYPE_JACOBBI {
 		return "Jacobbi"
-	} else if t == BHATTACHARYYA {
+	} else if t == SIMILARITY_TYPE_BHATTACHARYYA {
 		return "Bhattacharyya"
-	} else if t == SCRIPT {
+	} else if t == SIMILARITY_TYPE_SCRIPT {
 		return "Script"
 	}
 	return ""
 }
 
+type DatasetSimilarityPopulationPolicy struct {
+	PolicyType DatasetSimilarityPopulationPolicyType
+	Parameters map[string]float64
+}
+
+type DatasetSimilarityPopulationPolicyType uint
+
+const (
+	// FULL policy needs no params
+	POPULATION_POL_FULL DatasetSimilarityPopulationPolicyType = iota
+	// APRX must have defined one of two params: count (how many points)
+	// or threshold (percentage in similarity gain)
+	POPULATION_POL_APRX DatasetSimilarityPopulationPolicyType = iota + 1
+)
+
 // Factory method for creating a DatasetSimilarityEstimator
 func NewDatasetSimilarityEstimator(
 	estType DatasetSimilarityEstimatorType,
 	datasets []*Dataset) DatasetSimilarityEstimator {
-	if estType == JACOBBI {
+	policy := *new(DatasetSimilarityPopulationPolicy)
+	policy.PolicyType = POPULATION_POL_FULL
+	if estType == SIMILARITY_TYPE_JACOBBI {
 		a := new(JacobbiEstimator)
+		a.PopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		return a
-	} else if estType == BHATTACHARYYA {
+	} else if estType == SIMILARITY_TYPE_BHATTACHARYYA {
 		a := new(BhattacharyyaEstimator)
+		a.PopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
 		return a
-	} else if estType == SCRIPT {
+	} else if estType == SIMILARITY_TYPE_SCRIPT {
 		a := new(ScriptSimilarityEstimator)
+		a.PopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.normDegree = 1
 		return a
 	}
 	return nil
-
 }
 
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarities struct {
-	datasets     []*Dataset     // the datasets slice
-	inverseIndex map[string]int // the inverse index
-	similarities [][]float64    // the actual similarities holder
+	datasets      []*Dataset     // the datasets slice
+	inverseIndex  map[string]int // the inverse index
+	similarities  [][]float64    // the actual similarities holder
+	indexDisabled bool           // indicates whether the closestIndex is disabled or not
+	closestIndex  *closestIndex  // index that hold the closest datasets
 }
 
 // NewDatasetSimilarities is the constructor for the DatasetSimilarities struct
 func NewDatasetSimilarities(datasets []*Dataset) *DatasetSimilarities {
 	r := new(DatasetSimilarities)
 	r.datasets = datasets
+	r.indexDisabled = false
 	if datasets != nil {
 		r.allocateStructs()
 	}
 	return r
+}
+
+// IndexDisabled sets whether the closest dataset index should be disabled or not.
+// The index is useless if the FULL Estimator strategy is being followed.
+func (s *DatasetSimilarities) IndexDisabled(flag bool) {
+	s.indexDisabled = flag
 }
 
 func (s *DatasetSimilarities) allocateStructs() {
@@ -90,6 +120,7 @@ func (s *DatasetSimilarities) allocateStructs() {
 	for i := 0; i < len(s.datasets)-1; i++ {
 		s.similarities[i] = make([]float64, len(s.datasets)-i-1)
 	}
+	s.closestIndex = newClosestIndex(len(s.datasets))
 
 }
 
@@ -98,6 +129,10 @@ func (s *DatasetSimilarities) Set(a, b string, value float64) {
 	idxA := s.inverseIndex[a]
 	idxB := s.inverseIndex[b]
 	if idxA == idxB { // do nothing
+		if !s.indexDisabled {
+			s.closestIndex.CheckAndSet(idxA, idxB, value)
+			s.closestIndex.CheckAndSet(idxB, idxA, value)
+		}
 		return
 	} else if idxA > idxB { //we only want to fill the upper diagonal elems
 		t := idxB
@@ -105,13 +140,20 @@ func (s *DatasetSimilarities) Set(a, b string, value float64) {
 		idxA = t
 	}
 	s.similarities[idxA][idxB-idxA-1] = value
-
+	if !s.indexDisabled {
+		s.closestIndex.CheckAndSet(idxA, idxB, value)
+		s.closestIndex.CheckAndSet(idxB, idxA, value)
+	}
 }
 
 // Get returns the similarity between two dataset paths
 func (s *DatasetSimilarities) Get(a, b string) float64 {
 	idxA := s.inverseIndex[a]
 	idxB := s.inverseIndex[b]
+	if !s.indexDisabled {
+		idxA, _ = s.closestIndex.Get(idxA)
+		idxB, _ = s.closestIndex.Get(idxB)
+	}
 	if idxA == idxB {
 		return 1.0
 	} else if idxA > idxB {
@@ -120,6 +162,12 @@ func (s *DatasetSimilarities) Get(a, b string) float64 {
 		idxA = t
 	}
 	return s.similarities[idxA][idxB-idxA-1]
+}
+
+// LeastSimilar method returns the dataset that presents the lowest
+// similarity among the examined datasets
+func (s *DatasetSimilarities) LeastSimilar() (int, float64) {
+	return s.closestIndex.LeastSimilar()
 }
 
 func (s DatasetSimilarities) String() string {
@@ -162,6 +210,18 @@ func (s *DatasetSimilarities) Serialize() []byte {
 			buf.Write(getBytesFloat(s.similarities[i][j]))
 		}
 	}
+
+	for i := 0; i < len(s.datasets); i++ {
+		//		buf.Write(getBytesInt(s.closestIndex.closestIdx[i])
+		buf.Write(getBytesFloat(float64(s.closestIndex.closestIdx[i])))
+		buf.Write(getBytesFloat(s.closestIndex.similarity[i]))
+	}
+	if s.indexDisabled {
+		buf.WriteString("1")
+	} else {
+		buf.WriteString("0")
+	}
+
 	// compress before you send
 	var compressed bytes.Buffer
 	wr, err := gzip.NewWriterLevel(&compressed, gzip.BestCompression)
@@ -198,24 +258,35 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 	}
 
 	buf := bytes.NewBuffer(buff)
-	temp := make([]byte, 4)
-	buf.Read(temp)
+	tempInt := make([]byte, 4)
+	buf.Read(tempInt)
 
-	s.datasets = make([]*Dataset, getIntBytes(temp))
+	s.datasets = make([]*Dataset, getIntBytes(tempInt))
 	for i := range s.datasets {
 		tmp, _ := buf.ReadString('\n')
 		s.datasets[i] = NewDataset(tmp[:len(tmp)-1])
 	}
 	s.allocateStructs()
 
-	temp = make([]byte, 8)
+	tempFloat := make([]byte, 8)
 	for i := 0; i < len(s.datasets)-1; i++ {
 		for j := 0; j < len(s.datasets)-1-i; j++ {
-			buf.Read(temp)
-			s.similarities[i][j] = getFloatBytes(temp)
+			buf.Read(tempFloat)
+			s.similarities[i][j] = getFloatBytes(tempFloat)
 		}
 	}
 
+	for i := 0; i < len(s.datasets); i++ {
+		buf.Read(tempFloat)
+		s.closestIndex.closestIdx[i] = int(getFloatBytes(tempFloat))
+		buf.Read(tempFloat)
+		s.closestIndex.similarity[i] = getFloatBytes(tempFloat)
+	}
+	if val, _ := buf.ReadString('\n'); val == "1" {
+		s.indexDisabled = true
+	} else {
+		s.indexDisabled = false
+	}
 	return nil
 }
 
@@ -223,4 +294,60 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 // matrix.
 func (s *DatasetSimilarities) Datasets() []*Dataset {
 	return s.datasets
+}
+
+// dsClosestIndex represents a map containing the most similar
+// datasets along with their respective similarities
+type closestIndex struct {
+	closestIdx []int
+	similarity []float64
+}
+
+func newClosestIndex(datasets int) *closestIndex {
+	res := new(closestIndex)
+	res.closestIdx = make([]int, datasets)
+	res.similarity = make([]float64, datasets)
+	for i := range res.closestIdx {
+		res.closestIdx[i] = -1   // represents a NUL dataset index
+		res.similarity[i] = -1.0 // represents a NUL similarity
+	}
+	return res
+}
+
+// Returns the index and similarity of the most similar dataset
+func (s *closestIndex) Get(idx int) (int, float64) {
+	if idx < len(s.closestIdx) {
+		return s.closestIdx[idx], s.similarity[idx]
+	}
+	return -1, -1.0
+}
+
+// Sets the index and the similarity of the most similar dataset
+func (s *closestIndex) Set(srcIdx, dstIdx int, similarity float64) {
+	s.closestIdx[srcIdx] = dstIdx
+	s.similarity[srcIdx] = similarity
+}
+
+// Sets the index and the similarity of the most similar dataset, iff the provided similarity
+// is higher than the one previously stored
+func (s *closestIndex) CheckAndSet(srcIdx, dstIdx int, similarity float64) {
+	if s.similarity[srcIdx] < similarity {
+		s.closestIdx[srcIdx] = dstIdx
+		s.similarity[srcIdx] = similarity
+	}
+}
+
+// Returns the dataset index (and its respective value) with the lowest similarity
+// to its most close dataset
+func (s *closestIndex) LeastSimilar() (int, float64) {
+	minIdx, minV := 0, s.similarity[0]
+	for i, v := range s.similarity {
+		if v < minV {
+			minV = v
+			minIdx = i
+		} else if v == minV && rand.Int()%2 == 0 { // random index
+			minIdx = i
+		}
+	}
+	return minIdx, minV
 }

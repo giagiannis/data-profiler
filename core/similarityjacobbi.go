@@ -11,9 +11,10 @@ import (
 // the cardinality of the intersection divided by the cardinality of the
 // union of the two datasets.
 type JacobbiEstimator struct {
-	datasets     []*Dataset           // the slice of datasets
-	similarities *DatasetSimilarities // holds the similarities
-	concurrency  int                  // max threads running in parallel
+	datasets     []*Dataset                        // the slice of datasets
+	similarities *DatasetSimilarities              // holds the similarities
+	concurrency  int                               // max threads running in parallel
+	popPolicy    DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
 }
 
 func (e *JacobbiEstimator) Compute() error {
@@ -26,25 +27,48 @@ func (e *JacobbiEstimator) Compute() error {
 	for _, d := range e.datasets {
 		d.ReadFromFile()
 	}
-
-	log.Printf("Starting Jacobbi computation (%d threads)", e.concurrency)
-	c := make(chan bool, e.concurrency)
-	done := make(chan bool)
-	for j := 0; j < e.concurrency; j++ {
-		c <- true
-	}
-	for i := 0; i < len(e.datasets)-1; i++ {
-		go func(c, done chan bool, i int) {
-			<-c
-			e.calculateLine(i)
+	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
+		e.similarities.IndexDisabled(true) // I don't need the index
+		log.Printf("Starting Jacobbi computation (%d threads)", e.concurrency)
+		c := make(chan bool, e.concurrency)
+		done := make(chan bool)
+		for j := 0; j < e.concurrency; j++ {
 			c <- true
-			done <- true
-		}(c, done, i)
+		}
+		for i := 0; i < len(e.datasets)-1; i++ {
+			go func(c, done chan bool, i int) {
+				<-c
+				e.calculateLine(i, i)
+				c <- true
+				done <- true
+			}(c, done, i)
+		}
+		for j := 0; j < len(e.datasets)-1; j++ {
+			<-done
+		}
+		log.Println("Done")
+	} else if e.popPolicy.PolicyType == POPULATION_POL_APRX {
+		e.similarities.IndexDisabled(false) // I need the index
+		if count, ok := e.popPolicy.Parameters["count"]; ok {
+			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
+			for i := 0.0; i < count; i++ {
+				idx, val := e.similarities.LeastSimilar()
+				log.Println("Computing the similarities for ", idx, val)
+				e.calculateLine(0, idx)
+			}
+
+		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
+			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
+			idx, val := e.similarities.LeastSimilar()
+			for val < threshold {
+				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
+				e.calculateLine(0, idx)
+				idx, val = e.similarities.LeastSimilar()
+			}
+
+		}
 	}
-	for j := 0; j < len(e.datasets)-1; j++ {
-		<-done
-	}
-	log.Println("Done")
+
 	return nil
 }
 
@@ -69,10 +93,14 @@ func (e *JacobbiEstimator) Options() map[string]string {
 	}
 }
 
+func (e *JacobbiEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+	e.popPolicy = policy
+}
+
 // calculates a table line
-func (e *JacobbiEstimator) calculateLine(lineNo int) {
+func (e *JacobbiEstimator) calculateLine(start, lineNo int) {
 	a := e.datasets[lineNo]
-	for i := lineNo + 1; i < len(e.datasets); i++ {
+	for i := start; i < len(e.datasets); i++ {
 		b := e.datasets[i]
 		inter := len(DatasetsIntersection(a, b))
 		union := len(DatasetsUnion(a, b))

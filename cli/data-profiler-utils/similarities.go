@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/giagiannis/data-profiler/core"
 )
 
 type similaritiesParams struct {
-	input   *string                              //datasets directory to be discovered
-	output  *string                              // output file
-	simType *core.DatasetSimilarityEstimatorType // similarity type
-	logfile *string                              // logfile
-	options *string                              // options for the estimators
+	input            *string                                 //datasets directory to be discovered
+	output           *string                                 // output file
+	simType          *core.DatasetSimilarityEstimatorType    // similarity type
+	logfile          *string                                 // logfile
+	options          *string                                 // options for the estimators
+	populationPolicy *core.DatasetSimilarityPopulationPolicy // defines the population policy
 }
 
 func similaritiesParseParams() *similaritiesParams {
@@ -24,28 +27,54 @@ func similaritiesParseParams() *similaritiesParams {
 	params.output =
 		flag.String("o", "", "where to store similarities file")
 	estType :=
-		flag.String("t", "BHATTACHARYYA", "similarity type [JACOBBI|BHATTACHARYYA]")
+		flag.String("t", "BHATTACHARYYA", "similarity type [JACOBBI|BHATTACHARYYA|SCRIPT]")
 	params.logfile =
 		flag.String("l", "", "logfile (default: stderr)")
 	params.options =
 		flag.String("opt", "", "options in the form val1=key1,val2=key2 (list for opts list)")
+	popPolicy :=
+		flag.String("p", "FULL", "population policy [FULL|APRX] along with options in the form POLICY,val1=key1,val2=key2")
 	flag.Parse()
 	setLogger(*params.logfile)
 
+	// population policy parsing
+	popPolicyType := strings.Split(*popPolicy, ",")[0]
+	params.populationPolicy = new(core.DatasetSimilarityPopulationPolicy)
+	params.populationPolicy.Parameters = make(map[string]float64)
+	if popPolicyType == "FULL" {
+		params.populationPolicy.PolicyType = core.POPULATION_POL_FULL
+	} else if popPolicyType == "APRX" {
+		params.populationPolicy.PolicyType = core.POPULATION_POL_APRX
+		idx := strings.Index(*popPolicy, ",")
+		if idx > -1 {
+			for k, v := range parseOptions((*popPolicy)[idx+1 : len(*popPolicy)]) {
+				val, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					log.Println(nil)
+					os.Exit(1)
+				}
+				params.populationPolicy.Parameters[k] = val
+			}
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Population policy unknown\n")
+		os.Exit(1)
+	}
+
 	if *estType == "BHATTACHARYYA" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.BHATTACHARYYA
+		*params.simType = core.SIMILARITY_TYPE_BHATTACHARYYA
 	} else if *estType == "JACOBBI" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.JACOBBI
+		*params.simType = core.SIMILARITY_TYPE_JACOBBI
 	} else if *estType == "SCRIPT" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SCRIPT
+		*params.simType = core.SIMILARITY_TYPE_SCRIPT
 	}
 
 	if *params.options == "list" {
 		similarityTypes := []core.DatasetSimilarityEstimatorType{
-			core.JACOBBI, core.BHATTACHARYYA, core.SCRIPT,
+			core.SIMILARITY_TYPE_JACOBBI, core.SIMILARITY_TYPE_BHATTACHARYYA, core.SIMILARITY_TYPE_SCRIPT,
 		}
 		for i, v := range similarityTypes {
 			fmt.Println(i+1, v)
@@ -72,6 +101,7 @@ func similaritiesRun() {
 	datasets := core.DiscoverDatasets(*params.input)
 	est := core.NewDatasetSimilarityEstimator(*params.simType, datasets)
 	est.Configure(parseOptions(*params.options))
+	est.PopulationPolicy(*params.populationPolicy)
 	est.Compute()
 
 	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)

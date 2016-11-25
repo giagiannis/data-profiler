@@ -23,7 +23,7 @@ func partitionerParseParams() *partitionerParams {
 	part := flag.String("t", "UNIFORM", "Type of partitioning")
 	if *part == "UNIFORM" {
 		params.partitionType = new(core.PartitionerType)
-		*params.partitionType = core.UNIFORM
+		*params.partitionType = core.PARTITIONER_TYPE_UNIFORM
 	}
 	flag.Parse()
 	if *params.input == "" || *params.output == "" || *params.splits == 0 || *part == "" {

@@ -10,10 +10,11 @@ import (
 )
 
 type BhattacharyyaEstimator struct {
-	datasets          []*Dataset           // datasets slice
-	similarities      *DatasetSimilarities // the similarities struct
-	concurrency       int                  // the max number of threads that run in parallel
-	kdTreeScaleFactor float64              // determines the height of the kd tree to be used
+	datasets          []*Dataset                        // datasets slice
+	similarities      *DatasetSimilarities              // the similarities struct
+	concurrency       int                               // the max number of threads that run in parallel
+	kdTreeScaleFactor float64                           // determines the height of the kd tree to be used
+	popPolicy         DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
 }
 
 func (e *BhattacharyyaEstimator) Compute() error {
@@ -42,28 +43,46 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		indices[d.Path()] = tree.GetLeafIndex(d.Data())
 	}
 
-	log.Println("Computing the similarities using", e.concurrency, "threads")
-	for i := 0; i < len(e.datasets); i++ {
-		e.computeLine(i, indices)
-	}
-	c := make(chan bool, e.concurrency)
-	done := make(chan bool)
-	for j := 0; j < e.concurrency; j++ {
-		c <- true
-	}
-	for i := 0; i < len(e.datasets)-1; i++ {
-		go func(c, done chan bool, i int, indices map[string][]int) {
-			<-c
-			e.computeLine(i, indices)
+	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
+		e.similarities.IndexDisabled(true) // I don't need the index
+		log.Println("Computing the similarities using", e.concurrency, "threads")
+		c := make(chan bool, e.concurrency)
+		done := make(chan bool)
+		for j := 0; j < e.concurrency; j++ {
 			c <- true
-			done <- true
-		}(c, done, i, indices)
-	}
-	for j := 0; j < len(e.datasets)-1; j++ {
-		<-done
-	}
+		}
+		for i := 0; i < len(e.datasets)-1; i++ {
+			go func(c, done chan bool, i int, indices map[string][]int) {
+				<-c
+				e.computeLine(i, i, indices)
+				c <- true
+				done <- true
+			}(c, done, i, indices)
+		}
+		for j := 0; j < len(e.datasets)-1; j++ {
+			<-done
+		}
+		log.Println("Done")
+	} else if e.popPolicy.PolicyType == POPULATION_POL_APRX {
+		e.similarities.IndexDisabled(false) // I need the index
+		if count, ok := e.popPolicy.Parameters["count"]; ok {
+			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
+			for i := 0.0; i < count; i++ {
+				idx, val := e.similarities.LeastSimilar()
+				log.Println("Computing the similarities for ", idx, val)
+				e.computeLine(0, idx, indices)
+			}
 
-	log.Println("Done")
+		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
+			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
+			idx, val := e.similarities.LeastSimilar()
+			for val < threshold {
+				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
+				e.computeLine(0, idx, indices)
+				idx, val = e.similarities.LeastSimilar()
+			}
+		}
+	}
 	return nil
 }
 
@@ -96,8 +115,12 @@ func (e *BhattacharyyaEstimator) Options() map[string]string {
 	}
 }
 
-func (e *BhattacharyyaEstimator) computeLine(i int, indices map[string][]int) {
-	for j := i + 1; j < len(e.datasets); j++ {
+func (e *BhattacharyyaEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+	e.popPolicy = policy
+}
+
+func (e *BhattacharyyaEstimator) computeLine(start, i int, indices map[string][]int) {
+	for j := start; j < len(e.datasets); j++ {
 		a, b := e.datasets[i], e.datasets[j]
 		r1, r2 := indices[a.Path()], indices[b.Path()]
 		sum := 0.0
