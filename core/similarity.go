@@ -111,6 +111,22 @@ func (s *DatasetSimilarities) IndexDisabled(flag bool) {
 	s.indexDisabled = flag
 }
 
+// NumberOfFullNodes returns the number of nodes the similarity of which
+// has been calculated for all the nodes. This number can work as a measure
+// of how close to the full similarity matrix the current object is.
+func (s *DatasetSimilarities) FullyCalculatedNodes() int {
+	if s.indexDisabled {
+		return len(s.Datasets())
+	}
+	count := 0
+	for i := range s.Datasets() {
+		if idx, _ := s.closestIndex.Get(i); idx == i {
+			count += 1
+		}
+	}
+	return count
+}
+
 func (s *DatasetSimilarities) allocateStructs() {
 	s.inverseIndex = make(map[string]int)
 	for i := 0; i < len(s.datasets); i++ {

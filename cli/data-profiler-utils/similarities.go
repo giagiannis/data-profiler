@@ -26,10 +26,10 @@ func similaritiesParseParams() *similaritiesParams {
 		flag.String("i", "", "input datasets path")
 	params.output =
 		flag.String("o", "", "where to store similarities file")
-	estType :=
-		flag.String("t", "BHATTACHARYYA", "similarity type [JACOBBI|BHATTACHARYYA|SCRIPT]")
 	params.logfile =
 		flag.String("l", "", "logfile (default: stderr)")
+	estType :=
+		flag.String("t", "BHATTACHARYYA", "similarity type [JACOBBI|BHATTACHARYYA|SCRIPT]")
 	params.options =
 		flag.String("opt", "", "options in the form val1=key1,val2=key2 (list for opts list)")
 	popPolicy :=

@@ -6,12 +6,13 @@ import (
 )
 
 var utilsDescription = map[string]string{
-	"help":         "prints this help message",
-	"partition":    "split a dataset file into more smaller files",
-	"heatmap":      "creates a heatmap of the datasets according to their accuracy",
-	"similarities": "calculates and stores the similarity matrix of the specified datasets",
-	"train":        "exhaustively trains the specified ML job with the datasets and creates a scores matrix",
-	"clustering":   "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
+	"help":          "prints this help message",
+	"partition":     "split a dataset file into more smaller files",
+	"heatmap":       "creates a heatmap of the datasets according to their accuracy",
+	"similarities":  "calculates and stores the similarity matrix of the specified datasets",
+	"train":         "exhaustively trains the specified ML job with the datasets and creates a scores matrix",
+	"clustering":    "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
+	"simcomparison": "compares a list of similarity matrices",
 }
 
 func main() {
@@ -37,7 +38,8 @@ func main() {
 		trainRun()
 	} else if command == "clustering" {
 		clusteringRun()
-
+	} else if command == "simcomparison" {
+		simcomparisonRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
