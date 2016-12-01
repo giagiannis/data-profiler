@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 )
@@ -44,6 +45,10 @@ func TestDatasetSerialize(t *testing.T) {
 			}
 		}
 	}
+
+	for _, f := range datasets {
+		os.Remove(f.Path())
+	}
 }
 
 func TestDatasetSimilarityClosestIndex(t *testing.T) {
@@ -65,6 +70,10 @@ func TestDatasetSimilarityClosestIndex(t *testing.T) {
 			t.Log("Closest idx is not accurate")
 			t.FailNow()
 		}
+	}
+
+	for _, f := range datasets {
+		os.Remove(f.Path())
 	}
 }
 
@@ -91,4 +100,7 @@ func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 		}
 	}
 
+	for _, f := range datasets {
+		os.Remove(f.Path())
+	}
 }

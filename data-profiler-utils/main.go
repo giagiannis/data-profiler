@@ -13,6 +13,7 @@ var utilsDescription = map[string]string{
 	"train":         "exhaustively trains the specified ML job with the datasets and creates a scores matrix",
 	"clustering":    "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
 	"simcomparison": "compares a list of similarity matrices",
+	"mds":           "executes Multidimensional Scaling to a similarity matrix",
 }
 
 func main() {
@@ -40,6 +41,8 @@ func main() {
 		clusteringRun()
 	} else if command == "simcomparison" {
 		simcomparisonRun()
+	} else if command == "mds" {
+		mdsRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}

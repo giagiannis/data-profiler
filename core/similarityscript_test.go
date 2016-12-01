@@ -28,6 +28,10 @@ func TestScriptSimilarityDatasetAnalysis(t *testing.T) {
 			t.FailNow()
 		}
 	}
+
+	for _, f := range datasets {
+		os.Remove(f.Path())
+	}
 }
 func TestScriptSimilarityCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 4)

@@ -4,12 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 )
+
+// DatasetCoordinates is a struct for representing the dataset coordinates
+type DatasetCoordinates []float64
 
 // MDScaling is responsible for the execution of a MultiDimensional Scaling
 // algorithm in order to provide coefficients for each dataset, based on a
@@ -19,8 +22,8 @@ type MDScaling struct {
 	k      int                  // number of output dimensions
 	matrix *DatasetSimilarities // the similarity matrix
 
-	coordinates [][]float64 // the coordinates matrix
-	stress      float64     // the stress factor
+	coordinates []DatasetCoordinates // the coordinates matrix
+	stress      float64              // the stress factor
 }
 
 // NewMDScaling is the default MDScaling constructor; it initializes a new
@@ -44,7 +47,7 @@ func (md *MDScaling) Compute() error {
 		return err
 	}
 	defer writer.Close()
-	defer os.Remove(writer.Name())
+	//defer os.Remove(writer.Name())
 	for _, d1 := range datasets {
 		for j, d2 := range datasets {
 			val := md.matrix.Get(d1.Path(), d2.Path())
@@ -58,7 +61,6 @@ func (md *MDScaling) Compute() error {
 
 	// execute computation
 	if md.k < 1 { // binary search in the interval [1, n-1]
-
 		return errors.New("Not implemented")
 	} else { // execute solution
 		md.coordinates, md.stress, err = md.executeScript(writer.Name())
@@ -71,7 +73,7 @@ func (md *MDScaling) Compute() error {
 
 // Coordinates getter returns the dataset coordinates in a nxk slice (n being
 // the number of datasets).
-func (md *MDScaling) Coordinates() [][]float64 {
+func (md *MDScaling) Coordinates() []DatasetCoordinates {
 	return md.coordinates
 }
 
@@ -101,15 +103,16 @@ func (md *MDScaling) Variances() ([]float64, error) {
 	return variances, nil
 }
 
-// executeScript is used to execyute the specified MDS script and parse
+// executeScript is used to execute the specified MDS script and parse
 // its results. Not part of the structs public API. If successful, returns
 // the coordinates slice, the stress factor and nil errors; If not successful,
 // returns nil results and an error object
 //
-func (md *MDScaling) executeScript(smPath string) ([][]float64, float64, error) {
+func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64, error) {
 	command := exec.Command(md.script, smPath, strconv.Itoa(md.k))
 	buf, err := command.CombinedOutput()
 	if err != nil {
+		log.Println(string(buf))
 		return nil, 0.0, err
 	}
 	lines := strings.Split(string(buf), "\n")
@@ -125,7 +128,7 @@ func (md *MDScaling) executeScript(smPath string) ([][]float64, float64, error) 
 		}
 	}
 	// parse coordinates slices
-	coordinates := make([][]float64, count)
+	coordinates := make([]DatasetCoordinates, count)
 	for i := 1; i < len(lines) && len(lines[i]) > 0; i++ {
 		splitLine := strings.Split(lines[i], " ")
 		coordinates[i-1] = make([]float64, md.k)

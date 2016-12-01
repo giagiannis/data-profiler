@@ -1,6 +1,9 @@
 package core
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 const MDSCALING_SCRIPT = "../r_scripts/mdscaling/mdscaling.R"
 
@@ -25,6 +28,10 @@ func TestMDScalingScript(t *testing.T) {
 	if md.Coordinates() != nil {
 		t.Log("Script should not have succeeded")
 		t.FailNow()
+	}
+
+	for _, d := range datasets {
+		os.Remove(d.Path())
 	}
 }
 
