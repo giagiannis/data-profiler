@@ -12,8 +12,18 @@ s <- as.matrix(read.csv(args[1],header=FALSE))
 k <- as.numeric(args[2])
 MAXITERATIONS <- 1000
 TOLERANCE <- 1e-4
-# turn the similarity matrix into a distance matrix
+EPSILON <- 1e-10
+# turn the similarity matrix into a distance matrix and add 
+# EPSILON values to non-diag elems
 d <- 1/s-1 
+d[which(d==0)] <- EPSILON
+for(i in 1:nrow(d)) {
+		for(j in 1:ncol(d)) {
+				if(i==j){
+				d[i,j]<-0
+				}
+		}
+}
 fit <- isoMDS(d, k=k, trace=FALSE, tol = TOLERANCE, maxit = MAXITERATIONS)
 cat(fit$stress)
 cat("\n")
@@ -24,3 +34,5 @@ for(i in 1:nrow(fit$points)) {
 		}
 		cat("\n")
 }
+
+

@@ -60,8 +60,8 @@ func (md *MDScaling) Compute() error {
 	}
 
 	// execute computation
-	if md.k < 1 { // binary search in the interval [1, n-1]
-		return errors.New("Not implemented")
+	if md.k < 1 || md.k > len(md.matrix.Datasets())-1 { // binary search in the interval [1, n-1]
+		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
 	} else { // execute solution
 		md.coordinates, md.stress, err = md.executeScript(writer.Name())
 		if err != nil {

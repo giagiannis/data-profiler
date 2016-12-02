@@ -41,7 +41,12 @@ func simcomparisonParseParams() *simcomparisonParams {
 			params.modules[s] = true
 		}
 	}
-
+	if *input == "" ||
+		*params.output == "" {
+		fmt.Println("Options:")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 	// parse similarities
 	simSlice := strings.Split(*input, ",")
 	params.similarities = make([]*core.DatasetSimilarities, len(simSlice))
@@ -60,12 +65,6 @@ func simcomparisonParseParams() *simcomparisonParams {
 		params.similarities[i].Deserialize(buf)
 	}
 
-	if *input == "" ||
-		*params.output == "" {
-		fmt.Println("Options:")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
 	return params
 }
 
