@@ -40,7 +40,7 @@ func heatmapParseParams() *heatmapParams {
 	}
 
 	// reading similarities
-	params.similarities = *core.NewDatasetSimilarities(nil)
+	params.similarities = *core.NewDatasetSimilarities(0)
 	log.Println("Reading", *similaritiesPath)
 	f, err := os.Open(*similaritiesPath)
 	if err != nil {
@@ -85,7 +85,7 @@ func heatmapRun() {
 		for j := 0; j < len(list); j++ {
 			fmt.Fprintf(outfile, "%d %d %.5f\n",
 				i, j,
-				params.similarities.Get(list[i].path, list[j].path))
+				params.similarities.Get(i, j))
 		}
 		fmt.Fprintln(outfile)
 	}

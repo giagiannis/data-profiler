@@ -62,7 +62,7 @@ func mdsParseParams() *mdsParams {
 		os.Exit(1)
 	}
 
-	params.similarities = core.NewDatasetSimilarities(nil)
+	params.similarities = core.NewDatasetSimilarities(0)
 	log.Println("Reading", *similaritiesPath)
 	f, err := os.Open(*similaritiesPath)
 	if err != nil {

@@ -20,10 +20,6 @@ func NewOnlineIndexer(estimator DatasetSimilarityEstimator,
 	indexer.coordinates = coordinates
 	indexer.estimator = estimator
 	indexer.script = script
-	indexer.datasetMap = make(map[string]int)
-	for i, d := range estimator.GetSimilarities().Datasets() {
-		indexer.datasetMap[d.Path()] = i
-	}
 	return indexer
 }
 

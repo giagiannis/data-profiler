@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -26,21 +25,14 @@ func TestDatasetSerialize(t *testing.T) {
 			log.Println(sim.closestIndex, s.closestIndex)
 			t.FailNow()
 		}
-		if sim.datasets[i].Path() != s.datasets[i].Path() {
-			log.Printf("Dataset files not identical (%s vs %s)\n",
-				sim.datasets[i].Path(), s.datasets[i].Path())
-			fmt.Println(len(sim.datasets[i].Path()))
-			fmt.Println(len(s.datasets[i].Path()))
-			t.FailNow()
-		}
 	}
 
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			if sim.Get(d1.Path(), d2.Path()) != s.Get(d1.Path(), d2.Path()) {
+	for i := range datasets {
+		for j := range datasets {
+			if sim.Get(i, j) != s.Get(j, i) {
 				log.Printf("Sim and s provide different values: (%.5f vs %.5f)\n",
-					sim.Get(d1.Path(), d2.Path()),
-					s.Get(d1.Path(), d2.Path()))
+					sim.Get(i, j),
+					s.Get(i, j))
 				t.FailNow()
 			}
 		}
@@ -54,14 +46,14 @@ func TestDatasetSerialize(t *testing.T) {
 func TestDatasetSimilarityClosestIndex(t *testing.T) {
 	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(5000, 100, 3)
-	sim := NewDatasetSimilarities(datasets)
+	sim := NewDatasetSimilarities(len(datasets))
 	chosenIdx := rand.Int() % len(datasets)
-	for i, d := range datasets {
+	for i := range datasets {
 		val := rand.Float64()
 		if i == chosenIdx {
 			val = 1
 		}
-		sim.Set(datasets[chosenIdx].Path(), d.Path(), val)
+		sim.Set(chosenIdx, i, val)
 	}
 
 	for i := range datasets {
@@ -80,20 +72,20 @@ func TestDatasetSimilarityClosestIndex(t *testing.T) {
 func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(5000, 100, 3)
-	sim := NewDatasetSimilarities(datasets)
+	sim := NewDatasetSimilarities(len(datasets))
 	sim.IndexDisabled(true)
 	chosenIdx := rand.Int() % len(datasets)
-	for i, d := range datasets {
+	for i := range datasets {
 		val := rand.Float64()
 		if i == chosenIdx {
 			val = 1
 		}
-		sim.Set(datasets[chosenIdx].Path(), d.Path(), val)
+		sim.Set(chosenIdx, i, val)
 	}
 
 	for i := range datasets {
 		closest, valI := sim.closestIndex.Get(i)
-		valA := sim.Get(datasets[chosenIdx].Path(), datasets[i].Path())
+		valA := sim.Get(chosenIdx, i)
 		if closest != -1 || valI != -1 || valA <= 0.0 {
 			t.Log("Closest idx is wrong")
 			t.FailNow()

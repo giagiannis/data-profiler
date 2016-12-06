@@ -12,6 +12,7 @@ import (
 )
 
 type clusteringParams struct {
+	input        *string                   //datasets directory to be discovered
 	similarities *core.DatasetSimilarities // similarities
 	scores       *core.DatasetScores       // scores file
 	logfile      *string                   // log file
@@ -22,6 +23,8 @@ type clusteringParams struct {
 func clusteringParseParams() *clusteringParams {
 	params := new(clusteringParams)
 
+	params.input =
+		flag.String("i", "", "input datasets path")
 	similaritiesFile :=
 		flag.String("si", "", "similarities file - required")
 	scoresFile :=
@@ -35,7 +38,7 @@ func clusteringParseParams() *clusteringParams {
 	flag.Parse()
 	setLogger(*params.logfile)
 
-	if *similaritiesFile == "" || *scoresFile == "" {
+	if *params.input == "" || *similaritiesFile == "" || *scoresFile == "" {
 		fmt.Println("Options:")
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -51,7 +54,7 @@ func clusteringParseParams() *clusteringParams {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	params.similarities = core.NewDatasetSimilarities(nil)
+	params.similarities = core.NewDatasetSimilarities(0)
 	err = params.similarities.Deserialize(buf)
 	if err != nil {
 		log.Fatalln(err)
@@ -78,7 +81,8 @@ func clusteringParseParams() *clusteringParams {
 func clusteringRun() {
 	params := clusteringParseParams()
 	log.Println("Initializing clustering object")
-	cls := core.NewClustering(params.similarities)
+	datasets := core.DiscoverDatasets(*params.input)
+	cls := core.NewClustering(params.similarities, datasets)
 	cls.SetConcurrency(*params.concurrency)
 	log.Println("Executing computation")
 	cls.Compute()

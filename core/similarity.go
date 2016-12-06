@@ -88,19 +88,20 @@ func NewDatasetSimilarityEstimator(
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarities struct {
-	datasets      []*Dataset     // the datasets slice
-	inverseIndex  map[string]int // the inverse index
-	similarities  [][]float64    // the actual similarities holder
-	indexDisabled bool           // indicates whether the closestIndex is disabled or not
-	closestIndex  *closestIndex  // index that hold the closest datasets
+	similarities  [][]float64   // the actual similarities holder
+	indexDisabled bool          // indicates whether the closestIndex is disabled or not
+	closestIndex  *closestIndex // index that hold the closest datasets
+	capacity      int           // represents the capacity of the sim matrix
 }
 
-// NewDatasetSimilarities is the constructor for the DatasetSimilarities struct
-func NewDatasetSimilarities(datasets []*Dataset) *DatasetSimilarities {
+// NewDatasetSimilarities is the constructor for the DatasetSimilarities struct,
+// expecting the number of datasets that will be held by it. If capacity=0, this
+// implies that the Similarity Matrix will be deserialzed.
+func NewDatasetSimilarities(capacity int) *DatasetSimilarities {
 	r := new(DatasetSimilarities)
-	r.datasets = datasets
 	r.indexDisabled = false
-	if datasets != nil {
+	r.capacity = capacity
+	if capacity != 0 {
 		r.allocateStructs()
 	}
 	return r
@@ -117,10 +118,10 @@ func (s *DatasetSimilarities) IndexDisabled(flag bool) {
 // of how close to the full similarity matrix the current object is.
 func (s *DatasetSimilarities) FullyCalculatedNodes() int {
 	if s.indexDisabled {
-		return len(s.Datasets())
+		return s.capacity
 	}
 	count := 0
-	for i := range s.Datasets() {
+	for i := 0; i < s.capacity; i++ {
 		if idx, _ := s.closestIndex.Get(i); idx == i {
 			count += 1
 		}
@@ -129,22 +130,19 @@ func (s *DatasetSimilarities) FullyCalculatedNodes() int {
 }
 
 func (s *DatasetSimilarities) allocateStructs() {
-	s.inverseIndex = make(map[string]int)
-	for i := 0; i < len(s.datasets); i++ {
-		s.inverseIndex[s.datasets[i].Path()] = i
+	s.similarities = make([][]float64, s.capacity-1)
+	for i := 0; i < s.capacity-1; i++ {
+		s.similarities[i] = make([]float64, s.capacity-i-1)
 	}
-	s.similarities = make([][]float64, len(s.datasets)-1)
-	for i := 0; i < len(s.datasets)-1; i++ {
-		s.similarities[i] = make([]float64, len(s.datasets)-i-1)
-	}
-	s.closestIndex = newClosestIndex(len(s.datasets))
+	s.closestIndex = newClosestIndex(s.capacity)
+}
 
+func (s *DatasetSimilarities) Capacity() int {
+	return s.capacity
 }
 
 // Set is a setter function for the similarity between two datasets
-func (s *DatasetSimilarities) Set(a, b string, value float64) {
-	idxA := s.inverseIndex[a]
-	idxB := s.inverseIndex[b]
+func (s *DatasetSimilarities) Set(idxA, idxB int, value float64) {
 	if idxA == idxB { // do nothing
 		if !s.indexDisabled {
 			s.closestIndex.CheckAndSet(idxA, idxB, value)
@@ -164,9 +162,7 @@ func (s *DatasetSimilarities) Set(a, b string, value float64) {
 }
 
 // Get returns the similarity between two dataset paths
-func (s *DatasetSimilarities) Get(a, b string) float64 {
-	idxA := s.inverseIndex[a]
-	idxB := s.inverseIndex[b]
+func (s *DatasetSimilarities) Get(idxA, idxB int) float64 {
 	if !s.indexDisabled {
 		idxA, _ = s.closestIndex.Get(idxA)
 		idxB, _ = s.closestIndex.Get(idxB)
@@ -189,10 +185,9 @@ func (s *DatasetSimilarities) LeastSimilar() (int, float64) {
 
 func (s DatasetSimilarities) String() string {
 	var buf bytes.Buffer
-	for i := 0; i < len(s.datasets); i++ {
-		for j := 0; j < len(s.datasets); j++ {
-			buf.WriteString(fmt.Sprintf("%.5f ",
-				s.Get(s.datasets[i].Path(), s.datasets[j].Path())))
+	for i := 0; i < s.capacity; i++ {
+		for j := 0; j < s.capacity; j++ {
+			buf.WriteString(fmt.Sprintf("%.5f ", s.Get(i, j)))
 		}
 		buf.WriteString("\n")
 	}
@@ -216,20 +211,14 @@ func (s *DatasetSimilarities) Serialize() []byte {
 	}
 
 	buf := new(bytes.Buffer)
-	buf.Write(getBytesInt(len(s.datasets)))
-
-	for i := 0; i < len(s.datasets); i++ {
-		buf.WriteString(fmt.Sprintf("%s\n", s.datasets[i].Path()))
-	}
-
-	for i := 0; i < len(s.datasets)-1; i++ {
-		for j := 0; j < len(s.datasets)-1-i; j++ {
+	buf.Write(getBytesInt(s.capacity))
+	for i := 0; i < s.capacity-1; i++ {
+		for j := 0; j < s.capacity-1-i; j++ {
 			buf.Write(getBytesFloat(s.similarities[i][j]))
 		}
 	}
 
-	for i := 0; i < len(s.datasets); i++ {
-		//		buf.Write(getBytesInt(s.closestIndex.closestIdx[i])
+	for i := 0; i < s.capacity; i++ {
 		buf.Write(getBytesFloat(float64(s.closestIndex.closestIdx[i])))
 		buf.Write(getBytesFloat(s.closestIndex.similarity[i]))
 	}
@@ -277,23 +266,18 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 	buf := bytes.NewBuffer(buff)
 	tempInt := make([]byte, 4)
 	buf.Read(tempInt)
-
-	s.datasets = make([]*Dataset, getIntBytes(tempInt))
-	for i := range s.datasets {
-		tmp, _ := buf.ReadString('\n')
-		s.datasets[i] = NewDataset(tmp[:len(tmp)-1])
-	}
+	s.capacity = getIntBytes(tempInt)
 	s.allocateStructs()
 
 	tempFloat := make([]byte, 8)
-	for i := 0; i < len(s.datasets)-1; i++ {
-		for j := 0; j < len(s.datasets)-1-i; j++ {
+	for i := 0; i < s.capacity-1; i++ {
+		for j := 0; j < s.capacity-1-i; j++ {
 			buf.Read(tempFloat)
 			s.similarities[i][j] = getFloatBytes(tempFloat)
 		}
 	}
 
-	for i := 0; i < len(s.datasets); i++ {
+	for i := 0; i < s.capacity; i++ {
 		buf.Read(tempFloat)
 		s.closestIndex.closestIdx[i] = int(getFloatBytes(tempFloat))
 		buf.Read(tempFloat)
@@ -307,13 +291,6 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 	return nil
 }
 
-// Datasets method returns the datasets that express the specific similarity
-// matrix.
-func (s *DatasetSimilarities) Datasets() []*Dataset {
-	return s.datasets
-}
-
-// dsClosestIndex represents a map containing the most similar
 // datasets along with their respective similarities
 type closestIndex struct {
 	closestIdx []int

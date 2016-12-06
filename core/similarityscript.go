@@ -15,6 +15,7 @@ import (
 type ScriptSimilarityEstimator struct {
 	analysisScript string                            // the analysis script to be executed
 	datasets       []*Dataset                        // the input datasets
+	inverseIndex   map[string]int                    // inverse index that maps datasets to ints
 	concurrency    int                               // max number of threads to run in parallel
 	similarities   *DatasetSimilarities              // the similarities struct
 	normDegree     int                               // defines the degree of the norm
@@ -37,7 +38,11 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 
 	// compare the analysis outcomes
 	log.Println("Calculating similarities")
-	s.similarities = NewDatasetSimilarities(s.datasets)
+	s.similarities = NewDatasetSimilarities(len(s.datasets))
+	s.inverseIndex = make(map[string]int)
+	for i, d := range s.datasets {
+		s.inverseIndex[d.Path()] = i
+	}
 	if s.popPolicy.PolicyType == POPULATION_POL_FULL {
 		s.similarities.IndexDisabled(true) // I don't need the index
 		c, done := make(chan bool, s.concurrency), make(chan bool)
@@ -181,6 +186,6 @@ func (s *ScriptSimilarityEstimator) computeLine(coordinates [][]float64, start, 
 		if err != nil {
 			log.Panic(err)
 		}
-		s.similarities.Set(a, b, sim)
+		s.similarities.Set(s.inverseIndex[a], s.inverseIndex[b], sim)
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 type BhattacharyyaEstimator struct {
 	datasets          []*Dataset                        // datasets slice
+	inverseIndex      map[string]int                    // inverse index that maps datasets to ints
 	similarities      *DatasetSimilarities              // the similarities struct
 	concurrency       int                               // the max number of threads that run in parallel
 	kdTreeScaleFactor float64                           // determines the height of the kd tree to be used
@@ -19,7 +20,11 @@ type BhattacharyyaEstimator struct {
 
 func (e *BhattacharyyaEstimator) Compute() error {
 	// allocation of similarities struct
-	e.similarities = NewDatasetSimilarities(e.datasets)
+	e.similarities = NewDatasetSimilarities(len(e.datasets))
+	e.inverseIndex = make(map[string]int)
+	for i, d := range e.datasets {
+		e.inverseIndex[d.Path()] = i
+	}
 
 	log.Println("Fetching datasets in memory")
 	if e.datasets == nil || len(e.datasets) == 0 {
@@ -128,7 +133,7 @@ func (e *BhattacharyyaEstimator) computeLine(start, i int, indices map[string][]
 			sum += math.Sqrt(float64(r1[k] * r2[k]))
 		}
 		sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
-		e.similarities.Set(a.Path(), b.Path(), sum)
+		e.similarities.Set(e.inverseIndex[a.Path()], e.inverseIndex[b.Path()], sum)
 	}
 }
 

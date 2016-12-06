@@ -14,14 +14,14 @@ func TestClustering(t *testing.T) {
 	for i := 0; i < len(datasets); i++ {
 		datasets[i] = NewDataset(fmt.Sprintf("data-%d", i))
 	}
-	sim := NewDatasetSimilarities(datasets)
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			sim.Set(d1.Path(), d2.Path(), rand.Float64())
+	sim := NewDatasetSimilarities(len(datasets))
+	for i := range datasets {
+		for j := range datasets {
+			sim.Set(i, j, rand.Float64())
 		}
 	}
 
-	cluster := NewClustering(sim)
+	cluster := NewClustering(sim, datasets)
 	cluster.SetConcurrency(10)
 	err := cluster.Compute()
 	if err != nil {

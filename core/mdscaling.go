@@ -41,18 +41,17 @@ func NewMDScaling(matrix *DatasetSimilarities, k int, script string) *MDScaling 
 // Compute functions executes the Multidimensional Scaling computation.
 func (md *MDScaling) Compute() error {
 	// create a temp file containing similarity matrix as a csv
-	datasets := md.matrix.Datasets()
 	writer, err := ioutil.TempFile("/tmp", "similarities")
 	if err != nil {
 		return err
 	}
 	defer writer.Close()
 	//defer os.Remove(writer.Name())
-	for _, d1 := range datasets {
-		for j, d2 := range datasets {
-			val := md.matrix.Get(d1.Path(), d2.Path())
+	for i := 0; i < md.matrix.Capacity(); i++ {
+		for j := 0; j < md.matrix.Capacity(); j++ {
+			val := md.matrix.Get(i, j)
 			writer.WriteString(fmt.Sprintf("%.5f", val))
-			if j < len(datasets)-1 {
+			if j < md.matrix.Capacity()-1 {
 				writer.WriteString(",")
 			}
 		}
@@ -60,7 +59,7 @@ func (md *MDScaling) Compute() error {
 	}
 
 	// execute computation
-	if md.k < 1 || md.k > len(md.matrix.Datasets())-1 { // binary search in the interval [1, n-1]
+	if md.k < 1 || md.k > md.matrix.Capacity()-1 { // binary search in the interval [1, n-1]
 		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
 	} else { // execute solution
 		md.coordinates, md.stress, err = md.executeScript(writer.Name())

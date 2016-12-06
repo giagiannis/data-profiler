@@ -51,7 +51,7 @@ func simcomparisonParseParams() *simcomparisonParams {
 	simSlice := strings.Split(*input, ",")
 	params.similarities = make([]*core.DatasetSimilarities, len(simSlice))
 	for i, sim := range simSlice {
-		params.similarities[i] = core.NewDatasetSimilarities(nil)
+		params.similarities[i] = core.NewDatasetSimilarities(0)
 		f, err := os.Open(sim)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -82,12 +82,11 @@ func simcomparisonRun() {
 
 // Returns the frobenius distance between two similarity matrices
 func frobenius(a, b *core.DatasetSimilarities) float64 {
-	datasets := a.Datasets()
 	sum := 0.0
-	for i, d1 := range datasets {
-		for j, d2 := range datasets {
+	for i := 0; i < a.Capacity(); i++ {
+		for j := 0; j < a.Capacity(); j++ {
 			if i > j {
-				sum += math.Pow(a.Get(d1.Path(), d2.Path())-b.Get(d1.Path(), d2.Path()), 2)
+				sum += math.Pow(a.Get(i, j)-b.Get(i, j), 2)
 			}
 		}
 	}
@@ -97,12 +96,10 @@ func frobenius(a, b *core.DatasetSimilarities) float64 {
 
 // Checks whether the provided similarity files refer to the same datasets
 func sanityCheck(similarities []*core.DatasetSimilarities) bool {
-	datasets := similarities[0].Datasets()
+	cap := similarities[0].Capacity()
 	for _, s := range similarities {
-		for i, d := range s.Datasets() {
-			if d.Path() != datasets[i].Path() {
-				return false
-			}
+		if s.Capacity() != cap {
+			return false
 		}
 	}
 	return true

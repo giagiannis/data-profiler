@@ -24,10 +24,10 @@ func TestBhattacharyyaCompute(t *testing.T) {
 		t.Log("Nil similarities returned")
 		t.FailNow()
 	}
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			v1 := s.Get(d1.Path(), d2.Path())
-			v2 := s.Get(d2.Path(), d1.Path())
+	for i := range datasets {
+		for j := range datasets {
+			v1 := s.Get(i, j)
+			v2 := s.Get(j, i)
 			if v1 != v2 {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
@@ -90,10 +90,10 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 		t.Log("Nil similarities returned")
 		t.FailNow()
 	}
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			v1 := s.Get(d1.Path(), d2.Path())
-			v2 := s.Get(d2.Path(), d1.Path())
+	for i := range datasets {
+		for j := range datasets {
+			v1 := s.Get(i, j)
+			v2 := s.Get(j, i)
 			if v1 != v2 {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
@@ -134,10 +134,10 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 		t.Log("Nil similarities returned")
 		t.FailNow()
 	}
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			v1 := s.Get(d1.Path(), d2.Path())
-			v2 := s.Get(d2.Path(), d1.Path())
+	for i := range datasets {
+		for j := range datasets {
+			v1 := s.Get(i, j)
+			v2 := s.Get(j, i)
 			if v1 != v2 {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()

@@ -12,13 +12,19 @@ import (
 // union of the two datasets.
 type JacobbiEstimator struct {
 	datasets     []*Dataset                        // the slice of datasets
+	inverseIndex map[string]int                    // inverse index that maps datasets to ints
 	similarities *DatasetSimilarities              // holds the similarities
 	concurrency  int                               // max threads running in parallel
 	popPolicy    DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
 }
 
 func (e *JacobbiEstimator) Compute() error {
-	e.similarities = NewDatasetSimilarities(e.datasets)
+	e.similarities = NewDatasetSimilarities(len(e.datasets))
+	e.inverseIndex = make(map[string]int)
+	for i, d := range e.datasets {
+		e.inverseIndex[d.Path()] = i
+	}
+
 	log.Println("Fetching datasets in memory")
 	if e.datasets == nil || len(e.datasets) == 0 {
 		log.Println("No datasets were given")
@@ -105,6 +111,6 @@ func (e *JacobbiEstimator) calculateLine(start, lineNo int) {
 		inter := len(DatasetsIntersection(a, b))
 		union := len(DatasetsUnion(a, b))
 		value := float64(inter) / float64(union)
-		e.similarities.Set(a.Path(), b.Path(), value)
+		e.similarities.Set(e.inverseIndex[a.Path()], e.inverseIndex[b.Path()], value)
 	}
 }

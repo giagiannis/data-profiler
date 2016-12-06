@@ -14,9 +14,9 @@ func TestJacobbiCompute(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.GetSimilarities()
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			if s.Get(d1.Path(), d2.Path()) != s.Get(d2.Path(), d1.Path()) {
+	for i := range datasets {
+		for j := range datasets {
+			if s.Get(i, j) != s.Get(j, i) {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
 			}
@@ -44,9 +44,9 @@ func TestJacobbiComputeAppxCnt(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.GetSimilarities()
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			if s.Get(d1.Path(), d2.Path()) != s.Get(d2.Path(), d1.Path()) {
+	for i := range datasets {
+		for j := range datasets {
+			if s.Get(i, j) != s.Get(j, i) {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
 			}
@@ -74,9 +74,9 @@ func TestJacobbiComputeAppxThres(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.GetSimilarities()
-	for _, d1 := range datasets {
-		for _, d2 := range datasets {
-			if s.Get(d1.Path(), d2.Path()) != s.Get(d2.Path(), d1.Path()) {
+	for i := range datasets {
+		for j := range datasets {
+			if s.Get(i, j) != s.Get(j, i) {
 				t.Log("Similarity matrix not symmetrical")
 				t.Fail()
 			}

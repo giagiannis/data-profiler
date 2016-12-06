@@ -9,6 +9,7 @@ import (
 // Clustering struct is responsible to execute the necessary actions in order
 // to cluster the datasets based on their availability
 type Clustering struct {
+	datasets     []*Dataset           // list of datasets
 	similarities *DatasetSimilarities // dataset similarities
 	results      *Dendrogram          // holds the clustering results
 	concurrency  int
@@ -16,10 +17,11 @@ type Clustering struct {
 
 // Constructor for creating a Clustering object, providing a DatasetSimilarities
 // object
-func NewClustering(similarities *DatasetSimilarities) *Clustering {
+func NewClustering(similarities *DatasetSimilarities, datasets []*Dataset) *Clustering {
 	c := new(Clustering)
 	c.similarities = similarities
 	c.concurrency = 1
+	c.datasets = datasets
 	return c
 }
 
@@ -29,7 +31,7 @@ func (c *Clustering) SetConcurrency(concurrency int) {
 
 // Executes the clustering
 func (c *Clustering) Compute() error {
-	c.results = NewDendrogram(c.similarities.Datasets())
+	c.results = NewDendrogram(c.datasets)
 	for c.results.hasUnmerged() {
 		unmerged := c.results.getUnmerged()
 		c.mergeClosestPairs(unmerged)
@@ -45,9 +47,9 @@ func (c *Clustering) Results() *Dendrogram {
 // Returns the similarity between two different clusters of datasets
 func (c *Clustering) getClustersSimilarity(a, b []*Dataset) float64 {
 	sum := 0.0
-	for _, m1 := range a {
-		for _, m2 := range b {
-			sum += c.similarities.Get(m1.Path(), m2.Path())
+	for i := range a {
+		for j := range b {
+			sum += c.similarities.Get(i, j)
 		}
 	}
 	return sum / float64(len(a)*len(b))
