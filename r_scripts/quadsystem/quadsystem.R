@@ -12,12 +12,9 @@ n <- nrow(dataset) # number of points and dimensionality of space
 coords <- as.matrix(dataset[,1:n])
 distances <- as.matrix(dataset[n+1])
 
-#for(i in 1:n) lines(x = 0.1*cos(theta)+coords[i,1], y=0.1*sin(theta)+coords[i,2])
-
-
 func <- function(x) {
 		y <- numeric(n)
-		for(i in 1:n) y[i] <- sqrt(sum((x-coords[,i])^2)) - distances[i]
+		for(i in 1:n) y[i] <- sqrt(sum((x-coords[i,])^2)) - distances[i]
 		y
 }
 
@@ -32,11 +29,12 @@ xstart=matrix(runif(noOfPoints*n,max=max(coords)+maxDist,min=min(coords)-maxDist
 #	 xlim=c(min(coords)-maxDist, max(coords)+maxDist), 
 #	 ylim=c(min(coords)-maxDist, max(coords)+maxDist),
 #	 main=args[1])
-#theta <- seq(0,2*pi, length=500)
+#theta <- seq(0,2*pi, length=50)
 #for(i in 1:n) lines(x = distances[i]*cos(theta)+coords[i,1], y=distances[i]*sin(theta)+coords[i,2])
 #grid(NULL,NULL, col="black")
-#
-zeros <- searchZeros(xstart,func,digits=2, method="Broyden")
+#points(xstart, pch=3)
+
+zeros <- searchZeros(xstart,func,digits=2)
 
 # no solution was found
 if(is.null(zeros)){
@@ -55,9 +53,8 @@ for(i in 1:nrow(zeros$x)) {
 }
 cat(zeros$xfnorm,sep=" ")
 
-# plot the solutions and the xstart vectors
+# plot the solutions
 #points(zeros$x, pch=7)
-#points(xstart, pch=3)
 
 # used only for one solution
 #nlq <- nleqslv(xstart, dslnex)
