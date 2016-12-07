@@ -91,8 +91,17 @@ func (e *BhattacharyyaEstimator) Compute() error {
 	return nil
 }
 
+func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
+	// FIXME: implement similarity method
+	return 1.0
+}
+
 func (e *BhattacharyyaEstimator) GetSimilarities() *DatasetSimilarities {
 	return e.similarities
+}
+
+func (e *BhattacharyyaEstimator) Datasets() []*Dataset {
+	return e.datasets
 }
 
 func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {

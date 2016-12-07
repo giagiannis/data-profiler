@@ -77,9 +77,19 @@ func (e *JacobbiEstimator) Compute() error {
 
 	return nil
 }
+func (e *JacobbiEstimator) Similarity(a, b *Dataset) float64 {
+	inter := len(DatasetsIntersection(a, b))
+	union := len(DatasetsUnion(a, b))
+	value := float64(inter) / float64(union)
+	return value
+}
 
 func (e *JacobbiEstimator) GetSimilarities() *DatasetSimilarities {
 	return e.similarities
+}
+
+func (e *JacobbiEstimator) Datasets() []*Dataset {
+	return e.datasets
 }
 
 func (e *JacobbiEstimator) Configure(conf map[string]string) {

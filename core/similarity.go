@@ -13,8 +13,9 @@ import (
 
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
-	Compute() error // computes the similarity matrix
-	//	Similarity(a, b *Dataset)                           // returns the similarity for 2 datasets
+	Compute() error                                     // computes the similarity matrix
+	Similarity(a, b *Dataset) float64                   // returns the similarity for 2 datasets
+	Datasets() []*Dataset                               // returns the datasets slice
 	GetSimilarities() *DatasetSimilarities              // returns the similarity struct
 	Configure(map[string]string)                        // provides configuration options
 	Options() map[string]string                         // list of options for the estimator

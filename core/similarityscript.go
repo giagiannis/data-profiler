@@ -85,6 +85,15 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 	return nil
 }
 
+func (e *ScriptSimilarityEstimator) Similarity(a, b *Dataset) float64 {
+	// FIXME: implement similarity method
+	return 1.0
+}
+
+func (e *ScriptSimilarityEstimator) Datasets() []*Dataset {
+	return e.datasets
+}
+
 func (s *ScriptSimilarityEstimator) GetSimilarities() *DatasetSimilarities {
 	return s.similarities
 }

@@ -4,24 +4,27 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 )
 
 const ONLINE_INDEXING_SCRIPT = "../r_scripts/quadsystem/quadsystem.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
-	datasets := createPoolBasedDatasets(2000, 10, 4)
-	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	rand.Seed(int64(time.Now().Nanosecond()))
+	datasets := createPoolBasedDatasets(2000, 50, 4)
+	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets[2:len(datasets)])
+	estim.Configure(map[string]string{
+		"concurrency": "10",
+	})
 	estim.Compute()
+	md := NewMDScaling(estim.GetSimilarities(), 2, MDSCALING_SCRIPT)
+	md.Compute()
 
-	coords := make([]DatasetCoordinates, 10)
-	for i := range coords {
-		coords[i] = make([]float64, 2)
-		for j := range coords[i] {
-			coords[i][j] = rand.Float64()
-		}
-	}
-
-	//indexer := NewOnlineIndexer(estim, coords, ONLINE_INDEXING_SCRIPT)
+	indexer := NewOnlineIndexer(estim, md.Coordinates(), ONLINE_INDEXING_SCRIPT)
+	indexer.Calculate(datasets[1])
+	indexer.Calculate(datasets[1])
+	indexer.Calculate(datasets[1])
+	indexer.Calculate(datasets[1])
 	for _, f := range datasets {
 		os.Remove(f.Path())
 	}

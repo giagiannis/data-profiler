@@ -24,15 +24,15 @@ maxDist <- max(distances)
 xstart=matrix(runif(noOfPoints*n,max=max(coords)+maxDist,min=min(coords)-maxDist),nrow=noOfPoints,ncol=n)
 
 # create plot before estimating the roots
-#pdf(paste0(args[1], ".pdf"))
-#plot(coords, 
-#	 xlim=c(min(coords)-maxDist, max(coords)+maxDist), 
-#	 ylim=c(min(coords)-maxDist, max(coords)+maxDist),
-#	 main=args[1])
-#theta <- seq(0,2*pi, length=50)
-#for(i in 1:n) lines(x = distances[i]*cos(theta)+coords[i,1], y=distances[i]*sin(theta)+coords[i,2])
-#grid(NULL,NULL, col="black")
-#points(xstart, pch=3)
+pdf(paste0(args[1],as.numeric(Sys.time()), ".pdf"))
+plot(coords, 
+	 xlim=c(min(coords)-maxDist, max(coords)+maxDist), 
+	 ylim=c(min(coords)-maxDist, max(coords)+maxDist),
+	 main=args[1])
+theta <- seq(0,2*pi, length=50)
+for(i in 1:n) lines(x = distances[i]*cos(theta)+coords[i,1], y=distances[i]*sin(theta)+coords[i,2])
+grid(NULL,NULL, col="black")
+points(xstart, pch=3)
 
 zeros <- searchZeros(xstart,func,digits=2)
 
@@ -54,7 +54,7 @@ for(i in 1:nrow(zeros$x)) {
 cat(zeros$xfnorm,sep=" ")
 
 # plot the solutions
-#points(zeros$x, pch=7)
+points(zeros$x, pch=7)
 
 # used only for one solution
 #nlq <- nleqslv(xstart, dslnex)
