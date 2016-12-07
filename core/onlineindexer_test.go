@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const ONLINE_INDEXING_SCRIPT = "../r_scripts/quadsystem.R"
+const ONLINE_INDEXING_SCRIPT = "../_rscripts/quadsystem.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
 	rand.Seed(int64(time.Now().Nanosecond()))

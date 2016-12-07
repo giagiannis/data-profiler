@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const MDSCALING_SCRIPT = "../r_scripts/mdscaling.R"
+const MDSCALING_SCRIPT = "../_rscripts/mdscaling.R"
 
 func TestMDScalingScript(t *testing.T) {
 	datasets := createPoolBasedDatasets(2000, 10, 4)

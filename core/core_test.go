@@ -10,8 +10,8 @@ import (
 const (
 	TRAINSET        = "../_testdata/datatraining.csv"
 	TESTSET         = "../_testdata/datatest.csv"
-	ANALYSIS_SCRIPT = "../r_scripts/pca.R"
-	ML_SCRIPT       = "../r_scripts/lm.R"
+	ANALYSIS_SCRIPT = "../_rscripts/pca.R"
+	ML_SCRIPT       = "../_rscripts/lm.R"
 	TMP_DIR         = "/tmp/"
 )
 
