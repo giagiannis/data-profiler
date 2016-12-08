@@ -42,7 +42,7 @@ func TestDatasetUnion(t *testing.T) {
 }
 
 func TestUniformPartition(t *testing.T) {
-	log.SetOutput(ioutil.Discard)
+	//log.SetOutput(ioutil.Discard)
 	numberOfDatasets := rand.Int()%200 + 1
 	rand.Seed(int64(time.Now().Nanosecond()))
 	part := NewDatasetPartitioner(TRAINSET, TRAINSET+"-splits/", numberOfDatasets, PARTITIONER_TYPE_UNIFORM)
