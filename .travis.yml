@@ -6,7 +6,9 @@ go:
 before_install:
         - sudo apt-get -qq update
         - sudo apt-get install -qq -y r-base
-        - sudo echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla
+        - export R_LIBS="/tmp/Rlib"
+        - mkdir $R_LIBS
+        - echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla
 branches:
         only:
                 - master
