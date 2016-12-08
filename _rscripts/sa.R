@@ -38,7 +38,7 @@ if(ncol(coords)==2){
 		ylim[1] <- min(coords) -max(distances)
 		ylim[2] <- max(coords) +max(distances)
 #pdf(paste0(args[1],as.numeric(Sys.time()), ".pdf"))
-	pdf(paste0(args[1], ".pdf"))
+	pdf(paste(args[1], ".pdf", sep="", collapse=NULL))
 	plot(coords, 
 		 xlim = xlim,
 		 ylim = ylim,
