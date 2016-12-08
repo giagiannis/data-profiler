@@ -3,8 +3,6 @@ package core
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"testing"
