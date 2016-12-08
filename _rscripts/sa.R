@@ -7,8 +7,6 @@ if (length(args) < 1 ) {
     cat("Please provide the points along with their distances\n") 
 	quit()
 }
-makePlot <- FALSE
-for(i in 1:length(args)) if(args[i] == "plot") makePlot <- TRUE
 library(GenSA)
 dataset <- read.csv(args[1])
 coords <- as.matrix(dataset[,1:ncol(dataset)-1])
@@ -32,10 +30,19 @@ cat(sa$par, sep=" ")
 cat("\n")
 cat(sa$value)
 
-if(makePlot){
+if(ncol(coords)==2){
+		xlim <- numeric(ncol(coords))
+		ylim <- numeric(ncol(coords))
+		xlim[1] <- min(coords) -max(distances)
+		xlim[2] <- max(coords) +max(distances)
+		ylim[1] <- min(coords) -max(distances)
+		ylim[2] <- max(coords) +max(distances)
 #pdf(paste0(args[1],as.numeric(Sys.time()), ".pdf"))
 	pdf(paste0(args[1], ".pdf"))
-	plot(coords, main=args[1])
+	plot(coords, 
+		 xlim = xlim,
+		 ylim = ylim,
+		 main=args[1])
 	theta <- seq(0,2*pi, length=200)
 	for(i in 1:nrow(coords)) {
 		lines(

@@ -11,20 +11,19 @@ import (
 
 type BhattacharyyaEstimator struct {
 	datasets          []*Dataset                        // datasets slice
-	inverseIndex      map[string]int                    // inverse index that maps datasets to ints
-	similarities      *DatasetSimilarities              // the similarities struct
 	concurrency       int                               // the max number of threads that run in parallel
 	kdTreeScaleFactor float64                           // determines the height of the kd tree to be used
 	popPolicy         DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+
+	similarities    *DatasetSimilarities // the similarities struct
+	kdTree          *kdTreeNode          // kd tree, utilized for dataset partitioning
+	pointsPerRegion map[string][]int     // holds the number of points for each dataset region
+	datasetsSize    map[string]int       // holds the total number of points for each dataset
 }
 
 func (e *BhattacharyyaEstimator) Compute() error {
 	// allocation of similarities struct
 	e.similarities = NewDatasetSimilarities(len(e.datasets))
-	e.inverseIndex = make(map[string]int)
-	for i, d := range e.datasets {
-		e.inverseIndex[d.Path()] = i
-	}
 
 	log.Println("Fetching datasets in memory")
 	if e.datasets == nil || len(e.datasets) == 0 {
@@ -37,15 +36,17 @@ func (e *BhattacharyyaEstimator) Compute() error {
 	}
 
 	log.Println("Estimating a KD-tree partition")
-	tree := NewKDTreePartition(e.datasets[0].Data())
-	oldHeight := tree.Height()
+	e.kdTree = NewKDTreePartition(e.datasets[0].Data())
+	oldHeight := e.kdTree.Height()
 	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
 	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
-	tree.Prune(newHeight)
+	e.kdTree.Prune(newHeight)
 	//tree.Prune(1)
-	indices := make(map[string][]int)
+	e.pointsPerRegion = make(map[string][]int)
+	e.datasetsSize = make(map[string]int)
 	for _, d := range e.datasets {
-		indices[d.Path()] = tree.GetLeafIndex(d.Data())
+		e.pointsPerRegion[d.Path()] = e.kdTree.GetLeafIndex(d.Data())
+		e.datasetsSize[d.Path()] = len(d.Data())
 	}
 
 	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
@@ -57,12 +58,12 @@ func (e *BhattacharyyaEstimator) Compute() error {
 			c <- true
 		}
 		for i := 0; i < len(e.datasets)-1; i++ {
-			go func(c, done chan bool, i int, indices map[string][]int) {
+			go func(c, done chan bool, i int) {
 				<-c
-				e.computeLine(i, i, indices)
+				e.computeLine(i, i)
 				c <- true
 				done <- true
-			}(c, done, i, indices)
+			}(c, done, i)
 		}
 		for j := 0; j < len(e.datasets)-1; j++ {
 			<-done
@@ -75,7 +76,7 @@ func (e *BhattacharyyaEstimator) Compute() error {
 			for i := 0.0; i < count; i++ {
 				idx, val := e.similarities.LeastSimilar()
 				log.Println("Computing the similarities for ", idx, val)
-				e.computeLine(0, idx, indices)
+				e.computeLine(0, idx)
 			}
 
 		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
@@ -83,7 +84,7 @@ func (e *BhattacharyyaEstimator) Compute() error {
 			idx, val := e.similarities.LeastSimilar()
 			for val < threshold {
 				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				e.computeLine(0, idx, indices)
+				e.computeLine(0, idx)
 				idx, val = e.similarities.LeastSimilar()
 			}
 		}
@@ -92,8 +93,32 @@ func (e *BhattacharyyaEstimator) Compute() error {
 }
 
 func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
-	// FIXME: implement similarity method
-	return 1.0
+	var indexA, indexB []int
+	var countA, countB int
+	if val, ok := e.pointsPerRegion[a.Path()]; ok {
+		indexA = val
+		countA = e.datasetsSize[a.Path()]
+	} else {
+		err := a.ReadFromFile()
+		if err != nil {
+			log.Println(err)
+		}
+		indexA = e.kdTree.GetLeafIndex(a.Data())
+		countA = len(a.Data())
+	}
+
+	if val, ok := e.pointsPerRegion[b.Path()]; ok {
+		indexB = val
+		countB = e.datasetsSize[b.Path()]
+	} else {
+		err := b.ReadFromFile()
+		if err != nil {
+			log.Println(err)
+		}
+		indexB = e.kdTree.GetLeafIndex(b.Data())
+		countB = e.datasetsSize[b.Path()]
+	}
+	return e.getValue(indexA, indexB, countA, countB)
 }
 
 func (e *BhattacharyyaEstimator) GetSimilarities() *DatasetSimilarities {
@@ -133,17 +158,26 @@ func (e *BhattacharyyaEstimator) PopulationPolicy(policy DatasetSimilarityPopula
 	e.popPolicy = policy
 }
 
-func (e *BhattacharyyaEstimator) computeLine(start, i int, indices map[string][]int) {
+func (e *BhattacharyyaEstimator) computeLine(start, i int) {
 	for j := start; j < len(e.datasets); j++ {
 		a, b := e.datasets[i], e.datasets[j]
-		r1, r2 := indices[a.Path()], indices[b.Path()]
+		r1, r2 := e.pointsPerRegion[a.Path()], e.pointsPerRegion[b.Path()]
 		sum := 0.0
 		for k := 0; k < len(r1); k++ {
 			sum += math.Sqrt(float64(r1[k] * r2[k]))
 		}
-		sum /= math.Sqrt(float64(len(a.Data()) * len(b.Data())))
-		e.similarities.Set(e.inverseIndex[a.Path()], e.inverseIndex[b.Path()], sum)
+		sum /= math.Sqrt(float64(e.datasetsSize[a.Path()] * e.datasetsSize[b.Path()]))
+		e.similarities.Set(i, j, sum)
 	}
+}
+
+func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) float64 {
+	sum := 0.0
+	for k := 0; k < len(indA); k++ {
+		sum += math.Sqrt(float64(indA[k] * indB[k]))
+	}
+	sum /= math.Sqrt(float64(countA * countB))
+	return sum
 }
 
 type kdTreeNode struct {
@@ -278,5 +312,4 @@ func NewKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 	node := new(kdTreeNode)
 	partition(tuples, 0, node)
 	return node
-
 }

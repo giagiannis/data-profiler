@@ -15,11 +15,13 @@ import (
 type ScriptSimilarityEstimator struct {
 	analysisScript string                            // the analysis script to be executed
 	datasets       []*Dataset                        // the input datasets
-	inverseIndex   map[string]int                    // inverse index that maps datasets to ints
 	concurrency    int                               // max number of threads to run in parallel
-	similarities   *DatasetSimilarities              // the similarities struct
 	normDegree     int                               // defines the degree of the norm
 	popPolicy      DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+
+	similarities       *DatasetSimilarities // the similarities struct
+	inverseIndex       map[string]int       // inverse index that maps datasets to ints
+	datasetCoordinates [][]float64          // holds the dataset coordinates
 }
 
 func (s *ScriptSimilarityEstimator) Compute() error {
@@ -34,7 +36,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 
 	// execute analysis for each dataset
 	log.Println("Analyzing datasets")
-	coordinates := s.analyzeDatasets()
+	s.datasetCoordinates = s.analyzeDatasets()
 
 	// compare the analysis outcomes
 	log.Println("Calculating similarities")
@@ -53,7 +55,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 		for i := 0; i < len(s.datasets); i++ {
 			go func(c, done chan bool, line int) {
 				<-c
-				s.computeLine(coordinates, line, line)
+				s.computeLine(line, line)
 				c <- true
 				done <- true
 			}(c, done, i)
@@ -69,7 +71,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 			for i := 0.0; i < count; i++ {
 				idx, val := s.similarities.LeastSimilar()
 				log.Println("Computing the similarities for ", idx, val)
-				s.computeLine(coordinates, 0, idx)
+				s.computeLine(0, idx)
 			}
 
 		} else if threshold, ok := s.popPolicy.Parameters["threshold"]; ok {
@@ -77,7 +79,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 			idx, val := s.similarities.LeastSimilar()
 			for val < threshold {
 				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				s.computeLine(coordinates, 0, idx)
+				s.computeLine(0, idx)
 				idx, val = s.similarities.LeastSimilar()
 			}
 		}
@@ -87,7 +89,23 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 
 func (e *ScriptSimilarityEstimator) Similarity(a, b *Dataset) float64 {
 	// FIXME: implement similarity method
-	return 1.0
+	var coordsA, coordsB []float64
+	if id, ok := e.inverseIndex[a.Path()]; ok {
+		coordsA = e.datasetCoordinates[id]
+	} else {
+		coordsA = e.analyzeDataset(a.Path())
+	}
+	if id, ok := e.inverseIndex[b.Path()]; ok {
+		coordsB = e.datasetCoordinates[id]
+	} else {
+		coordsB = e.analyzeDataset(b.Path())
+	}
+	val, err := e.norm(coordsA, coordsB)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return DistanceToSimilarity(val)
 }
 
 func (e *ScriptSimilarityEstimator) Datasets() []*Dataset {
@@ -185,13 +203,13 @@ func (s *ScriptSimilarityEstimator) norm(a, b []float64) (float64, error) {
 	return math.Pow(sum, 1.0/float64(s.normDegree)), nil
 }
 
-func (s *ScriptSimilarityEstimator) computeLine(coordinates [][]float64, start, line int) {
+func (s *ScriptSimilarityEstimator) computeLine(start, line int) {
 	a := s.datasets[line].Path()
 	for j := start; j < len(s.datasets); j++ {
 		b := s.datasets[j].Path()
-		v, err := s.norm(coordinates[line], coordinates[j])
+		v, err := s.norm(s.datasetCoordinates[line], s.datasetCoordinates[j])
 		// converting distance to similarity
-		sim := 1.0 / (1.0 + v)
+		sim := DistanceToSimilarity(v)
 		if err != nil {
 			log.Panic(err)
 		}

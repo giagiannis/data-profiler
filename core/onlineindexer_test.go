@@ -7,12 +7,13 @@ import (
 	"time"
 )
 
-const ONLINE_INDEXING_SCRIPT = "../_rscripts/quadsystem.R"
+const ONLINE_INDEXING_SCRIPT = "../_rscripts/sa.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
 	rand.Seed(int64(time.Now().Nanosecond()))
-	datasets := createPoolBasedDatasets(2000, 50, 4)
-	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets[2:len(datasets)])
+	datasets := createPoolBasedDatasets(200, 100, 4)
+	//estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
 	estim.Configure(map[string]string{
 		"concurrency": "10",
 	})
@@ -21,10 +22,12 @@ func TestNewOnlineIndexer(t *testing.T) {
 	md.Compute()
 
 	indexer := NewOnlineIndexer(estim, md.Coordinates(), ONLINE_INDEXING_SCRIPT)
-	indexer.Calculate(datasets[1])
-	indexer.Calculate(datasets[1])
-	indexer.Calculate(datasets[1])
-	indexer.Calculate(datasets[1])
+	coords, stress, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	t.Log(coords, stress)
 	for _, f := range datasets {
 		os.Remove(f.Path())
 	}

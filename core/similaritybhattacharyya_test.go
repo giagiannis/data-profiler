@@ -36,6 +36,12 @@ func TestBhattacharyyaCompute(t *testing.T) {
 				t.Log("Similarity value out of range [0,1]", v1, v2)
 				t.FailNow()
 			}
+			if v1 == 0 {
+				t.Log("Zero element found (?)")
+			}
+			if v1 == 1 && i != j {
+				t.Log("Similarity of 1 in non-diagonal element")
+			}
 		}
 	}
 
