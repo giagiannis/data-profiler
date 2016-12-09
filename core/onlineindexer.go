@@ -51,7 +51,7 @@ func (o *OnlineIndexer) DatasetsToCompare(datasets int) {
 // coordinates system, an error is returned.
 func (o *OnlineIndexer) Calculate(dataset *Dataset) (DatasetCoordinates, float64, error) {
 	// calculate the distances for the new dataset
-	log.Println("Creating dataset perm")
+	log.Println("Creating dataset permutation")
 	perm := rand.Perm(len(o.estimator.Datasets()))
 
 	writer, err := ioutil.TempFile("/tmp", "coordinates.csv-")

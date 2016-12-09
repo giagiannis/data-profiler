@@ -43,6 +43,8 @@ func main() {
 		simcomparisonRun()
 	} else if command == "mds" {
 		mdsRun()
+	} else if command == "indexing" {
+		indexingRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
