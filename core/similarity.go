@@ -119,6 +119,25 @@ func NewDatasetSimilarityEstimator(
 	return nil
 }
 
+// Factory method used to deserialize the Estimator according to its type
+func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
+	estimatorType := DatasetSimilarityEstimatorType(getIntBytes(b[0:4]))
+	if estimatorType == SIMILARITY_TYPE_JACOBBI {
+		a := new(JacobbiEstimator)
+		a.Deserialize(b)
+		return a
+	} else if estimatorType == SIMILARITY_TYPE_BHATTACHARYYA {
+		a := new(BhattacharyyaEstimator)
+		a.Deserialize(b)
+		return a
+	} else if estimatorType == SIMILARITY_TYPE_SCRIPT {
+		a := new(ScriptSimilarityEstimator)
+		a.Deserialize(b)
+		return a
+	}
+	return nil
+}
+
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarities struct {

@@ -153,7 +153,7 @@ func (e *ScriptSimilarityEstimator) PopulationPolicy(policy DatasetSimilarityPop
 
 func (e *ScriptSimilarityEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-
+	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_SCRIPT)))
 	buffer.Write(getBytesInt(e.concurrency))
 	buffer.Write(getBytesInt(e.normDegree))
 	buffer.WriteString(e.analysisScript + "\n")
@@ -187,6 +187,7 @@ func (e *ScriptSimilarityEstimator) Serialize() []byte {
 func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInit := make([]byte, 4)
+	buffer.Read(tempInit) // consume estimator type
 	var count int
 	buffer.Read(tempInit)
 	e.concurrency = getIntBytes(tempInit)

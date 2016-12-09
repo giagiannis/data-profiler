@@ -182,9 +182,9 @@ func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) 
 }
 
 func (e *BhattacharyyaEstimator) Serialize() []byte {
-	// FIXME: implement the serialize method
 	buffer := new(bytes.Buffer)
 
+	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_BHATTACHARYYA)))
 	buffer.Write(getBytesInt(e.concurrency))
 	buffer.Write(getBytesFloat(e.kdTreeScaleFactor))
 
@@ -226,6 +226,7 @@ func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)
 	tempFloat := make([]byte, 8)
+	buffer.Read(tempInt) // contains estimator type
 
 	var count int
 	buffer.Read(tempInt)

@@ -5,11 +5,9 @@ import (
 	"log"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 func TestClustering(t *testing.T) {
-	rand.Seed(time.Now().UTC().UnixNano())
 	datasets := make([]*Dataset, 500)
 	for i := 0; i < len(datasets); i++ {
 		datasets[i] = NewDataset(fmt.Sprintf("data-%d", i))

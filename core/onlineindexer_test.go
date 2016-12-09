@@ -4,13 +4,11 @@ import (
 	"math/rand"
 	"os"
 	"testing"
-	"time"
 )
 
 const ONLINE_INDEXING_SCRIPT = "../_rscripts/sa.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
-	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(200, 100, 4)
 	//estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
 	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)

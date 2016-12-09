@@ -113,6 +113,7 @@ func (e *JacobbiEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPo
 
 func (e *JacobbiEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACOBBI)))
 	buffer.Write(getBytesInt(e.concurrency))
 
 	pol := e.popPolicy.Serialize()
@@ -136,27 +137,28 @@ func (e *JacobbiEstimator) Serialize() []byte {
 
 func (e *JacobbiEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
-	tempInit := make([]byte, 4)
+	tempInt := make([]byte, 4)
+	buffer.Read(tempInt) // consume estimator type
 	var count int
-	buffer.Read(tempInit)
-	e.concurrency = getIntBytes(tempInit)
+	buffer.Read(tempInt)
+	e.concurrency = getIntBytes(tempInt)
 
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
+	buffer.Read(tempInt)
+	count = getIntBytes(tempInt)
 	polBytes := make([]byte, count)
 	buffer.Read(polBytes)
 	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
 	e.popPolicy.Deserialize(polBytes)
 
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
+	buffer.Read(tempInt)
+	count = getIntBytes(tempInt)
 	similarityBytes := make([]byte, count)
 	buffer.Read(similarityBytes)
 	e.similarities = new(DatasetSimilarities)
 	e.similarities.Deserialize(similarityBytes)
 
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
+	buffer.Read(tempInt)
+	count = getIntBytes(tempInt)
 	e.datasets = make([]*Dataset, count)
 	for i := range e.datasets {
 		line, _ := buffer.ReadString('\n')

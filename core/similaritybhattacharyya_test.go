@@ -2,10 +2,8 @@ package core
 
 import (
 	"log"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestBhattacharyyaCompute(t *testing.T) {
@@ -73,7 +71,6 @@ func TestKdTree(t *testing.T) {
 }
 
 func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
-	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(200, 200, 4)
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
 	conf := map[string]string{"concurrency": "10"}
@@ -117,7 +114,6 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 }
 
 func TestBhattacharyyaComputeAppxThres(t *testing.T) {
-	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(200, 200, 4)
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
 	conf := map[string]string{"concurrency": "10"}

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestDatasetSimilarityPolicySerialization(t *testing.T) {
@@ -64,7 +63,6 @@ func TestDatasetSerialize(t *testing.T) {
 }
 
 func TestDatasetSimilarityClosestIndex(t *testing.T) {
-	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(5000, 100, 3)
 	sim := NewDatasetSimilarities(len(datasets))
 	chosenIdx := rand.Int() % len(datasets)
@@ -90,7 +88,6 @@ func TestDatasetSimilarityClosestIndex(t *testing.T) {
 }
 
 func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
-	rand.Seed(int64(time.Now().Nanosecond()))
 	datasets := createPoolBasedDatasets(5000, 100, 3)
 	sim := NewDatasetSimilarities(len(datasets))
 	sim.IndexDisabled(true)
@@ -114,5 +111,64 @@ func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 
 	for _, f := range datasets {
 		os.Remove(f.Path())
+	}
+}
+
+func TestDeserializeSimilarityEstimator(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 10, 2)
+	// jacobbi
+	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	est.Configure(map[string]string{"concurrency": "10"})
+	err := est.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	} else {
+		buf := est.Serialize()
+		newEst := DeserializeSimilarityEstimator(buf)
+		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
+		a, b := datasets[idxA], datasets[idxB]
+		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
+			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			t.Log("Deserialization error")
+			t.Fail()
+		}
+	}
+	// bhat
+	est = NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	est.Configure(map[string]string{"concurrency": "10"})
+	err = est.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	} else {
+		buf := est.Serialize()
+		newEst := DeserializeSimilarityEstimator(buf)
+		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
+		a, b := datasets[idxA], datasets[idxB]
+		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
+			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			t.Log("Deserialization error")
+			t.Fail()
+		}
+	}
+
+	// script
+	est = NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	est.Configure(map[string]string{"concurrency": "10", "script": ANALYSIS_SCRIPT})
+	err = est.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	} else {
+		buf := est.Serialize()
+		newEst := DeserializeSimilarityEstimator(buf)
+		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
+		a, b := datasets[idxA], datasets[idxB]
+		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
+			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			t.Log("Deserialization error")
+			t.Fail()
+		}
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 func init() {
 	log.SetOutput(ioutil.Discard)
 	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+	rand.Seed(int64(time.Now().Nanosecond()))
 }
 
 // Creates a random tuple with floats, containing fields fields.
