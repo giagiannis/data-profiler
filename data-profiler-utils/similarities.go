@@ -18,6 +18,7 @@ type similaritiesParams struct {
 	logfile          *string                                 // logfile
 	options          *string                                 // options for the estimators
 	populationPolicy *core.DatasetSimilarityPopulationPolicy // defines the population policy
+	estimatorPath    *string
 }
 
 func similaritiesParseParams() *similaritiesParams {
@@ -34,6 +35,8 @@ func similaritiesParseParams() *similaritiesParams {
 		flag.String("opt", "", "options in the form val1=key1,val2=key2 (list for opts list)")
 	popPolicy :=
 		flag.String("p", "FULL", "population policy [FULL|APRX] along with options in the form POLICY,val1=key1,val2=key2")
+	params.estimatorPath =
+		flag.String("e", "", "if set, serializes the estimator to the specified path")
 	flag.Parse()
 	setLogger(*params.logfile)
 
@@ -112,4 +115,15 @@ func similaritiesRun() {
 	defer outfile.Close()
 	outfile.Write(est.GetSimilarities().Serialize())
 	log.Println("\n" + est.GetSimilarities().String())
+
+	if *params.estimatorPath != "" {
+		outfile, er = os.OpenFile(*params.estimatorPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if er != nil {
+			fmt.Fprintln(os.Stderr, er)
+			os.Exit(1)
+		}
+		defer outfile.Close()
+		outfile.Write(est.Serialize())
+		log.Println("Serialized estimator to file", outfile.Name())
+	}
 }
