@@ -1,9 +1,11 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 )
 
 // JacobbiEstimator estimates the Jacobbi coefficients between the different
@@ -107,6 +109,60 @@ func (e *JacobbiEstimator) Options() map[string]string {
 
 func (e *JacobbiEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
 	e.popPolicy = policy
+}
+
+func (e *JacobbiEstimator) Serialize() []byte {
+	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(e.concurrency))
+
+	pol := e.popPolicy.Serialize()
+	log.Println(len(pol))
+	buffer.Write(getBytesInt(len(pol)))
+	buffer.Write(pol)
+
+	sim := e.similarities.Serialize()
+	log.Println(len(sim))
+	buffer.Write(getBytesInt(len(sim)))
+	buffer.Write(sim)
+
+	// serialize dataste names
+	buffer.Write(getBytesInt(len(e.datasets)))
+	for _, d := range e.datasets {
+		buffer.WriteString(d.Path() + "\n")
+	}
+
+	return buffer.Bytes()
+}
+
+func (e *JacobbiEstimator) Deserialize(b []byte) {
+	buffer := bytes.NewBuffer(b)
+	tempInit := make([]byte, 4)
+	var count int
+	buffer.Read(tempInit)
+	e.concurrency = getIntBytes(tempInit)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	polBytes := make([]byte, count)
+	buffer.Read(polBytes)
+	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
+	e.popPolicy.Deserialize(polBytes)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	similarityBytes := make([]byte, count)
+	buffer.Read(similarityBytes)
+	e.similarities = new(DatasetSimilarities)
+	e.similarities.Deserialize(similarityBytes)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	e.datasets = make([]*Dataset, count)
+	for i := range e.datasets {
+		line, _ := buffer.ReadString('\n')
+		line = strings.TrimSpace(line)
+		e.datasets[i] = NewDataset(line)
+	}
 }
 
 // calculates a table line

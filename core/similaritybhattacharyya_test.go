@@ -159,3 +159,28 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 		os.Remove(f.Path())
 	}
 }
+
+func TestKdtreeNodeSerialization(t *testing.T) {
+	datasets := createPoolBasedDatasets(50000, 1, 4)
+	datasets[0].ReadFromFile()
+	tree := NewKDTreePartition(datasets[0].Data())
+	tree.Prune(tree.MinHeight() / 2)
+	b := tree.Serialize()
+	newTree := new(kdTreeNode)
+	newTree.Deserialize(b)
+	var dfsTraversal func(treeA, treeB *kdTreeNode) bool
+	dfsTraversal = func(treeA, treeB *kdTreeNode) bool {
+		if treeA == nil && treeB == nil {
+			return true
+		}
+		if treeA.dim != treeB.dim || treeA.value != treeB.value {
+			return false
+		} else {
+			return dfsTraversal(treeA.left, treeB.left) && dfsTraversal(treeA.right, treeB.right)
+		}
+	}
+	if !dfsTraversal(tree, newTree) {
+		t.Log("Trees not equal")
+		t.FailNow()
+	}
+}

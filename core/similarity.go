@@ -3,23 +3,24 @@ package core
 import (
 	"bytes"
 	"compress/gzip"
-	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"math/rand"
+	"strings"
 )
 
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
 	Compute() error                                     // computes the similarity matrix
-	Similarity(a, b *Dataset) float64                   // returns the similarity for 2 datasets
 	Datasets() []*Dataset                               // returns the datasets slice
+	Similarity(a, b *Dataset) float64                   // returns the similarity for 2 datasets
 	GetSimilarities() *DatasetSimilarities              // returns the similarity struct
 	Configure(map[string]string)                        // provides configuration options
 	Options() map[string]string                         // list of options for the estimator
 	PopulationPolicy(DatasetSimilarityPopulationPolicy) // sets the population policy for the estimator
+	Serialize() []byte                                  // returns a serialized esimator object
+	Deserialize([]byte)                                 // instantiates an estimator from a serialized object
 }
 
 type DatasetSimilarityEstimatorType uint
@@ -44,6 +45,38 @@ func (t DatasetSimilarityEstimatorType) String() string {
 type DatasetSimilarityPopulationPolicy struct {
 	PolicyType DatasetSimilarityPopulationPolicyType
 	Parameters map[string]float64
+}
+
+func (s *DatasetSimilarityPopulationPolicy) Serialize() []byte {
+	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(int(s.PolicyType)))
+	buffer.Write(getBytesInt(len(s.Parameters)))
+	for k, v := range s.Parameters {
+		buffer.WriteString(k + "\n")
+		buffer.Write(getBytesFloat(v))
+	}
+	return buffer.Bytes()
+}
+
+func (s *DatasetSimilarityPopulationPolicy) Deserialize(b []byte) {
+	buffer := bytes.NewBuffer(b)
+	tempInt := make([]byte, 4)
+	tempFloat := make([]byte, 8)
+	buffer.Read(tempInt)
+	s.PolicyType = DatasetSimilarityPopulationPolicyType(getIntBytes(tempInt))
+	buffer.Read(tempInt)
+	count := getIntBytes(tempInt)
+	if s.Parameters == nil {
+		s.Parameters = make(map[string]float64)
+	}
+	for i := 0; i < count; i++ {
+		line, _ := buffer.ReadString('\n')
+		line = strings.TrimSpace(line)
+		buffer.Read(tempFloat)
+		val := getFloatBytes(tempFloat)
+		s.Parameters[line] = val
+	}
+
 }
 
 type DatasetSimilarityPopulationPolicyType uint
@@ -197,20 +230,6 @@ func (s DatasetSimilarities) String() string {
 
 // Serialize method returns a byte slice that represents the similarity matrix
 func (s *DatasetSimilarities) Serialize() []byte {
-
-	getBytesInt := func(val int) []byte {
-		temp := make([]byte, 4)
-		binary.BigEndian.PutUint32(temp, uint32(val))
-		return temp
-	}
-
-	getBytesFloat := func(val float64) []byte {
-		bits := math.Float64bits(val)
-		temp := make([]byte, 8)
-		binary.BigEndian.PutUint64(temp, bits)
-		return temp
-	}
-
 	buf := new(bytes.Buffer)
 	buf.Write(getBytesInt(s.capacity))
 	for i := 0; i < s.capacity-1; i++ {
@@ -223,11 +242,13 @@ func (s *DatasetSimilarities) Serialize() []byte {
 		buf.Write(getBytesFloat(float64(s.closestIndex.closestIdx[i])))
 		buf.Write(getBytesFloat(s.closestIndex.similarity[i]))
 	}
+	charBuf := make([]byte, 1)
 	if s.indexDisabled {
-		buf.WriteString("1")
+		charBuf[0] = 1
 	} else {
-		buf.WriteString("0")
+		charBuf[0] = 0
 	}
+	buf.Write(charBuf)
 
 	// compress before you send
 	var compressed bytes.Buffer
@@ -253,15 +274,9 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 		log.Println("Error message from compression: ", err)
 	}
 	defer re.Close()
-	buff, _ = ioutil.ReadAll(re)
-
-	getIntBytes := func(buf []byte) int {
-		return int(binary.BigEndian.Uint32(buf))
-	}
-	getFloatBytes := func(buf []byte) float64 {
-		bits := binary.BigEndian.Uint64(buf)
-		float := math.Float64frombits(bits)
-		return float
+	buff, err = ioutil.ReadAll(re)
+	if err != nil {
+		log.Println(err, len(buff))
 	}
 
 	buf := bytes.NewBuffer(buff)
@@ -284,7 +299,9 @@ func (s *DatasetSimilarities) Deserialize(buff []byte) error {
 		buf.Read(tempFloat)
 		s.closestIndex.similarity[i] = getFloatBytes(tempFloat)
 	}
-	if val, _ := buf.ReadString('\n'); val == "1" {
+	charBuf := make([]byte, 1)
+	buf.Read(charBuf)
+	if charBuf[0] == 1 {
 		s.indexDisabled = true
 	} else {
 		s.indexDisabled = false

@@ -8,6 +8,26 @@ import (
 	"time"
 )
 
+func TestDatasetSimilarityPolicySerialization(t *testing.T) {
+	pol := new(DatasetSimilarityPopulationPolicy)
+	pol.Parameters = map[string]float64{"count": 10.0, "foo": 100.0}
+	pol.PolicyType = POPULATION_POL_APRX
+	bytes := pol.Serialize()
+	newPol := new(DatasetSimilarityPopulationPolicy)
+	newPol.Deserialize(bytes)
+	if newPol.PolicyType != pol.PolicyType {
+		t.Log("Policy types different")
+		t.Fail()
+	}
+	for k, v := range pol.Parameters {
+		val, ok := newPol.Parameters[k]
+		if !ok || val != v {
+			t.Log("Missing key or different value", ok, val, v)
+			t.Fail()
+		}
+	}
+}
+
 func TestDatasetSerialize(t *testing.T) {
 	datasets := createPoolBasedDatasets(5000, 10, 3)
 	e := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)

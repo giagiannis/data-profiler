@@ -180,11 +180,83 @@ func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) 
 	return sum
 }
 
+func (e *BhattacharyyaEstimator) Serialize() []byte {
+	// FIXME: implement the serialize method
+	return nil
+}
+
+func (e *BhattacharyyaEstimator) Deserialize(bytes []byte) {
+	// FIXME: implement the Deserialized method
+	return
+}
+
 type kdTreeNode struct {
 	dim   int
 	value float64
 	right *kdTreeNode
 	left  *kdTreeNode
+}
+
+func (r *kdTreeNode) Serialize() []byte {
+	var countNodes func(*kdTreeNode) int
+	countNodes = func(node *kdTreeNode) int {
+		if node == nil {
+			return 0
+		}
+		count := 0
+		count += countNodes(node.left)
+		count += countNodes(node.right)
+		return count + 1
+	}
+	dataSize := 8 + 4
+	nodes := countNodes(r)
+	buf := make([]byte, dataSize*nodes)
+	var serializeNode func(*kdTreeNode, int)
+	serializeNode = func(node *kdTreeNode, offset int) {
+		if node == nil {
+			return
+		}
+		for i, b := range getBytesInt(node.dim) {
+			buf[offset*dataSize+i] = b
+		}
+		count := len(getBytesInt(node.dim))
+		for i, b := range getBytesFloat(node.value) {
+			buf[offset*dataSize+count+i] = b
+		}
+		serializeNode(node.left, (2*offset + 1))
+		serializeNode(node.right, (2*offset + 2))
+	}
+	serializeNode(r, 0)
+	return buf
+}
+
+func (r *kdTreeNode) Deserialize(b []byte) {
+	dataSize := 8 + 4
+	var deserialize func(int) *kdTreeNode
+	deserialize = func(offset int) *kdTreeNode {
+		if offset*dataSize >= len(b) {
+			return nil
+		}
+		node := new(kdTreeNode)
+		tempInt := make([]byte, 4)
+		for i := range tempInt {
+			tempInt[i] = b[offset*dataSize+i]
+		}
+		node.dim = getIntBytes(tempInt)
+		tempFloat := make([]byte, 8)
+		for i := range tempFloat {
+			tempFloat[i] = b[offset*dataSize+4+i]
+		}
+		node.value = getFloatBytes(tempFloat)
+		node.left = deserialize(2*offset + 1)
+		node.right = deserialize(2*offset + 2)
+		return node
+	}
+	n := deserialize(0)
+	r.dim = n.dim
+	r.value = n.value
+	r.left = n.left
+	r.right = n.right
 }
 
 func (r *kdTreeNode) Height() int {
@@ -223,7 +295,7 @@ func (r *kdTreeNode) MinHeight() int {
 
 func (r *kdTreeNode) Prune(level int) {
 	minHeight := r.MinHeight()
-	if level >= minHeight {
+	if level > minHeight {
 		log.Println("Cannot prune the tree with more levels than minHeight ", minHeight)
 		return
 	}

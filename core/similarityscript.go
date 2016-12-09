@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"log"
 	"math"
@@ -88,7 +89,6 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 }
 
 func (e *ScriptSimilarityEstimator) Similarity(a, b *Dataset) float64 {
-	// FIXME: implement similarity method
 	var coordsA, coordsB []float64
 	if id, ok := e.inverseIndex[a.Path()]; ok {
 		coordsA = e.datasetCoordinates[id]
@@ -150,6 +150,90 @@ func (s *ScriptSimilarityEstimator) Options() map[string]string {
 func (e *ScriptSimilarityEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
 	e.popPolicy = policy
 }
+
+func (e *ScriptSimilarityEstimator) Serialize() []byte {
+	buffer := new(bytes.Buffer)
+
+	buffer.Write(getBytesInt(e.concurrency))
+	buffer.Write(getBytesInt(e.normDegree))
+	buffer.WriteString(e.analysisScript + "\n")
+
+	pol := e.popPolicy.Serialize()
+	log.Println(len(pol))
+	buffer.Write(getBytesInt(len(pol)))
+	buffer.Write(pol)
+
+	sim := e.similarities.Serialize()
+	log.Println(len(sim))
+	buffer.Write(getBytesInt(len(sim)))
+	buffer.Write(sim)
+
+	// serialize dataset names
+	buffer.Write(getBytesInt(len(e.datasets)))
+	for _, d := range e.datasets {
+		buffer.WriteString(d.Path() + "\n")
+	}
+
+	// write number of coordinates per dataset
+	buffer.Write(getBytesInt(len(e.datasetCoordinates[0])))
+	for _, arr := range e.datasetCoordinates {
+		for _, v := range arr {
+			buffer.Write(getBytesFloat(v))
+		}
+	}
+	return buffer.Bytes()
+}
+
+func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
+	// FIXME: implement the Deserialize method
+	buffer := bytes.NewBuffer(b)
+	tempInit := make([]byte, 4)
+	var count int
+	buffer.Read(tempInit)
+	e.concurrency = getIntBytes(tempInit)
+	buffer.Read(tempInit)
+	e.normDegree = getIntBytes(tempInit)
+	line, _ := buffer.ReadString('\n')
+	e.analysisScript = strings.TrimSpace(line)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	polBytes := make([]byte, count)
+	buffer.Read(polBytes)
+	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
+	e.popPolicy.Deserialize(polBytes)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	similarityBytes := make([]byte, count)
+	buffer.Read(similarityBytes)
+	e.similarities = new(DatasetSimilarities)
+	e.similarities.Deserialize(similarityBytes)
+
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	e.datasets = make([]*Dataset, count)
+	e.inverseIndex = make(map[string]int)
+	for i := range e.datasets {
+		line, _ := buffer.ReadString('\n')
+		line = strings.TrimSpace(line)
+		e.datasets[i] = NewDataset(line)
+		e.inverseIndex[line] = i
+	}
+
+	tempFloat := make([]byte, 8)
+	buffer.Read(tempInit)
+	count = getIntBytes(tempInit)
+	e.datasetCoordinates = make([][]float64, len(e.datasets))
+	for i := range e.datasets {
+		e.datasetCoordinates[i] = make([]float64, count)
+		for j := range e.datasetCoordinates[i] {
+			buffer.Read(tempFloat)
+			e.datasetCoordinates[i][j] = getFloatBytes(tempFloat)
+		}
+	}
+}
+
 func (s *ScriptSimilarityEstimator) analyzeDatasets() [][]float64 {
 	c, done := make(chan bool, s.concurrency), make(chan bool)
 	coords := make([][]float64, len(s.datasets))
