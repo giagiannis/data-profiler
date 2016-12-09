@@ -185,7 +185,6 @@ func (e *ScriptSimilarityEstimator) Serialize() []byte {
 }
 
 func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
-	// FIXME: implement the Deserialize method
 	buffer := bytes.NewBuffer(b)
 	tempInit := make([]byte, 4)
 	var count int

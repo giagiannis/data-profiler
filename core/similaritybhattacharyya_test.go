@@ -161,10 +161,10 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 }
 
 func TestKdtreeNodeSerialization(t *testing.T) {
-	datasets := createPoolBasedDatasets(50000, 1, 4)
+	datasets := createPoolBasedDatasets(10000, 1, 2)
 	datasets[0].ReadFromFile()
 	tree := NewKDTreePartition(datasets[0].Data())
-	tree.Prune(tree.MinHeight() / 2)
+	tree.Prune(tree.MinHeight() * 4 / 5)
 	b := tree.Serialize()
 	newTree := new(kdTreeNode)
 	newTree.Deserialize(b)
@@ -182,5 +182,77 @@ func TestKdtreeNodeSerialization(t *testing.T) {
 	if !dfsTraversal(tree, newTree) {
 		t.Log("Trees not equal")
 		t.FailNow()
+	}
+}
+
+func TestBhattacharyyaSerialization(t *testing.T) {
+	datasets := createPoolBasedDatasets(10000, 100, 4)
+	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	est := *new(BhattacharyyaEstimator)
+	est.datasets = datasets
+	est.kdTreeScaleFactor = 0.75
+	est.concurrency = 10
+	pol := DatasetSimilarityPopulationPolicy{
+		PolicyType: POPULATION_POL_FULL,
+		Parameters: map[string]float64{},
+	}
+	est.PopulationPolicy(pol)
+	err := est.Compute()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	bytes := est.Serialize()
+	t.Log("Bytes length", len(bytes))
+
+	newEst := *new(BhattacharyyaEstimator)
+	newEst.Deserialize(bytes)
+	if est.concurrency != newEst.concurrency {
+		t.Log("Concurrency differs")
+		t.Fail()
+	}
+
+	for i := range est.datasets {
+		if est.datasets[i].Path() != newEst.datasets[i].Path() {
+			t.Log("Dataset names are different", est.datasets[i], newEst.datasets[i])
+			t.Fail()
+		}
+	}
+
+	for i := 0; i < est.similarities.Capacity(); i++ {
+		for j := 0; j < est.similarities.Capacity(); j++ {
+			if est.similarities.Get(i, j) != newEst.similarities.Get(i, j) {
+				t.Log("SM differs", i, j)
+				t.Fail()
+			}
+		}
+	}
+
+	for k, v := range est.inverseIndex {
+		if newEst.inverseIndex[k] != v {
+			t.Log("Inverse index failed")
+			t.Fail()
+		}
+	}
+
+	for i, arr := range est.pointsPerRegion {
+		for j, v := range arr {
+			if v != newEst.pointsPerRegion[i][j] {
+				t.Log("Points per region not the same", i, j)
+				t.Fail()
+			}
+		}
+	}
+
+	for i, v := range est.datasetsSize {
+		if v != newEst.datasetsSize[i] {
+			t.Log("Datasets sizes not the same", i)
+			t.Fail()
+		}
+	}
+
+	if newEst.Similarity(datasets[0], datasets[1]) != newEst.GetSimilarities().Get(0, 1) {
+		t.Log("Something is seriously wrong here", newEst.GetSimilarities().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
+		t.Fail()
 	}
 }
