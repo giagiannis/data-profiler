@@ -203,7 +203,6 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 		t.FailNow()
 	}
 	bytes := est.Serialize()
-	t.Log("Bytes length", len(bytes))
 
 	newEst := *new(BhattacharyyaEstimator)
 	newEst.Deserialize(bytes)

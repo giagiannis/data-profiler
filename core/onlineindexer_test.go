@@ -22,12 +22,11 @@ func TestNewOnlineIndexer(t *testing.T) {
 	md.Compute()
 
 	indexer := NewOnlineIndexer(estim, md.Coordinates(), ONLINE_INDEXING_SCRIPT)
-	coords, stress, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
-	if err != nil {
+	coords, _, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
+	if err != nil || coords == nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	t.Log(coords, stress)
 	for _, f := range datasets {
 		os.Remove(f.Path())
 	}

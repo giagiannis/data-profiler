@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -16,6 +17,11 @@ const (
 	TMP_DIR         = "/tmp/"
 )
 
+func init() {
+	log.SetOutput(ioutil.Discard)
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+}
+
 // Creates a random tuple with floats, containing fields fields.
 func randomTupleGenerator(fields int) []float64 {
 	res := make([]float64, fields)
@@ -28,8 +34,6 @@ func randomTupleGenerator(fields int) []float64 {
 // Creates a pool of tuples (its sizeis determined by poolSize) and a number of
 // datasets each containing tuples with the specified number of attributes.
 func createPoolBasedDatasets(poolSize, datasets, attributes int) []*Dataset {
-
-	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 	pool := *new([][]float64)
 	for i := 0; i < poolSize; i++ {
 		pool = append(pool, randomTupleGenerator(attributes))
