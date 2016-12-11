@@ -23,7 +23,7 @@ type MDScaling struct {
 	matrix *DatasetSimilarities // the similarity matrix
 
 	coordinates []DatasetCoordinates // the coordinates matrix
-	stress      float64              // the stress factor
+	gof         float64              // the gof factor
 }
 
 // NewMDScaling is the default MDScaling constructor; it initializes a new
@@ -46,11 +46,12 @@ func (md *MDScaling) Compute() error {
 		return err
 	}
 	defer writer.Close()
+	log.Println("Writing distances to file", writer.Name())
 	//defer os.Remove(writer.Name())
 	for i := 0; i < md.matrix.Capacity(); i++ {
 		for j := 0; j < md.matrix.Capacity(); j++ {
 			val := md.matrix.Get(i, j)
-			writer.WriteString(fmt.Sprintf("%.5f", val))
+			writer.WriteString(fmt.Sprintf("%.5f", SimilarityToDistance(val)))
 			if j < md.matrix.Capacity()-1 {
 				writer.WriteString(",")
 			}
@@ -62,7 +63,7 @@ func (md *MDScaling) Compute() error {
 	if md.k < 1 || md.k > md.matrix.Capacity()-1 { // binary search in the interval [1, n-1]
 		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
 	} else { // execute solution
-		md.coordinates, md.stress, err = md.executeScript(writer.Name())
+		md.coordinates, md.gof, err = md.executeScript(writer.Name())
 		if err != nil {
 			return err
 		}
@@ -76,9 +77,9 @@ func (md *MDScaling) Coordinates() []DatasetCoordinates {
 	return md.coordinates
 }
 
-// Stress getter returns the stress factor for the calculated solution
-func (md *MDScaling) Stress() float64 {
-	return md.stress
+// Gof getter returns the gof factor for the calculated solution
+func (md *MDScaling) Gof() float64 {
+	return md.gof
 }
 
 // Variances function returns the variances of the principal coordinates
@@ -104,7 +105,7 @@ func (md *MDScaling) Variances() ([]float64, error) {
 
 // executeScript is used to execute the specified MDS script and parse
 // its results. Not part of the structs public API. If successful, returns
-// the coordinates slice, the stress factor and nil errors; If not successful,
+// the coordinates slice, the gof factor and nil errors; If not successful,
 // returns nil results and an error object
 //
 func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64, error) {
@@ -115,8 +116,8 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 		return nil, 0.0, err
 	}
 	lines := strings.Split(string(buf), "\n")
-	// parse stress float
-	stress, err := strconv.ParseFloat(lines[0], 64)
+	// parse gof float
+	gof, err := strconv.ParseFloat(lines[0], 64)
 	if err != nil {
 		return nil, 0.0, err
 	}
@@ -138,5 +139,5 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 			}
 		}
 	}
-	return coordinates, stress, nil
+	return coordinates, gof, nil
 }

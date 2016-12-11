@@ -33,4 +33,4 @@ set style line 4 lt 1 pt 10 lc rgb "#999999" lw 4 ps 4
 set style line 5 lt 1 pt 13 lc rgb "#aaaaaa" lw 4 ps 4
 
 plot for [i=1:words(inputFile)] word(inputFile,i) u 1:2:0 w labels t system("basename ".word(inputFile,i)) ls i
-system("epstopdf ".outputFile." && rm ".outputFile)
+system("epstopdf --outfile=".outputFile.".pdf ".outputFile." && rm ".outputFile)

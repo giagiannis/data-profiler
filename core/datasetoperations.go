@@ -121,8 +121,10 @@ func (a *DatasetPartitioner) uniform(scanner *bufio.Scanner, newFiles []*os.File
 func DiscoverDatasets(inputDir string) []*Dataset {
 	log.Println("Discovering datasets")
 	files, err := ioutil.ReadDir(inputDir)
-	if err != nil {
-		return nil
+	if err != nil { // the specified input is not a dir - returns the file
+		datasets := make([]*Dataset, 1)
+		datasets[0] = NewDataset(inputDir)
+		return datasets
 	}
 	datasets := make([]*Dataset, len(files))
 	for i, f := range files {

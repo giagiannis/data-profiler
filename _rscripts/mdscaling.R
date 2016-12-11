@@ -7,25 +7,25 @@ if (length(args) < 2 ) {
 	quit()
 }
 
-library(MASS)
-s <- as.matrix(read.csv(args[1],header=FALSE))
+#library(MASS)
+d <- as.matrix(read.csv(args[1],header=FALSE))
 k <- as.numeric(args[2])
 MAXITERATIONS <- 1000
 TOLERANCE <- 1e-4
 EPSILON <- 1e-10
-# turn the similarity matrix into a distance matrix and add 
-# EPSILON values to non-diag elems
-d <- 1/s-1 
-d[which(d==0)] <- EPSILON
-for(i in 1:nrow(d)) {
-		for(j in 1:ncol(d)) {
-				if(i==j){
-				d[i,j]<-0
-				}
-		}
-}
-fit <- isoMDS(d, k=k, trace=FALSE, tol = TOLERANCE, maxit = MAXITERATIONS)
-cat(fit$stress)
+#fit <- isoMDS(d, k=k, trace=FALSE, tol = TOLERANCE, maxit = MAXITERATIONS, p=2)
+#cat(fit$stress)
+#cat("\n")
+#for(i in 1:nrow(fit$points)) {
+#		for(j in 1:ncol(fit$points)) {
+#				cat(fit$points[i,j])
+#				cat(" ")
+#		}
+#		cat("\n")
+#}
+
+fit <- cmdscale(d, k=k, eig=TRUE)
+cat(fit$GOF[2])
 cat("\n")
 for(i in 1:nrow(fit$points)) {
 		for(j in 1:ncol(fit$points)) {
@@ -34,5 +34,4 @@ for(i in 1:nrow(fit$points)) {
 		}
 		cat("\n")
 }
-
 

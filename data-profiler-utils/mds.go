@@ -23,7 +23,7 @@ type mdsParams struct {
 }
 
 var mdsModules = map[string]string{
-	"stress": "prints the stress values from 1 up to the specified k",
+	"gof":    "prints the gof values from 1 up to the specified k",
 	"coords": "prints the datasets coordinates for the specified k",
 }
 
@@ -119,17 +119,17 @@ func mdsRun() {
 		}
 	}
 
-	if params.modules["stress"] {
+	if params.modules["gof"] {
 		extension := filepath.Ext(*params.output)
 		basename := strings.TrimSuffix(*params.output, extension)
-		outfile, er := os.OpenFile(basename+"-stress"+extension, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		outfile, er := os.OpenFile(basename+"-gof"+extension, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if er != nil {
 			fmt.Fprintln(os.Stderr, er)
 			os.Exit(1)
 		}
 		defer outfile.Close()
 
-		fmt.Fprintf(outfile, "dimensions stress\n")
+		fmt.Fprintf(outfile, "dimensions gof\n")
 		for k := 1; k <= *params.k; k++ {
 			log.Println("Executing MDS for k =", k)
 			mds := core.NewMDScaling(params.similarities, k, *params.script)
@@ -138,7 +138,7 @@ func mdsRun() {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			fmt.Fprintf(outfile, "%d %.5f\n", k, mds.Stress())
+			fmt.Fprintf(outfile, "%d %.5f\n", k, mds.Gof())
 		}
 
 	}

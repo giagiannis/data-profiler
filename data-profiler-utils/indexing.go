@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,8 +22,9 @@ type indexingParams struct {
 	script      *string                         // indexing script needed by the indexer
 	output      *string                         // where to store the output
 	logfile     *string                         // logfile of execution
-	k           *int                            // determines the number of datasets to compare
+	k           *string                         // determines the number of datasets to compare
 	concurrency *int                            //number of threads to be utilized for the exec
+	repetition  *int                            //number of threads to be utilized for the exec
 }
 
 func indexingParseParams() *indexingParams {
@@ -37,11 +40,13 @@ func indexingParseParams() *indexingParams {
 	params.logfile =
 		flag.String("l", "", "the log file")
 	datasetsPath :=
-		flag.String("i", "", "the new datasets to be indexed")
+		flag.String("i", "", "the new dataset to be indexed - if a dir, only the first dataset is considered")
 	params.k =
-		flag.Int("k", 0, "the number of datasets to compare for indexing - the default is equal to the number of datasets in the matrix")
+		flag.String("k", "0", "comma separated list of datasets to be used for comparison - 0 means all")
 	params.concurrency =
 		flag.Int("t", 1, "the number of threads to spawn for the indexing")
+	params.repetition =
+		flag.Int("r", 1, "times to repeat the experiments for random experiments")
 	flag.Parse()
 	setLogger(*params.logfile)
 
@@ -99,39 +104,70 @@ func indexingParseParams() *indexingParams {
 	// parse datasets
 	params.datasets = core.DiscoverDatasets(*datasetsPath)
 
-	// parse k
-	if *params.k == 0 {
-		*params.k = len(params.estimator.Datasets())
-	}
-
 	return params
 }
 
 func indexingRun() {
 	params := indexingParseParams()
-	indexer := core.NewOnlineIndexer(params.estimator, params.coordinates, *params.script)
-	indexer.DatasetsToCompare(*params.k)
 	c := make(chan bool, *params.concurrency)
 	done := make(chan resultsStruct)
 	for j := 0; j < *params.concurrency; j++ {
 		c <- true
 	}
-	for i, d := range params.datasets {
-		go func(c chan bool, done chan resultsStruct, d *core.Dataset, i int) {
+	testCases := 0
+	for _, k := range strings.Split(*params.k, ",") {
+		kInt, err := strconv.Atoi(k)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		execution := func(c chan bool, done chan resultsStruct, k int) {
+			indexer := core.NewOnlineIndexer(params.estimator, params.coordinates, *params.script)
+			indexer.DatasetsToCompare(k)
 			<-c
 			start := time.Now()
-			coo, str, err := indexer.Calculate(d)
-			duration := time.Since(start) / 1000
+			coo, gof, err := indexer.Calculate(params.datasets[0])
+			duration := time.Since(start)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			}
 			c <- true
-			done <- resultsStruct{i, coo, str, duration}
-		}(c, done, d, i)
+			done <- resultsStruct{k, coo, gof, duration}
+		}
+		if kInt == 0 || kInt == len(params.estimator.Datasets()) {
+			kInt = len(params.estimator.Datasets())
+			go execution(c, done, kInt)
+			testCases += 1
+		} else {
+			for i := 0; i < *params.repetition; i++ {
+				go execution(c, done, kInt)
+				testCases += 1
+			}
+		}
 	}
-	for range params.datasets {
+	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if er != nil {
+		fmt.Fprintln(os.Stderr, er)
+		os.Exit(1)
+	}
+	defer outfile.Close()
+
+	results := make(map[int][]resultsStruct)
+	for i := 0; i < testCases; i++ {
 		res := <-done
-		fmt.Println(res)
+		results[res.id] = append(results[res.id], res)
+	}
+	// find best
+	keys := make([]int, 0)
+	for k := range results {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+	best := results[keys[len(keys)-1]][0]
+
+	fmt.Fprintf(outfile, "k distance stress duration\n")
+	for _, k := range keys {
+		d, g, du := aggregateResults(results[k], best)
+		fmt.Fprintf(outfile, "%d %.5f %.5f %.5f\n", k, d, g, du)
 	}
 }
 
@@ -140,4 +176,23 @@ type resultsStruct struct {
 	coords   core.DatasetCoordinates
 	stress   float64
 	duration time.Duration
+}
+
+// receives the structs and returns the distance between the best, the stress and the duration
+func aggregateResults(array []resultsStruct, best resultsStruct) (float64, float64, float64) {
+	coordsDistance := func(a, b core.DatasetCoordinates) float64 {
+		sum := 0.0
+		for i := range a {
+			sum += (a[i] - b[i]) * (a[i] - b[i])
+		}
+		return math.Sqrt(sum)
+	}
+	dst, stress, dur := 0.0, 0.0, 0.0
+	for i := range array {
+		dst += coordsDistance(array[i].coords, best.coords)
+		stress += array[i].stress
+		dur += array[i].duration.Seconds()
+	}
+	l := float64(len(array))
+	return dst / l, stress / l, dur / l
 }

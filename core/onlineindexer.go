@@ -78,7 +78,7 @@ func (o *OnlineIndexer) Calculate(dataset *Dataset) (DatasetCoordinates, float64
 			fmt.Fprintf(writer, "%.5f,", o.coordinates[i][j])
 		}
 		actualDistances[c] = SimilarityToDistance(sim)
-		fmt.Fprintf(writer, "%.5f\n", 1.0/sim-1.0)
+		fmt.Fprintf(writer, "%.5f\n", actualDistances[c])
 	}
 	writer.Close()
 	coords, err := o.executeScript(writer.Name())
