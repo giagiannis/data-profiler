@@ -14,6 +14,11 @@ var utilsDescription = map[string]string{
 	"clustering":    "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
 	"simcomparison": "compares a list of similarity matrices",
 	"mds":           "executes Multidimensional Scaling to a similarity matrix",
+
+	// experiments
+	"exp-accuracy": "trains an ML model and prints the error",
+	"exp-top-k":    "finds the top-k objects and compares them with the original",
+	"exp-ordering": "compares the ordering of the datasets to the original ordering",
 }
 
 func main() {
@@ -45,6 +50,15 @@ func main() {
 		mdsRun()
 	} else if command == "indexing" {
 		indexingRun()
+	} else if len(command) > 3 && command[0:4] == "exp-" {
+		experiment := command[4:len(command)]
+		if experiment == "accuracy" {
+			expAccuracyRun()
+		} else if experiment == "top-k" {
+			fmt.Println(experiment)
+		} else if experiment == "ordering" {
+			fmt.Println(experiment)
+		}
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
