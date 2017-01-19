@@ -12,13 +12,13 @@ import (
 )
 
 type similaritiesParams struct {
-	input            *string                                 //datasets directory to be discovered
+	input            *string                                 // datasets directory to be discovered
 	output           *string                                 // output file
 	simType          *core.DatasetSimilarityEstimatorType    // similarity type
 	logfile          *string                                 // logfile
 	options          *string                                 // options for the estimators
 	populationPolicy *core.DatasetSimilarityPopulationPolicy // defines the population policy
-	estimatorPath    *string
+	estimatorPath    *string                                 // place to store estimator object
 }
 
 func similaritiesParseParams() *similaritiesParams {
@@ -109,13 +109,22 @@ func similaritiesRun() {
 
 	outfile, er := os.OpenFile(*params.output, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if er != nil {
-		fmt.Fprintln(os.Stderr, er)
-		os.Exit(1)
+		log.Fatal(er)
 	}
 	defer outfile.Close()
+	// serializing similarity matrix
 	outfile.Write(est.GetSimilarities().Serialize())
 	log.Println("\n" + est.GetSimilarities().String())
 
+	idxFile, er := os.OpenFile(*params.output+".idx", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	defer idxFile.Close()
+	for i, d := range datasets {
+		fmt.Fprintf(idxFile, "%d\t%s\n", i, d.Path())
+	}
+	if er != nil {
+		log.Fatal(er)
+	}
+	// serializing estimator
 	if *params.estimatorPath != "" {
 		outfile, er = os.OpenFile(*params.estimatorPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if er != nil {

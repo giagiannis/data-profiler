@@ -98,20 +98,20 @@ func mdsRun() {
 		mds := core.NewMDScaling(params.similarities, *params.k, *params.script)
 		err := mds.Compute()
 		log.Println("Done")
-		bestCoordinates := mds.Coordinates()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		if bestCoordinates == nil {
+		coords := mds.Coordinates()
+		if coords == nil {
 			return
 		}
 
-		for i := 0; i < len(bestCoordinates[0]); i++ {
+		for i := 0; i < len(coords[0]); i++ {
 			fmt.Fprintf(outfile, "x_%d ", i+1)
 		}
 		fmt.Fprintf(outfile, "\n")
-		for _, d := range bestCoordinates {
+		for _, d := range coords {
 			for _, c := range d {
 				fmt.Fprintf(outfile, "%.5f ", c)
 			}
