@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -40,4 +41,39 @@ func setLogger(logfile string) {
 	}
 	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 
+}
+
+func setOutput(output string) *os.File {
+	outF := os.Stdout
+	if output != "" {
+		var err error
+		outF, err = os.OpenFile(output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	return outF
+
+}
+
+// returns the average of a float slice
+func getAverage(sl []float64) float64 {
+	if sl == nil || len(sl) == 0 {
+		return 0
+	}
+	sum := 0.0
+	for _, v := range sl {
+		sum += v
+	}
+	return sum / float64(len(sl))
+}
+
+// returns the n-th percentile of a float slice (50 for median)
+func getPercentile(sl []float64, percentile int) float64 {
+	sort.Float64s(sl)
+	idx := int((float64(percentile) / 100.0) * float64(len(sl)))
+	if idx >= len(sl) {
+		idx = len(sl) - 1
+	}
+	return sl[idx]
 }
