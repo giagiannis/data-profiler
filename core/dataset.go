@@ -120,3 +120,30 @@ func (t DatasetTuple) String() string {
 	}
 	return fmt.Sprintf("%s", buffer.Bytes())
 }
+
+// Equals function returns true if t is equal to o
+func (t DatasetTuple) Equals(o DatasetTuple) bool {
+	for i, v := range o.Data {
+		if t.Data[i] != v {
+			return false
+		}
+	}
+	return true
+}
+
+type DatasetTuples []DatasetTuple
+
+func (slice DatasetTuples) Len() int {
+	return len(slice)
+}
+func (slice DatasetTuples) Less(i, j int) bool {
+	for k := range slice[i].Data {
+		if slice[i].Data[k] >= slice[j].Data[k] {
+			return false
+		}
+	}
+	return true
+}
+func (slice DatasetTuples) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}

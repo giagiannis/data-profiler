@@ -54,10 +54,8 @@ func main() {
 		experiment := command[4:len(command)]
 		if experiment == "accuracy" {
 			expAccuracyRun()
-		} else if experiment == "top-k" {
-			fmt.Println(experiment)
 		} else if experiment == "ordering" {
-			fmt.Println(experiment)
+			expOrderingRun()
 		}
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")

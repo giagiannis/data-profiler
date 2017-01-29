@@ -15,7 +15,7 @@ import (
 	"github.com/giagiannis/data-profiler/core"
 )
 
-type expParams struct {
+type expAccuracyParams struct {
 	mlScript    *string // script used for approximation
 	output      *string // output file path
 	repetitions *int    // number of times to repeat experiment
@@ -27,8 +27,8 @@ type expParams struct {
 	samplingRates []float64 // samplings rates to run
 }
 
-func expParseParams() *expParams {
-	params := new(expParams)
+func expAccuracyParseParams() *expAccuracyParams {
+	params := new(expAccuracyParams)
 	params.mlScript =
 		flag.String("ml", "", "ML script to use for approximation")
 	params.output =
@@ -51,6 +51,12 @@ func expParseParams() *expParams {
 
 	flag.Parse()
 	setLogger(*loger)
+	if *params.mlScript == "" || *params.output == "" || *coordsFile == "" ||
+		*scoresFile == "" || *idxFile == "" || *srString == "" {
+		fmt.Println("Options:")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
 	// sampling rates parsing
 	a := strings.Split(*srString, ",")
@@ -136,7 +142,7 @@ func expParseParams() *expParams {
 
 func expAccuracyRun() {
 	// inititializing steps
-	params := expParseParams()
+	params := expAccuracyParseParams()
 	rand.Seed(int64(time.Now().Nanosecond()))
 	output := setOutput(*params.output)
 	fmt.Fprintf(output, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
@@ -150,8 +156,25 @@ func expAccuracyRun() {
 	)
 
 	// create random permutation
-	perm := rand.Perm(len(params.coords))
-	testset := generateSet(perm, params.coords, params.scores)
+	slice := make([]int, len(params.coords))
+	for i := 0; i < len(slice); i++ {
+		slice[i] = i
+	}
+
+	testset := generateSet(slice[0:int(float64(len(slice))*1.0)], params.coords, params.scores)
+
+	executeScript := func(script, trainset, testset string) float64 {
+		cmd := exec.Command(script, trainset, testset)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Println(err)
+		}
+		val, err := strconv.ParseFloat(string(out), 64)
+		if err != nil {
+			log.Println(err)
+		}
+		return val
+	}
 
 	// execute
 	for _, sr := range params.samplingRates {
@@ -198,41 +221,4 @@ func expAccuracyRun() {
 
 // UTILS
 
-// generate set creates a CSV file containing dataset coordinates and values in
-// a comma separated format. useful for train/test set generation. Returns a
-// string corresponding to the path of the file.
-func generateSet(ids []int, coords []core.DatasetCoordinates, scores []float64) string {
-	f, err := ioutil.TempFile("/tmp", "set")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if len(coords) < 1 || len(scores) < 1 {
-		log.Fatalln("Coordinates or scores length less than one")
-	}
-	for i := range coords[0] {
-		fmt.Fprintf(f, "x%d,", i)
-	}
-	fmt.Fprintf(f, "class\n")
-	for _, v := range ids {
-		for _, c := range coords[v] {
-			fmt.Fprintf(f, "%.5f,", c)
-		}
-		fmt.Fprintf(f, "%.5f\n", scores[v])
-	}
-	f.Close()
-	return f.Name()
-}
-
-// executes regression and returns the error
-func executeScript(script, trainset, testset string) float64 {
-	cmd := exec.Command(script, trainset, testset)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-	}
-	val, err := strconv.ParseFloat(string(out), 64)
-	if err != nil {
-		log.Println(err)
-	}
-	return val
-}
+// executes the script and get model errors

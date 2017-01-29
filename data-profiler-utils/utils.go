@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/giagiannis/data-profiler/core"
 )
 
 const (
@@ -76,4 +79,59 @@ func getPercentile(sl []float64, percentile int) float64 {
 		idx = len(sl) - 1
 	}
 	return sl[idx]
+}
+
+// generate set creates a CSV file containing dataset coordinates and values in
+// a comma separated format. useful for train/test set generation. Returns a
+// string corresponding to the path of the file.
+func generateSet(ids []int, coords []core.DatasetCoordinates, scores []float64) string {
+	f, err := ioutil.TempFile("/tmp", "set")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if len(coords) < 1 || len(scores) < 1 {
+		log.Fatalln("Coordinates or scores length less than one")
+	}
+	for i := range coords[0] {
+		fmt.Fprintf(f, "x%d,", i)
+	}
+	fmt.Fprintf(f, "class\n")
+	for _, v := range ids {
+		for _, c := range coords[v] {
+			fmt.Fprintf(f, "%.5f,", c)
+		}
+		fmt.Fprintf(f, "%.5f\n", scores[v])
+	}
+	f.Close()
+	return f.Name()
+}
+
+// getRanks returns the ranks slice for a float slice
+func getRanks(a []float64) []int {
+	ranks := make([]int, len(a))
+	for i := range a {
+		for j := range a {
+			if a[j] < a[i] {
+				ranks[i] += 1
+			}
+		}
+	}
+	return ranks
+}
+
+// getKendalTau returns the kendal correlation coefficient for two slices
+// representing the ranks of each id (id -> rank)
+func getKendalTau(x, y []int) float64 {
+	c, nc, n := 0, 0, len(x)
+	for i := 0; i < len(x); i++ {
+		for j := i + 1; j < len(y); j++ {
+			val := (x[i] - x[j]) * (y[i] - y[j])
+			if val > 0 {
+				c += 1
+			} else if val < 0 {
+				nc += 1
+			}
+		}
+	}
+	return float64(c-nc) / float64(n*(n-1)/2)
 }
