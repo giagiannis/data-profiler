@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -140,19 +141,20 @@ func expAccuracyParseParams() *expAccuracyParams {
 	return params
 }
 
+type evalAppxResults struct {
+	mse, mape, mapeCorrected float64
+}
+
 func expAccuracyRun() {
 	// inititializing steps
 	params := expAccuracyParseParams()
 	rand.Seed(int64(time.Now().Nanosecond()))
 	output := setOutput(*params.output)
-	fmt.Fprintf(output, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+	fmt.Fprintln(output,
 		"sr",
-		"avg",
-		"perc-0",
-		"perc-25",
-		"perc-50",
-		"perc-75",
-		"perc-100",
+		"mse-avg", "mse-perc-0", "mse-perc-25", "mse-perc-50", "mse-perc-75", "mse-perc-100",
+		"mape-avg", "mape-perc-0", "mape-perc-25", "mape-perc-50", "mape-perc-75", "mape-perc-100",
+		"mapec-avg", "mapec-perc-0", "mapec-perc-25", "mapec-perc-50", "mapec-perc-75", "mapec-perc-100",
 	)
 
 	// create random permutation
@@ -163,38 +165,89 @@ func expAccuracyRun() {
 
 	testset := generateSet(slice[0:int(float64(len(slice))*1.0)], params.coords, params.scores)
 
-	executeScript := func(script, trainset, testset string) float64 {
+	executeScript := func(script, trainset, testset string) []float64 {
 		cmd := exec.Command(script, trainset, testset)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println(err)
 		}
-		val, err := strconv.ParseFloat(string(out), 64)
-		if err != nil {
-			log.Println(err)
+		result := make([]float64, 0)
+		for _, line := range strings.Split(string(out), "\n") {
+			val, err := strconv.ParseFloat(line, 64)
+			if err == nil {
+				result = append(result, val)
+			}
+
 		}
-		return val
+		return result
 	}
 
+	mse := func(predicted, actual []float64) float64 {
+		if len(predicted) != len(actual) {
+			log.Println("Predicted and actual values not of the same size")
+		}
+		sum := 0.0
+		for i := range predicted {
+			sum += (predicted[i] - actual[i]) * (predicted[i] - actual[i])
+		}
+		return sum / float64(len(predicted))
+	}
+
+	mape := func(predicted, actual []float64) float64 {
+		if len(predicted) != len(actual) {
+			log.Println("Predicted and actual values not of the same size")
+		}
+		sum := 0.0
+		for i := range predicted {
+			if actual[i] <= 0 {
+				log.Println("Actual value not permitted", actual[i])
+			} else {
+				sum += math.Abs(float64(actual[i]-predicted[i]) / float64(actual[i]))
+			}
+		}
+		return sum / float64(len(predicted))
+	}
+
+	mapeCorrected := func(predicted, actual []float64) float64 {
+		if len(predicted) != len(actual) {
+			log.Println("Predicted and actual values not of the same size")
+		}
+		sum := 0.0
+		for i := range predicted {
+			if actual[i] <= 0 || predicted[i] <= 0 {
+				log.Println("Actual value not permitted", actual[i])
+			} else {
+				sum += math.Abs(math.Log(predicted[i]) - math.Log(actual[i]))
+			}
+		}
+		return sum / float64(len(predicted))
+
+	}
+
+	eval := func(sr float64) *evalAppxResults {
+		perm := rand.Perm(len(params.coords))
+		trainsetIndexes := perm[0:int(float64(len(perm))*sr)]
+		trainset := generateSet(trainsetIndexes, params.coords, params.scores)
+		appxScores := executeScript(*params.mlScript, trainset, testset)
+		res := new(evalAppxResults)
+		res.mse = mse(appxScores, params.scores)
+		res.mape = mape(appxScores, params.scores)
+		res.mapeCorrected = mapeCorrected(appxScores, params.scores)
+		os.Remove(trainset)
+		return res
+	}
 	// execute
 	for _, sr := range params.samplingRates {
-		results := make([]float64, 0)
-		eval := func(sr float64) float64 {
-			perm := rand.Perm(len(params.coords))
-			trainsetIndexes := perm[0:int(float64(len(perm))*sr)]
-			trainset := generateSet(trainsetIndexes, params.coords, params.scores)
-			modelError := executeScript(*params.mlScript, trainset, testset)
-			os.Remove(trainset)
-			return modelError
-		}
-		done := make(chan float64)
+		resultsMSE, resultsMAPE, resultsMAPECorrected :=
+			make([]float64, 0), make([]float64, 0), make([]float64, 0)
+		done := make(chan *evalAppxResults)
 		slots := make(chan bool, *params.threads)
 		for i := 0; i < *params.threads; i++ {
 			slots <- true
 		}
 
 		for i := 0; i < *params.repetitions; i++ {
-			go func(done chan float64, slots chan bool, repetition int) {
+			go func(done chan *evalAppxResults, slots chan bool, repetition int) {
 				log.Printf("[thread-%d] Starting calculation for SR %.2f\n", repetition, sr)
 				<-slots
 				done <- eval(sr)
@@ -204,21 +257,38 @@ func expAccuracyRun() {
 		}
 		for i := 0; i < *params.repetitions; i++ {
 			v := <-done
-			results = append(results, v)
+			resultsMSE = append(resultsMSE, v.mse)
+			resultsMAPE = append(resultsMAPE, v.mape)
+			resultsMAPECorrected = append(resultsMAPECorrected, v.mapeCorrected)
 		}
-		fmt.Fprintf(output, "%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\n",
+		metricFormat := "%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f"
+		format := "%.5f"
+		for i := 0; i < 3; i++ {
+			format += "\t" + metricFormat
+		}
+		format += "\n"
+
+		fmt.Fprintf(output, format,
 			sr,
-			getAverage(results),
-			getPercentile(results, 0),
-			getPercentile(results, 25),
-			getPercentile(results, 50),
-			getPercentile(results, 75),
-			getPercentile(results, 100),
+			getAverage(resultsMSE),
+			getPercentile(resultsMSE, 0),
+			getPercentile(resultsMSE, 25),
+			getPercentile(resultsMSE, 50),
+			getPercentile(resultsMSE, 75),
+			getPercentile(resultsMSE, 100),
+			getAverage(resultsMAPE),
+			getPercentile(resultsMAPE, 0),
+			getPercentile(resultsMAPE, 25),
+			getPercentile(resultsMAPE, 50),
+			getPercentile(resultsMAPE, 75),
+			getPercentile(resultsMAPE, 100),
+			getAverage(resultsMAPECorrected),
+			getPercentile(resultsMAPECorrected, 0),
+			getPercentile(resultsMAPECorrected, 25),
+			getPercentile(resultsMAPECorrected, 50),
+			getPercentile(resultsMAPECorrected, 75),
+			getPercentile(resultsMAPECorrected, 100),
 		)
 	}
 	os.Remove(testset)
 }
-
-// UTILS
-
-// executes the script and get model errors

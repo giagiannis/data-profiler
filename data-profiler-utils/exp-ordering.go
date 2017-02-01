@@ -141,8 +141,9 @@ func expOrderingParseParams() *expOrderingParams {
 }
 
 type evalResults struct {
-	tau                         float64
-	top10, top25, top50, top100 float64
+	tau                                                 float64
+	top10, top25, top50                                 float64
+	top2Perc, top5Perc, top10Perc, top25Perc, top50Perc float64
 }
 
 func expOrderingRun() {
@@ -150,11 +151,17 @@ func expOrderingRun() {
 	params := expOrderingParseParams()
 	rand.Seed(int64(time.Now().Nanosecond()))
 	output := setOutput(*params.output)
-	fmt.Fprintf(output, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+	fmt.Fprintln(output,
+		//"%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		"sr", "tau-avg", "tau-perc-0", "tau-perc-25", "tau-perc-50", "tau-perc-75", "tau-perc-100",
 		"top10-avg", "top10-perc-0", "top10-perc-25", "top10-perc-50", "top10-perc-75", "top10-perc-100",
 		"top25-avg", "top25-perc-0", "top25-perc-25", "top25-perc-50", "top25-perc-75", "top25-perc-100",
 		"top50-avg", "top50-perc-0", "top50-perc-25", "top50-perc-50", "top50-perc-75", "top50-perc-100",
+		"top2Perc-avg", "top2Perc-perc-0", "top2Perc-perc-25", "top2Perc-perc-50", "top2Perc-perc-75", "top2Perc-perc-20",
+		"top5Perc-avg", "top5Perc-perc-0", "top5Perc-perc-25", "top5Perc-perc-50", "top5Perc-perc-75", "top5Perc-perc-50",
+		"top10Perc-avg", "top10Perc-perc-0", "top10Perc-perc-25", "top10Perc-perc-50", "top10Perc-perc-75", "top10Perc-perc-100",
+		"top25Perc-avg", "top25Perc-perc-0", "top25Perc-perc-25", "top25Perc-perc-50", "top25Perc-perc-75", "top25Perc-perc-100",
+		"top50Perc-avg", "top50Perc-perc-0", "top50Perc-perc-25", "top50Perc-perc-50", "top50Perc-perc-75", "top50Perc-perc-100",
 	)
 
 	slice := make([]int, len(params.coords))
@@ -197,6 +204,18 @@ func expOrderingRun() {
 		return float64(count) / float64(k)
 	}
 
+	topKPercNeeded := func(x, y []int, k int) float64 {
+		maxActualRank := -1
+		for i, rank := range x {
+			if rank < k {
+				if maxActualRank < y[i] {
+					maxActualRank = y[i]
+				}
+			}
+		}
+		return float64(maxActualRank) / float64(len(x))
+	}
+
 	eval := func(sr float64) *evalResults {
 		perm := rand.Perm(len(params.coords))
 		trainsetIndexes := perm[0:int(float64(len(perm))*sr)]
@@ -204,10 +223,15 @@ func expOrderingRun() {
 		appxScores := executeScript(*params.mlScript, trainset, testset)
 		ranksAppx, ranksScores := getRanks(appxScores), getRanks(params.scores)
 		res := new(evalResults)
+		res.tau = getKendalTau(ranksAppx, ranksScores)
 		res.top10 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.1))
 		res.top25 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.25))
 		res.top50 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.5))
-		res.tau = getKendalTau(ranksAppx, ranksScores)
+		res.top2Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.02))
+		res.top5Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.05))
+		res.top10Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.1))
+		res.top25Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.25))
+		res.top50Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.5))
 		return res
 	}
 
@@ -215,6 +239,8 @@ func expOrderingRun() {
 	for _, sr := range params.samplingRates {
 		resultsTau, resultsTop10, resultsTop25, resultsTop50 :=
 			make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)
+		resultsTop2Perc, resultsTop5Perc, resultsTop10Perc, resultsTop25Perc, resultsTop50Perc :=
+			make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)
 		done := make(chan *evalResults)
 		slots := make(chan bool, *params.threads)
 		for i := 0; i < *params.threads; i++ {
@@ -236,9 +262,20 @@ func expOrderingRun() {
 			resultsTop10 = append(resultsTop10, v.top10)
 			resultsTop25 = append(resultsTop25, v.top25)
 			resultsTop50 = append(resultsTop50, v.top50)
+			resultsTop2Perc = append(resultsTop2Perc, v.top2Perc)
+			resultsTop5Perc = append(resultsTop5Perc, v.top5Perc)
+			resultsTop10Perc = append(resultsTop10Perc, v.top10Perc)
+			resultsTop25Perc = append(resultsTop25Perc, v.top25Perc)
+			resultsTop50Perc = append(resultsTop50Perc, v.top50Perc)
 		}
+		metricFormat := "%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f"
+		format := "%.5f"
+		for i := 0; i < 9; i++ {
+			format += "\t" + metricFormat
+		}
+		format += "\n"
 		fmt.Fprintf(output,
-			"%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f\n",
+			format,
 			sr,
 			getAverage(resultsTau),
 			getPercentile(resultsTau, 0),
@@ -264,6 +301,36 @@ func expOrderingRun() {
 			getPercentile(resultsTop50, 50),
 			getPercentile(resultsTop50, 75),
 			getPercentile(resultsTop50, 100),
+			getAverage(resultsTop2Perc),
+			getPercentile(resultsTop2Perc, 0),
+			getPercentile(resultsTop2Perc, 25),
+			getPercentile(resultsTop2Perc, 50),
+			getPercentile(resultsTop2Perc, 75),
+			getPercentile(resultsTop2Perc, 100),
+			getAverage(resultsTop5Perc),
+			getPercentile(resultsTop5Perc, 0),
+			getPercentile(resultsTop5Perc, 25),
+			getPercentile(resultsTop5Perc, 50),
+			getPercentile(resultsTop5Perc, 75),
+			getPercentile(resultsTop5Perc, 100),
+			getAverage(resultsTop10Perc),
+			getPercentile(resultsTop10Perc, 0),
+			getPercentile(resultsTop10Perc, 25),
+			getPercentile(resultsTop10Perc, 50),
+			getPercentile(resultsTop10Perc, 75),
+			getPercentile(resultsTop10Perc, 100),
+			getAverage(resultsTop25Perc),
+			getPercentile(resultsTop25Perc, 0),
+			getPercentile(resultsTop25Perc, 25),
+			getPercentile(resultsTop25Perc, 50),
+			getPercentile(resultsTop25Perc, 75),
+			getPercentile(resultsTop25Perc, 100),
+			getAverage(resultsTop50Perc),
+			getPercentile(resultsTop50Perc, 0),
+			getPercentile(resultsTop50Perc, 25),
+			getPercentile(resultsTop50Perc, 50),
+			getPercentile(resultsTop50Perc, 75),
+			getPercentile(resultsTop50Perc, 100),
 		)
 	}
 	os.Remove(testset)

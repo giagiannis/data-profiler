@@ -48,10 +48,22 @@ func (md *MDScaling) Compute() error {
 	defer writer.Close()
 	log.Println("Writing distances to file", writer.Name())
 	//defer os.Remove(writer.Name())
+	maxDistance := 0.0
+	for i := 0; i < md.matrix.Capacity(); i++ {
+		for j := i + 1; j < md.matrix.Capacity(); j++ {
+			dist := SimilarityToDistance(md.matrix.Get(i, j))
+			if !math.IsInf(dist, 0) && dist > maxDistance {
+				maxDistance = dist
+			}
+		}
+	}
 	for i := 0; i < md.matrix.Capacity(); i++ {
 		for j := 0; j < md.matrix.Capacity(); j++ {
-			val := md.matrix.Get(i, j)
-			writer.WriteString(fmt.Sprintf("%.5f", SimilarityToDistance(val)))
+			dist := SimilarityToDistance(md.matrix.Get(i, j))
+			if math.IsInf(dist, 0) {
+				dist = maxDistance
+			}
+			writer.WriteString(fmt.Sprintf("%.5f", dist))
 			if j < md.matrix.Capacity()-1 {
 				writer.WriteString(",")
 			}
