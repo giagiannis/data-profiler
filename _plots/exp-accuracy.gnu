@@ -32,18 +32,21 @@ set style line 5 lt 1 pt 13 lc rgb "#aaaaaa" lw 4 ps 4
 set title "MSE vs Sampling Rate".titleComment
 set ylabel "MSE"
 set output outputFile
-plot inputFile u 1:2 w lp t system("basename ".inputFile) ls 1
+#plot inputFile u 1:2 w lp t system("basename ".inputFile) ls 1
+plot for [i=1:words(inputFile)] word(inputFile,i) u 1:2 w lp t system("basename ".word(inputFile,i)) ls i
 system("epstopdf --outfile=".outputFile."-mse.pdf ".outputFile." && rm ".outputFile)
 
 
 set title "MAPE vs Sampling Rate".titleComment
 set ylabel "MAPE"
 set output outputFile
-plot inputFile u 1:8 w lp t system("basename ".inputFile) ls 1
+#plot inputFile u 1:8 w lp t system("basename ".inputFile) ls 1
+plot for [i=1:words(inputFile)] word(inputFile,i) u 1:8 w lp t system("basename ".word(inputFile,i)) ls i
 system("epstopdf --outfile=".outputFile."-mape.pdf ".outputFile." && rm ".outputFile)
 
 set title "MAPE-log vs Sampling Rate".titleComment
 set ylabel "MAPE-log"
 set output outputFile
-plot inputFile u 1:14 w lp t system("basename ".inputFile) ls 1
+#plot inputFile u 1:14 w lp t system("basename ".inputFile) ls 1
+plot for [i=1:words(inputFile)] word(inputFile,i) u 1:14 w lp t system("basename ".word(inputFile,i)) ls i
 system("epstopdf --outfile=".outputFile."-mape-log.pdf ".outputFile." && rm ".outputFile)
