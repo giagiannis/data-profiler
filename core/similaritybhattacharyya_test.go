@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"math"
 	"os"
 	"testing"
 )
@@ -56,8 +57,9 @@ func TestKdTree(t *testing.T) {
 		t.FailNow()
 	}
 	kd := NewKDTreePartition(dataset.Data())
-	kd.Prune(kd.Height() / 5)
+	kd.Prune(kd.Height() - 2)
 	ids := kd.GetLeafIndex(dataset.Data())
+	t.Log(len(ids))
 	sum := 0
 	for _, v := range ids {
 		sum += v
@@ -68,6 +70,32 @@ func TestKdTree(t *testing.T) {
 	}
 	os.Remove(dataset.Path())
 
+}
+
+func TestKdPruning(t *testing.T) {
+	dataset := createPoolBasedDatasets(20000, 1, 5)[0]
+	err := dataset.ReadFromFile()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	height := int(math.Log2(float64(len(dataset.Data())))) + 1
+	for i := 0; i < height; i++ {
+		kd := NewKDTreePartition(dataset.Data())
+		if i < kd.Height() {
+			kd.Prune(kd.Height() - i)
+			ids := kd.GetLeafIndex(dataset.Data())
+			sum := .0
+			for _, v := range ids {
+				sum += math.Sqrt(float64(v * v))
+			}
+			if sum != math.Sqrt(float64(len(dataset.Data())*len(dataset.Data()))) {
+				t.FailNow()
+			}
+		}
+	}
+
+	os.Remove(dataset.Path())
 }
 
 func TestBhattacharyyaComputeAppxCnt(t *testing.T) {

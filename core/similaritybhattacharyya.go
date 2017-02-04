@@ -390,14 +390,17 @@ func (r *kdTreeNode) MinHeight() int {
 }
 
 func (r *kdTreeNode) Prune(level int) {
-	minHeight := r.MinHeight()
-	if level > minHeight {
-		log.Println("Cannot prune the tree with more levels than minHeight ", minHeight)
-		return
-	}
+	//minHeight := r.MinHeight()
+	//if level > minHeight {
+	//	log.Println("Cannot prune the tree with more levels than minHeight ", minHeight)
+	//	return
+	//}
 	target := level - 1
 	var dfs func(*kdTreeNode, int)
 	dfs = func(node *kdTreeNode, level int) {
+		if node == nil {
+			return
+		}
 		if level == target {
 			node.left = nil
 			node.right = nil
