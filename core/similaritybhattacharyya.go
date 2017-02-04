@@ -413,20 +413,21 @@ func (r *kdTreeNode) Prune(level int) {
 }
 
 func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
-	var dfs func(*kdTreeNode, int, DatasetTuple) int
-	dfs = func(node *kdTreeNode, id int, tup DatasetTuple) int {
+	treeHeight := r.Height()
+	var dfs func(*kdTreeNode, int, int, DatasetTuple) int
+	dfs = func(node *kdTreeNode, id, level int, tup DatasetTuple) int {
 		if node == nil { // leaf
-			return id
+			return id << uint(treeHeight-level)
 		}
 		if tup.Data[node.dim] <= node.value {
-			return dfs(node.left, (id<<1)|0, tup)
+			return dfs(node.left, (id<<1)|0, level+1, tup)
 		} else {
-			return dfs(node.right, (id<<1)|1, tup)
+			return dfs(node.right, (id<<1)|1, level+1, tup)
 		}
 	}
-	results := make([]int, 2<<uint(r.Height()-1))
+	results := make([]int, 2<<uint(treeHeight-1))
 	for _, tup := range tuples {
-		results[dfs(r, 0, tup)] += 1
+		results[dfs(r, 0, 0, tup)] += 1
 	}
 	return results
 }
