@@ -122,7 +122,7 @@ func NewDatasetSimilarityEstimator(
 		a.PopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
-		a.normDegree = 1
+		a.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
 		return a
 	}
 	return nil

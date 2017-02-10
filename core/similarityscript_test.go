@@ -137,7 +137,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
 	est := *new(ScriptSimilarityEstimator)
 	est.datasets = datasets
-	est.normDegree = 2
+	est.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
 	est.analysisScript = ANALYSIS_SCRIPT
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
@@ -164,7 +164,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 		t.Fail()
 	}
 
-	if est.normDegree != newEst.normDegree {
+	if est.simType != newEst.simType {
 		t.Log("norm degree differs")
 		t.Fail()
 	}
@@ -205,4 +205,33 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 		t.Fail()
 	}
 
+}
+
+func TestScriptSimilarityCosine(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 20, 3)
+	s := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	s.Configure(map[string]string{
+		"script":      ANALYSIS_SCRIPT,
+		"concurrency": "1",
+		"type":        "cosine",
+	})
+	err := s.Compute()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	mat := s.GetSimilarities()
+	for i := range datasets {
+		for j := range datasets {
+			if mat.Get(i, j) < 0.0 || mat.Get(i, j) > 1.0 {
+				t.Logf("Cosine Similarity out of bounds between [%d, %d] -> %.3f\n", i, j, mat.Get(i, j))
+				//				t.FailNow()
+			}
+		}
+	}
+
+	for _, f := range datasets {
+		os.Remove(f.Path())
+	}
 }

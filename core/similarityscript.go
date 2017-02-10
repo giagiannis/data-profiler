@@ -17,7 +17,7 @@ type ScriptSimilarityEstimator struct {
 	analysisScript string                            // the analysis script to be executed
 	datasets       []*Dataset                        // the input datasets
 	concurrency    int                               // max number of threads to run in parallel
-	normDegree     int                               // defines the degree of the norm
+	simType        ScriptSimilarityEstimatorType     // similarity type - cosine, manhattan, euclidean
 	popPolicy      DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
 
 	similarities       *DatasetSimilarities // the similarities struct
@@ -25,14 +25,18 @@ type ScriptSimilarityEstimator struct {
 	datasetCoordinates [][]float64          // holds the dataset coordinates
 }
 
+type ScriptSimilarityEstimatorType uint8
+
+const (
+	SCRIPT_SIMILARITY_TYPE_MANHATTAN ScriptSimilarityEstimatorType = iota
+	SCRIPT_SIMILARITY_TYPE_EUCLIDEAN ScriptSimilarityEstimatorType = iota + 1
+	SCRIPT_SIMILARITY_TYPE_COSINE    ScriptSimilarityEstimatorType = iota + 2
+)
+
 func (s *ScriptSimilarityEstimator) Compute() error {
 	if s.analysisScript == "" {
 		log.Println("Analysis script not defined - exiting")
 		return errors.New("Analysis script not defined")
-	}
-	if s.normDegree < 1 {
-		log.Println("Cannot estimate a norm with degree lower than one")
-		return errors.New("Norm degree less than one")
 	}
 
 	// execute analysis for each dataset
@@ -100,11 +104,21 @@ func (e *ScriptSimilarityEstimator) Similarity(a, b *Dataset) float64 {
 	} else {
 		coordsB = e.analyzeDataset(b.Path())
 	}
-	val, err := e.norm(coordsA, coordsB)
+	if e.simType == SCRIPT_SIMILARITY_TYPE_COSINE {
+		val, err := e.cosine(coordsA, coordsB)
+		if err != nil {
+			log.Println(err)
+		}
+		return val
+	}
+	normDegree := 2 // default is EUCLIDEAN distance
+	if e.simType == SCRIPT_SIMILARITY_TYPE_MANHATTAN {
+		normDegree = 1
+	}
+	val, err := e.norm(coordsA, coordsB, normDegree)
 	if err != nil {
 		log.Println(err)
 	}
-
 	return DistanceToSimilarity(val)
 }
 
@@ -128,12 +142,15 @@ func (s *ScriptSimilarityEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["script"]; ok {
 		s.analysisScript = val
 	}
-	if val, ok := conf["norm"]; ok {
-		conv, err := strconv.ParseInt(val, 10, 32)
-		if err != nil {
-			log.Println(err)
+	if val, ok := conf["type"]; ok {
+		if val == "cosine" {
+			s.simType = SCRIPT_SIMILARITY_TYPE_COSINE
+		} else if val == "manhattan" {
+			s.simType = SCRIPT_SIMILARITY_TYPE_MANHATTAN
+		} else if val == "euclidean" {
+			s.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
 		} else {
-			s.normDegree = int(conv)
+			log.Println("Similarity Type not known, valid values: [cosine manhattan euclidean]")
 		}
 	}
 
@@ -143,7 +160,7 @@ func (s *ScriptSimilarityEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max number of threads to run in parallel",
 		"script":      "path of the analysis script to be executed",
-		"norm":        "the degree of the norm to be used among datasets",
+		"type":        "the type of the similarity - one of:  [cosine manhattan euclidean]",
 	}
 }
 
@@ -155,7 +172,7 @@ func (e *ScriptSimilarityEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_SCRIPT)))
 	buffer.Write(getBytesInt(e.concurrency))
-	buffer.Write(getBytesInt(e.normDegree))
+	buffer.Write(getBytesInt(int(e.simType)))
 	buffer.WriteString(e.analysisScript + "\n")
 
 	pol := e.popPolicy.Serialize()
@@ -192,7 +209,7 @@ func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
 	buffer.Read(tempInit)
 	e.concurrency = getIntBytes(tempInit)
 	buffer.Read(tempInit)
-	e.normDegree = getIntBytes(tempInit)
+	e.simType = ScriptSimilarityEstimatorType(getIntBytes(tempInit))
 	line, _ := buffer.ReadString('\n')
 	e.analysisScript = strings.TrimSpace(line)
 
@@ -275,28 +292,49 @@ func (s *ScriptSimilarityEstimator) analyzeDataset(path string) []float64 {
 }
 
 // norm function calculates the norm between two float slices
-func (s *ScriptSimilarityEstimator) norm(a, b []float64) (float64, error) {
+func (s *ScriptSimilarityEstimator) norm(a, b []float64, normDegree int) (float64, error) {
 	if len(a) != len(b) {
-		return -1, errors.New("Arrays have different sizes")
+		return -1, errors.New("arrays have different sizes")
 	}
 	sum := 0.0
 	for i := range a {
 		dif := math.Abs(a[i] - b[i])
-		sum += math.Pow(dif, float64(s.normDegree))
+		sum += math.Pow(dif, float64(normDegree))
 	}
-	return math.Pow(sum, 1.0/float64(s.normDegree)), nil
+	return math.Pow(sum, 1.0/float64(normDegree)), nil
+}
+
+// cosine calculates the cosine similarity between two vectors
+func (s *ScriptSimilarityEstimator) cosine(a, b []float64) (float64, error) {
+	if len(a) != len(b) {
+		return -1, errors.New("arrays have different sizes")
+	}
+	nomin, sumA, sumB := 0.0, 0.0, 0.0
+	for i := range a {
+		nomin += a[i] * b[i]
+		sumA += a[i] * a[i]
+		sumB += b[i] * b[i]
+	}
+	denom := math.Sqrt(sumA) * math.Sqrt(sumB)
+	if denom == 0.0 {
+		return -1, errors.New("Zero denominator to cosine similarity")
+	}
+	return nomin / denom, nil
 }
 
 func (s *ScriptSimilarityEstimator) computeLine(start, line int) {
-	a := s.datasets[line].Path()
+	a := s.datasets[line]
 	for j := start; j < len(s.datasets); j++ {
-		b := s.datasets[j].Path()
-		v, err := s.norm(s.datasetCoordinates[line], s.datasetCoordinates[j])
+		b := s.datasets[j]
+		//v, err := s.norm(s.datasetCoordinates[line], s.datasetCoordinates[j])
 		// converting distance to similarity
-		sim := DistanceToSimilarity(v)
-		if err != nil {
-			log.Panic(err)
-		}
-		s.similarities.Set(s.inverseIndex[a], s.inverseIndex[b], sim)
+		//		sim := DistanceToSimilarity(v)
+		//		if err != nil {
+		//			log.Panic(err)
+		//		}
+		s.similarities.Set(
+			s.inverseIndex[a.Path()],
+			s.inverseIndex[b.Path()],
+			s.Similarity(a, b))
 	}
 }

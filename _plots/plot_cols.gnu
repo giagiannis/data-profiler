@@ -9,7 +9,12 @@ if(!exists("inputFile") || !exists("outputFile") || !exists("cols") || !exists("
 
 set xlabel xtitle
 set ylabel ytitle
-set title ytitle." vs ".xtitle 
+
+if (exists("titleComment")) {
+	set title ytitle." vs ".xtitle." (".titleComment.")" 
+} else {
+	set title ytitle." vs ".xtitle 
+}
 
 set terminal postscript eps size 7,5.0 enhanced color font 'Arial,34'
 set output outputFile
