@@ -26,7 +26,7 @@ for (i in 1:(cols*cols)) {
 		}
 	}
 	cat((as.numeric(variances[(i-1)%/%cols + 1])*fit$rotation[i]*mul))
-	cat(" ")
+	cat("\t")
 }
 
 

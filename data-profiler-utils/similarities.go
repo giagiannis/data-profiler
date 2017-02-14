@@ -53,7 +53,7 @@ func similaritiesParseParams() *similaritiesParams {
 			for k, v := range parseOptions((*popPolicy)[idx+1 : len(*popPolicy)]) {
 				val, err := strconv.ParseFloat(v, 64)
 				if err != nil {
-					log.Println(nil)
+					log.Println("Error parsing population policy")
 					os.Exit(1)
 				}
 				params.populationPolicy.Parameters[k] = val
@@ -117,7 +117,6 @@ func similaritiesRun() {
 	defer outfile.Close()
 	// serializing similarity matrix
 	outfile.Write(est.GetSimilarities().Serialize())
-	log.Println("\n" + est.GetSimilarities().String())
 
 	idxFile, er := os.OpenFile(*params.output+".idx", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	defer idxFile.Close()

@@ -23,7 +23,7 @@ EPSILON <- 1e-10
 #		}
 #		cat("\n")
 #}
-
+#
 fit <- cmdscale(d, k=k, eig=TRUE)
 cat(fit$GOF[2])
 cat("\n")
@@ -34,4 +34,3 @@ for(i in 1:nrow(fit$points)) {
 		}
 		cat("\n")
 }
-

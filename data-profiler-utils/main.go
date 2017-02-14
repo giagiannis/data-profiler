@@ -17,8 +17,10 @@ var utilsDescription = map[string]string{
 
 	// experiments
 	"exp-accuracy": "trains an ML model and prints the error",
-	"exp-top-k":    "finds the top-k objects and compares them with the original",
 	"exp-ordering": "compares the ordering of the datasets to the original ordering",
+
+	// utils
+	"print-utils": "utilility to print objects in binary form",
 }
 
 func main() {
@@ -57,6 +59,8 @@ func main() {
 		} else if experiment == "ordering" {
 			expOrderingRun()
 		}
+	} else if command == "print-utils" {
+		printUtilsRun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}

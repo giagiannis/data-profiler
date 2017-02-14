@@ -281,13 +281,15 @@ func (s *ScriptSimilarityEstimator) analyzeDataset(path string) []float64 {
 		log.Println(err)
 	}
 	results := make([]float64, 0)
-	for _, sv := range strings.Split(string(out), " ") {
-		conv, err := strconv.ParseFloat(sv, 64)
+	for _, sv := range strings.Split(string(out), "\t") {
+		conv, err := strconv.ParseFloat(strings.TrimSpace((sv)), 64)
 		if err == nil {
 			results = append(results, conv)
+		} else {
+			log.Println(err)
 		}
 	}
-	log.Println(path, ":", results)
+	log.Println("Tuple read:", results)
 	return results
 }
 
