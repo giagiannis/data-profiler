@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -134,4 +135,28 @@ func getKendalTau(x, y []int) float64 {
 		}
 	}
 	return float64(c-nc) / float64(n*(n-1)/2)
+}
+
+// getPearsonRho returns the Pearson correlation coefficient for two slices
+// representing the ranks of each id (id -> rank)
+func getPearsonRho(x, y []int) float64 {
+	meanA, meanB := 0.0, 0.0
+	for i := range x {
+		meanA += float64(x[i])
+		meanB += float64(y[i])
+	}
+	meanA = meanA / float64(len(x))
+	meanB = meanB / float64(len(y))
+	nomin, denom1, denom2 := 0.0, 0.0, 0.0
+	for i := range x {
+		xC, yC := float64(x[i])-meanA, float64(y[i])-meanB
+		nomin += xC * yC
+		denom1 += xC * xC
+		denom2 += yC * yC
+	}
+	denom := math.Sqrt(denom1 * denom2)
+	if denom == 0 {
+		return 0
+	}
+	return nomin / denom
 }

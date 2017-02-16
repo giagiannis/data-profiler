@@ -141,7 +141,7 @@ func expOrderingParseParams() *expOrderingParams {
 }
 
 type evalResults struct {
-	tau                                                 float64
+	tau, rho                                            float64
 	top10, top25, top50                                 float64
 	top2Perc, top5Perc, top10Perc, top25Perc, top50Perc float64
 }
@@ -162,6 +162,7 @@ func expOrderingRun() {
 		"top10Perc-avg", "top10Perc-perc-0", "top10Perc-perc-25", "top10Perc-perc-50", "top10Perc-perc-75", "top10Perc-perc-100",
 		"top25Perc-avg", "top25Perc-perc-0", "top25Perc-perc-25", "top25Perc-perc-50", "top25Perc-perc-75", "top25Perc-perc-100",
 		"top50Perc-avg", "top50Perc-perc-0", "top50Perc-perc-25", "top50Perc-perc-50", "top50Perc-perc-75", "top50Perc-perc-100",
+		"rho-avg", "rho-perc-0", "rho-perc-25", "rho-perc-50", "rho-perc-75", "rho-perc-100",
 	)
 
 	slice := make([]int, len(params.coords))
@@ -224,6 +225,7 @@ func expOrderingRun() {
 		ranksAppx, ranksScores := getRanks(appxScores), getRanks(params.scores)
 		res := new(evalResults)
 		res.tau = getKendalTau(ranksAppx, ranksScores)
+		res.rho = getPearsonRho(ranksAppx, ranksScores)
 		res.top10 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.1))
 		res.top25 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.25))
 		res.top50 = topKCommon(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.5))
@@ -237,8 +239,8 @@ func expOrderingRun() {
 
 	// execute
 	for _, sr := range params.samplingRates {
-		resultsTau, resultsTop10, resultsTop25, resultsTop50 :=
-			make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)
+		resultsRho, resultsTau, resultsTop10, resultsTop25, resultsTop50 :=
+			make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)
 		resultsTop2Perc, resultsTop5Perc, resultsTop10Perc, resultsTop25Perc, resultsTop50Perc :=
 			make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0), make([]float64, 0)
 		done := make(chan *evalResults)
@@ -259,6 +261,7 @@ func expOrderingRun() {
 		for i := 0; i < *params.repetitions; i++ {
 			v := <-done
 			resultsTau = append(resultsTau, v.tau)
+			resultsRho = append(resultsRho, v.rho)
 			resultsTop10 = append(resultsTop10, v.top10)
 			resultsTop25 = append(resultsTop25, v.top25)
 			resultsTop50 = append(resultsTop50, v.top50)
@@ -331,6 +334,12 @@ func expOrderingRun() {
 			getPercentile(resultsTop50Perc, 50),
 			getPercentile(resultsTop50Perc, 75),
 			getPercentile(resultsTop50Perc, 100),
+			getAverage(resultsRho),
+			getPercentile(resultsRho, 0),
+			getPercentile(resultsRho, 25),
+			getPercentile(resultsRho, 50),
+			getPercentile(resultsRho, 75),
+			getPercentile(resultsRho, 100),
 		)
 	}
 	os.Remove(testset)
