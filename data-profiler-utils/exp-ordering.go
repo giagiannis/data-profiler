@@ -273,7 +273,7 @@ func expOrderingRun() {
 		}
 		metricFormat := "%.5f\t%.5f\t%.5f\t%.5f\t%.5f\t%.5f"
 		format := "%.5f"
-		for i := 0; i < 9; i++ {
+		for i := 0; i < 10; i++ {
 			format += "\t" + metricFormat
 		}
 		format += "\n"
