@@ -51,5 +51,6 @@ system("epstopdf --outfile=".outputFile."-topk-perc.pdf ".outputFile." && rm ".o
 
 set ylabel "Pearson {/Symbol r}"
 set title "Pearson {/Symbol r} vs Sampling Rate".titleComment
+set output outputFile
 plot inputFile u 1:56 w lp t system("basename ".inputFile) ls 1
 system("epstopdf --outfile=".outputFile."-rho.pdf ".outputFile." && rm ".outputFile)
