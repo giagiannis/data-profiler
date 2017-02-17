@@ -234,6 +234,7 @@ func expOrderingRun() {
 		res.top10Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.1))
 		res.top25Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.25))
 		res.top50Perc = topKPercNeeded(ranksAppx, ranksScores, int(float64(len(ranksAppx))*0.5))
+		os.Remove(trainset)
 		return res
 	}
 
