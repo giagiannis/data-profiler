@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	optsDelimiter      = ","
-	kvDelimiter        = "="
-	TESTSET_PERCENTAGE = 0.1
+	optsDelimiter = ","
+	kvDelimiter   = "="
 )
 
 func parseOptions(optString string) map[string]string {

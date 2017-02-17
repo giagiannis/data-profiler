@@ -170,7 +170,7 @@ func expOrderingRun() {
 		slice[i] = i
 	}
 
-	testset := generateSet(slice[0:int(float64(len(slice))*TESTSET_PERCENTAGE)], params.coords, params.scores)
+	testset := generateSet(slice, params.coords, params.scores)
 
 	executeScript := func(script, trainset, testset string) []float64 {
 		cmd := exec.Command(script, trainset, testset)
