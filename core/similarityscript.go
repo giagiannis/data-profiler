@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Script estimator utilizes a script to analyze the data based on some external
@@ -19,6 +20,7 @@ type ScriptSimilarityEstimator struct {
 	concurrency    int                               // max number of threads to run in parallel
 	simType        ScriptSimilarityEstimatorType     // similarity type - cosine, manhattan, euclidean
 	popPolicy      DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+	duration       float64
 
 	similarities       *DatasetSimilarities // the similarities struct
 	inverseIndex       map[string]int       // inverse index that maps datasets to ints
@@ -43,6 +45,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 	log.Println("Analyzing datasets")
 	s.datasetCoordinates = s.analyzeDatasets()
 
+	start := time.Now()
 	// compare the analysis outcomes
 	log.Println("Calculating similarities")
 	s.similarities = NewDatasetSimilarities(len(s.datasets))
@@ -89,7 +92,11 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 			}
 		}
 	}
+	s.duration = time.Since(start).Seconds()
 	return nil
+}
+func (e *ScriptSimilarityEstimator) Duration() float64 {
+	return e.duration
 }
 
 func (e *ScriptSimilarityEstimator) Similarity(a, b *Dataset) float64 {

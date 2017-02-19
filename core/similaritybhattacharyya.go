@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type BhattacharyyaEstimator struct {
@@ -17,6 +18,7 @@ type BhattacharyyaEstimator struct {
 	concurrency       int                               // the max number of threads that run in parallel
 	kdTreeScaleFactor float64                           // determines the height of the kd tree to be used
 	popPolicy         DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+	duration          float64                           // holds the duration of the calculation
 
 	similarities    *DatasetSimilarities // the similarities struct
 	kdTree          *kdTreeNode          // kd tree, utilized for dataset partitioning
@@ -40,6 +42,7 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		d.ReadFromFile()
 	}
 
+	start := time.Now()
 	log.Println("Estimating a KD-tree partition")
 	e.kdTree = NewKDTreePartition(e.datasets[0].Data())
 	oldHeight := e.kdTree.Height()
@@ -94,7 +97,13 @@ func (e *BhattacharyyaEstimator) Compute() error {
 			}
 		}
 	}
+	e.duration = time.Since(start).Seconds()
 	return nil
+}
+
+// Duration returns the duration of the computation
+func (e *BhattacharyyaEstimator) Duration() float64 {
+	return e.duration
 }
 
 func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {

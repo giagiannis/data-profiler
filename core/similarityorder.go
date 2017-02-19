@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // OrderEstimator estimates the similarity between two different datasets based
@@ -16,6 +17,7 @@ type OrderEstimator struct {
 	datasets    []*Dataset                        // the slice of datasets
 	concurrency int                               // max threads running in parallel
 	popPolicy   DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+	duration    float64
 
 	similarities *DatasetSimilarities // holds the similarities
 }
@@ -32,6 +34,7 @@ func (e *OrderEstimator) Compute() error {
 		d.ReadFromFile()
 	}
 
+	start := time.Now()
 	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
 		e.similarities.IndexDisabled(true) // I don't need the index
 		log.Printf("Starting order-based similarity computation (%d threads)", e.concurrency)
@@ -73,8 +76,13 @@ func (e *OrderEstimator) Compute() error {
 
 		}
 	}
+	e.duration = time.Since(start).Seconds()
 
 	return nil
+}
+
+func (e *OrderEstimator) Duration() float64 {
+	return e.duration
 }
 
 // returns a slice containing the ordering of the tuples

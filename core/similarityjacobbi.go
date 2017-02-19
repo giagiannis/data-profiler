@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // JacobbiEstimator estimates the Jacobbi coefficients between the different
@@ -16,6 +17,7 @@ type JacobbiEstimator struct {
 	datasets    []*Dataset                        // the slice of datasets
 	concurrency int                               // max threads running in parallel
 	popPolicy   DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
+	duration    float64
 
 	similarities *DatasetSimilarities // holds the similarities
 }
@@ -31,6 +33,8 @@ func (e *JacobbiEstimator) Compute() error {
 	for _, d := range e.datasets {
 		d.ReadFromFile()
 	}
+
+	start := time.Now()
 	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
 		e.similarities.IndexDisabled(true) // I don't need the index
 		log.Printf("Starting Jacobbi computation (%d threads)", e.concurrency)
@@ -72,8 +76,13 @@ func (e *JacobbiEstimator) Compute() error {
 
 		}
 	}
+	e.duration = time.Since(start).Seconds()
 
 	return nil
+}
+
+func (e *JacobbiEstimator) Duration() float64 {
+	return e.duration
 }
 func (e *JacobbiEstimator) Similarity(a, b *Dataset) float64 {
 	inter := len(DatasetsIntersection(a, b))

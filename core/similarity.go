@@ -21,6 +21,7 @@ type DatasetSimilarityEstimator interface {
 	PopulationPolicy(DatasetSimilarityPopulationPolicy) // sets the population policy for the estimator
 	Serialize() []byte                                  // returns a serialized esimator object
 	Deserialize([]byte)                                 // instantiates an estimator from a serialized object
+	Duration() float64                                  // returns the seconds needed to execute the computation
 }
 
 type DatasetSimilarityEstimatorType uint
