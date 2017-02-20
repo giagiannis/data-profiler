@@ -160,3 +160,11 @@ func getPearsonRho(x, y []int) float64 {
 	}
 	return nomin / denom
 }
+
+func getDistance(a, b []float64) float64 {
+	sum := 0.0
+	for i := range a {
+		sum += (a[i] - b[i]) * (a[i] - b[i])
+	}
+	return math.Sqrt(sum)
+}

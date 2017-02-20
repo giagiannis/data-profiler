@@ -43,7 +43,9 @@ func NewOnlineIndexer(estimator DatasetSimilarityEstimator,
 // DatasetsToCompare is a setter method to determine the number of datasets
 // that will be utilized for the assigment of coordinates
 func (o *OnlineIndexer) DatasetsToCompare(datasets int) {
-	o.datasetsToCompare = datasets
+	if datasets > 0 {
+		o.datasetsToCompare = datasets
+	}
 }
 
 // Calculate method is responsible to calculate the coordinates of the specified
@@ -102,12 +104,11 @@ func (o *OnlineIndexer) Calculate(dataset *Dataset) (DatasetCoordinates, float64
 // returns the stress factor (the difference between the actual and the calculated
 // distances
 func (o *OnlineIndexer) stress(actual, calculated []float64) float64 {
-	sum1, sum2 := 0.0, 0.0
+	sum1 := 0.0
 	for i := range actual {
 		sum1 += (actual[i] - calculated[i]) * (actual[i] - calculated[i])
-		sum2 += actual[i] * actual[i]
 	}
-	return math.Sqrt(sum1 / sum2)
+	return math.Sqrt(sum1)
 }
 
 // solveQuadSystem solves the quadratic polynomial system in order to identify

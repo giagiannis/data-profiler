@@ -17,7 +17,7 @@ stress <- function(x) {
 	for(i in 1:nrow(coords))  {
 			y[i] <- sum(sqrt(sum((x-coords[i,])^2)) - distances[i])
 	}
-	sqrt(sum(y^2)/sum(distances^2))
+	sqrt(sum(y^2))
 }
 
 lower <- numeric(ncol(coords))
@@ -25,7 +25,7 @@ for(i in 1:ncol(coords)) lower[i] <- min(coords)-max(distances)
 upper <- numeric(ncol(coords))
 for(i in 1:ncol(coords)) upper[i] <- max(coords)+max(distances)
 
-sa <- GenSA(fn=stress, lower=lower, upper=upper)
+sa <- GenSA(fn=stress, lower=lower, upper=upper, control=list(max.time=1))
 cat(sa$par, sep=" ")
 cat("\n")
 cat(sa$value)

@@ -16,8 +16,9 @@ var utilsDescription = map[string]string{
 	"mds":           "executes Multidimensional Scaling to a similarity matrix",
 
 	// experiments
-	"exp-accuracy": "trains an ML model and prints the error",
-	"exp-ordering": "compares the ordering of the datasets to the original ordering",
+	"exp-accuracy":       "trains an ML model and prints the error",
+	"exp-ordering":       "compares the ordering of the datasets to the original ordering",
+	"exp-online-indexer": "executes the online indexer experiment",
 
 	// utils
 	"print-utils": "utilility to print objects in binary form",
@@ -58,6 +59,8 @@ func main() {
 			expAccuracyRun()
 		} else if experiment == "ordering" {
 			expOrderingRun()
+		} else if experiment == "online-indexer" {
+			expOnlineIndexerRun()
 		}
 	} else if command == "print-utils" {
 		printUtilsRun()
