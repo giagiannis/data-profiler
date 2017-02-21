@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 )
 
 var utilsDescription = map[string]string{
@@ -26,6 +28,7 @@ var utilsDescription = map[string]string{
 
 func main() {
 	// consume the first command
+	rand.Seed(int64(time.Now().Nanosecond()))
 	if len(os.Args) < 2 || os.Args[1] == "help" {
 		fmt.Fprintf(os.Stderr, "Usage: %s [command]\n", os.Args[0])
 		fmt.Fprintln(os.Stderr, "List of commands:")
