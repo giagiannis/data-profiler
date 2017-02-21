@@ -117,7 +117,7 @@ func expOnlineIndexerRun() {
 			coord, stress, err := params.indexer.Calculate(d)
 			if err == nil {
 				params.coords = append(params.coords, coord)
-				initialStress += stress
+				initialStress = math.Sqrt(initialStress*initialStress + stress*stress)
 				log.Println("Results:", coord, stress)
 				log.Println("Current total stress:", initialStress)
 			} else {
