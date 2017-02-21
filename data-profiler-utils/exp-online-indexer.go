@@ -132,7 +132,7 @@ func expOnlineIndexerRun() {
 
 		for i := range params.coords {
 			for j := range params.coords[i] {
-				fmt.Fprintf(f, "%.5f\t", params.coords[i][j])
+				fmt.Fprintf(f, "%.5f ", params.coords[i][j])
 			}
 			fmt.Fprintf(f, "\n")
 		}
