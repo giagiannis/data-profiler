@@ -125,6 +125,11 @@ func expOnlineIndexerRun() {
 			}
 		}
 		f := setOutput(*params.outputCoords)
+		for i := 0; i < len(params.coords[0]); i++ {
+			fmt.Fprintf(f, "x_%d ", i+1)
+		}
+		fmt.Fprintf(f, "\n")
+
 		for i := range params.coords {
 			for j := range params.coords[i] {
 				fmt.Fprintf(f, "%.5f\t", params.coords[i][j])
@@ -132,6 +137,7 @@ func expOnlineIndexerRun() {
 			fmt.Fprintf(f, "\n")
 		}
 		log.Println("Final total stress", initialStress)
+		f.Close()
 	}
 
 }

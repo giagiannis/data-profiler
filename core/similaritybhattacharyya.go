@@ -303,6 +303,7 @@ type kdTreeNode struct {
 }
 
 func (r *kdTreeNode) Serialize() []byte {
+	// FIXME: Serialize and Deserialize do not work for partial trees
 	var countNodes func(*kdTreeNode) int
 	countNodes = func(node *kdTreeNode) int {
 		if node == nil {
@@ -336,6 +337,7 @@ func (r *kdTreeNode) Serialize() []byte {
 }
 
 func (r *kdTreeNode) Deserialize(b []byte) {
+	// FIXME: Serialize and Deserialize do not work for partial trees
 	dataSize := 8 + 4
 	var deserialize func(int) *kdTreeNode
 	deserialize = func(offset int) *kdTreeNode {
