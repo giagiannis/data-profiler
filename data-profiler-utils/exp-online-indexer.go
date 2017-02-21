@@ -111,14 +111,15 @@ func expOnlineIndexerParseParams() *expOnlineIndexerParams {
 func expOnlineIndexerRun() {
 	params := expOnlineIndexerParseParams()
 	initialStress := getTotalStress(params.sm, params.coords)
-	log.Println("Initial stress:", initialStress)
+	log.Println("Initial total stress:", initialStress)
 	if len(params.datasets) > 0 {
 		for _, d := range params.datasets {
 			coord, stress, err := params.indexer.Calculate(d)
 			if err == nil {
 				params.coords = append(params.coords, coord)
 				initialStress += stress
-				log.Println(coord, stress)
+				log.Println("Results:", coord, stress)
+				log.Println("Current total stress:", initialStress)
 			} else {
 				log.Println(err)
 			}
@@ -130,7 +131,7 @@ func expOnlineIndexerRun() {
 			}
 			fmt.Fprintf(f, "\n")
 		}
-		log.Println("Final stress", initialStress)
+		log.Println("Final total stress", initialStress)
 	}
 
 }
