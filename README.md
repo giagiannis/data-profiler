@@ -1,23 +1,19 @@
 data-profiler ![travis-status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master)
 =============
-TODO: add content
+data-profiler is a project used to perform data profiling in an operator agnostic way.
 
 Installation
 ------------
-TODO: add content
+```bash
+git clone https://github.com/giagiannis/data-profiler
+cd data-profiler
+go install ./...
+```
 
 Usage
 -----
-TODO: add content
-
-History
--------
-TODO: add content
-
-Credits
--------
-TODO: add content
+use the data-profiler-utils binary to use this project
 
 License
 -------
-Please read LICENSE file
+Apache License v2.0 (LICENSE)
