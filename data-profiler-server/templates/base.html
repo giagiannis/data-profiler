@@ -1,0 +1,25 @@
+<html>
+		<head>
+				<title>{{ .Title }}</title>
+				<link href='/static/style.css' rel='stylesheet' type='text/css'/>
+		</head>
+		<body>
+				<nav class="navbar">
+						<a href='/datasets/' class="navbar link">Datasets</a>
+						<a href='/sm/' class="navbar link">SM</a>
+						<a href='/mds/' class="navbar link">MDS</a>
+						<a href='/about/' class="navbar link">About</a></li>
+				</nav>
+				<div id='main'>
+				{{ template "body" . }}
+				</div>
+				<footer>
+								<div class='copyright'>
+								<hr/>
+								Copyright &copy;	2017
+								</div>
+				</footer>
+		</body>
+</html>
+
+{{ define "body" }} {{ end }}
