@@ -7,8 +7,7 @@ import (
 	"time"
 )
 
-var utilsDescription = map[string]string{
-	"help":          "prints this help message",
+var commandsDescription = map[string]string{
 	"partition":     "split a dataset file into more smaller files",
 	"heatmap":       "creates a heatmap of the datasets according to their accuracy",
 	"similarities":  "calculates and stores the similarity matrix of the specified datasets",
@@ -16,14 +15,16 @@ var utilsDescription = map[string]string{
 	"clustering":    "clusters the datasets based on the similarity matrix and prints their accuracy vs their cluster",
 	"simcomparison": "compares a list of similarity matrices",
 	"mds":           "executes Multidimensional Scaling to a similarity matrix",
+}
 
-	// experiments
+var expDescription = map[string]string{
 	"exp-accuracy":       "trains an ML model and prints the error",
 	"exp-ordering":       "compares the ordering of the datasets to the original ordering",
 	"exp-online-indexer": "executes the online indexer experiment",
-
-	// utils
+}
+var utilsDescription = map[string]string{
 	"print-utils": "utilility to print objects in binary form",
+	"help":        "prints this help message",
 }
 
 func main() {
@@ -31,10 +32,23 @@ func main() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 	if len(os.Args) < 2 || os.Args[1] == "help" {
 		fmt.Fprintf(os.Stderr, "Usage: %s [command]\n", os.Args[0])
-		fmt.Fprintln(os.Stderr, "List of commands:")
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintln(os.Stderr, "List of utils:")
 		for name, description := range utilsDescription {
 			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
 		}
+
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintln(os.Stderr, "List of commands:")
+		for name, description := range commandsDescription {
+			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
+		}
+		fmt.Fprintf(os.Stderr, "\n")
+		fmt.Fprintln(os.Stderr, "List of experiments:")
+		for name, description := range expDescription {
+			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
+		}
+
 		os.Exit(1)
 	}
 	command := os.Args[1]
