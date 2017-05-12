@@ -27,15 +27,15 @@ type DatasetSimilarityEstimator interface {
 type DatasetSimilarityEstimatorType uint
 
 const (
-	SIMILARITY_TYPE_JACOBBI       DatasetSimilarityEstimatorType = iota
+	SIMILARITY_TYPE_JACCARD       DatasetSimilarityEstimatorType = iota
 	SIMILARITY_TYPE_BHATTACHARYYA DatasetSimilarityEstimatorType = iota + 1
 	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
 	SIMILARITY_TYPE_ORDER         DatasetSimilarityEstimatorType = iota + 3
 )
 
 func (t DatasetSimilarityEstimatorType) String() string {
-	if t == SIMILARITY_TYPE_JACOBBI {
-		return "Jacobbi"
+	if t == SIMILARITY_TYPE_JACCARD {
+		return "Jaccard"
 	} else if t == SIMILARITY_TYPE_BHATTACHARYYA {
 		return "Bhattacharyya"
 	} else if t == SIMILARITY_TYPE_ORDER {
@@ -99,8 +99,8 @@ func NewDatasetSimilarityEstimator(
 	datasets []*Dataset) DatasetSimilarityEstimator {
 	policy := *new(DatasetSimilarityPopulationPolicy)
 	policy.PolicyType = POPULATION_POL_FULL
-	if estType == SIMILARITY_TYPE_JACOBBI {
-		a := new(JacobbiEstimator)
+	if estType == SIMILARITY_TYPE_JACCARD {
+		a := new(JaccardEstimator)
 		a.PopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
@@ -132,8 +132,8 @@ func NewDatasetSimilarityEstimator(
 // Factory method used to deserialize the Estimator according to its type
 func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 	estimatorType := DatasetSimilarityEstimatorType(getIntBytes(b[0:4]))
-	if estimatorType == SIMILARITY_TYPE_JACOBBI {
-		a := new(JacobbiEstimator)
+	if estimatorType == SIMILARITY_TYPE_JACCARD {
+		a := new(JaccardEstimator)
 		a.Deserialize(b)
 		return a
 	} else if estimatorType == SIMILARITY_TYPE_BHATTACHARYYA {

@@ -116,8 +116,8 @@ func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 
 func TestDeserializeSimilarityEstimator(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 10, 2)
-	// jacobbi
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	// jaccard
+	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {

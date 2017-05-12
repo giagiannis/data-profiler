@@ -155,7 +155,7 @@ func (e *OrderEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPoli
 
 func (e *OrderEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACOBBI)))
+	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACCARD)))
 	buffer.Write(getBytesInt(e.concurrency))
 
 	pol := e.popPolicy.Serialize()

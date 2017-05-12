@@ -134,7 +134,7 @@ func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 
 func TestScriptSimilaritySerialization(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 100, 4)
-	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est := *new(ScriptSimilarityEstimator)
 	est.datasets = datasets
 	est.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN

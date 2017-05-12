@@ -30,7 +30,7 @@ func similaritiesParseParams() *similaritiesParams {
 	params.logfile =
 		flag.String("l", "", "logfile (default: stderr)")
 	estType :=
-		flag.String("t", "BHATTACHARYYA", "similarity type [JACOBBI|BHATTACHARYYA|SCRIPT|ORDER]")
+		flag.String("t", "BHATTACHARYYA", "similarity type [JACCARD|BHATTACHARYYA|SCRIPT|ORDER]")
 	params.options =
 		flag.String("opt", "", "options in the form val1=key1,val2=key2 (list for opts list)")
 	popPolicy :=
@@ -67,9 +67,9 @@ func similaritiesParseParams() *similaritiesParams {
 	if *estType == "BHATTACHARYYA" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.SIMILARITY_TYPE_BHATTACHARYYA
-	} else if *estType == "JACOBBI" {
+	} else if *estType == "JACCARD" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_JACOBBI
+		*params.simType = core.SIMILARITY_TYPE_JACCARD
 	} else if *estType == "ORDER" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.SIMILARITY_TYPE_ORDER
@@ -80,7 +80,7 @@ func similaritiesParseParams() *similaritiesParams {
 
 	if *params.options == "list" {
 		similarityTypes := []core.DatasetSimilarityEstimatorType{
-			core.SIMILARITY_TYPE_JACOBBI, core.SIMILARITY_TYPE_BHATTACHARYYA, core.SIMILARITY_TYPE_SCRIPT,
+			core.SIMILARITY_TYPE_JACCARD, core.SIMILARITY_TYPE_BHATTACHARYYA, core.SIMILARITY_TYPE_SCRIPT,
 		}
 		for i, v := range similarityTypes {
 			fmt.Println(i+1, v)

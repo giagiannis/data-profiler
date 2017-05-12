@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-// JacobbiEstimator estimates the Jacobbi coefficients between the different
-// datasets. The Jacobbi coefficient between two datasets is defined as
+// JaccardEstimator estimates the Jaccard coefficients between the different
+// datasets. The Jaccard coefficient between two datasets is defined as
 // the cardinality of the intersection divided by the cardinality of the
 // union of the two datasets.
-type JacobbiEstimator struct {
+type JaccardEstimator struct {
 	datasets    []*Dataset                        // the slice of datasets
 	concurrency int                               // max threads running in parallel
 	popPolicy   DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
@@ -22,7 +22,7 @@ type JacobbiEstimator struct {
 	similarities *DatasetSimilarities // holds the similarities
 }
 
-func (e *JacobbiEstimator) Compute() error {
+func (e *JaccardEstimator) Compute() error {
 	e.similarities = NewDatasetSimilarities(len(e.datasets))
 
 	log.Println("Fetching datasets in memory")
@@ -37,7 +37,7 @@ func (e *JacobbiEstimator) Compute() error {
 	start := time.Now()
 	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
 		e.similarities.IndexDisabled(true) // I don't need the index
-		log.Printf("Starting Jacobbi computation (%d threads)", e.concurrency)
+		log.Printf("Starting Jaccard computation (%d threads)", e.concurrency)
 		c := make(chan bool, e.concurrency)
 		done := make(chan bool)
 		for j := 0; j < e.concurrency; j++ {
@@ -81,25 +81,25 @@ func (e *JacobbiEstimator) Compute() error {
 	return nil
 }
 
-func (e *JacobbiEstimator) Duration() float64 {
+func (e *JaccardEstimator) Duration() float64 {
 	return e.duration
 }
-func (e *JacobbiEstimator) Similarity(a, b *Dataset) float64 {
+func (e *JaccardEstimator) Similarity(a, b *Dataset) float64 {
 	inter := len(DatasetsIntersection(a, b))
 	union := len(DatasetsUnion(a, b))
 	value := float64(inter) / float64(union)
 	return value
 }
 
-func (e *JacobbiEstimator) GetSimilarities() *DatasetSimilarities {
+func (e *JaccardEstimator) GetSimilarities() *DatasetSimilarities {
 	return e.similarities
 }
 
-func (e *JacobbiEstimator) Datasets() []*Dataset {
+func (e *JaccardEstimator) Datasets() []*Dataset {
 	return e.datasets
 }
 
-func (e *JacobbiEstimator) Configure(conf map[string]string) {
+func (e *JaccardEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["concurrency"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
@@ -110,19 +110,19 @@ func (e *JacobbiEstimator) Configure(conf map[string]string) {
 	}
 }
 
-func (e *JacobbiEstimator) Options() map[string]string {
+func (e *JaccardEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
 	}
 }
 
-func (e *JacobbiEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+func (e *JaccardEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
 	e.popPolicy = policy
 }
 
-func (e *JacobbiEstimator) Serialize() []byte {
+func (e *JaccardEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACOBBI)))
+	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACCARD)))
 	buffer.Write(getBytesInt(e.concurrency))
 
 	pol := e.popPolicy.Serialize()
@@ -144,7 +144,7 @@ func (e *JacobbiEstimator) Serialize() []byte {
 	return buffer.Bytes()
 }
 
-func (e *JacobbiEstimator) Deserialize(b []byte) {
+func (e *JaccardEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)
 	buffer.Read(tempInt) // consume estimator type
@@ -177,7 +177,7 @@ func (e *JacobbiEstimator) Deserialize(b []byte) {
 }
 
 // calculates a table line
-func (e *JacobbiEstimator) calculateLine(start, lineNo int) {
+func (e *JaccardEstimator) calculateLine(start, lineNo int) {
 	a := e.datasets[lineNo]
 	for i := start; i < len(e.datasets); i++ {
 		b := e.datasets[i]

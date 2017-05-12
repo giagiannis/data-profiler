@@ -10,7 +10,7 @@ const ONLINE_INDEXING_SCRIPT = "../_rscripts/sa.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
 	datasets := createPoolBasedDatasets(200, 100, 4)
-	//estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	//estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	estim := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
 	estim.Configure(map[string]string{
 		"concurrency": "10",

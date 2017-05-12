@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestJacobbiCompute(t *testing.T) {
+func TestJaccardCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -28,9 +28,9 @@ func TestJacobbiCompute(t *testing.T) {
 	}
 }
 
-func TestJacobbiComputeAppxCnt(t *testing.T) {
+func TestJaccardComputeAppxCnt(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: POPULATION_POL_APRX,
 		Parameters: map[string]float64{
@@ -58,9 +58,9 @@ func TestJacobbiComputeAppxCnt(t *testing.T) {
 	}
 }
 
-func TestJacobbiComputeAppxThres(t *testing.T) {
+func TestJaccardComputeAppxThres(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
+	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: POPULATION_POL_APRX,
 		Parameters: map[string]float64{
@@ -88,10 +88,10 @@ func TestJacobbiComputeAppxThres(t *testing.T) {
 	}
 }
 
-func TestJacobbiSerialization(t *testing.T) {
+func TestJaccardSerialization(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACOBBI, datasets)
-	est := *new(JacobbiEstimator)
+	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := *new(JaccardEstimator)
 	est.datasets = datasets
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: POPULATION_POL_APRX,
@@ -107,7 +107,7 @@ func TestJacobbiSerialization(t *testing.T) {
 	}
 	bytes := est.Serialize()
 
-	newEst := *new(JacobbiEstimator)
+	newEst := *new(JaccardEstimator)
 	newEst.Deserialize(bytes)
 	if est.concurrency != newEst.concurrency {
 		t.Log("Concurrency differs")
