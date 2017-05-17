@@ -14,12 +14,16 @@ import (
 // OrderEstimator estimates the similarity between two different datasets based
 // on the ordering of the tuples.
 type OrderEstimator struct {
-	datasets    []*Dataset                        // the slice of datasets
-	concurrency int                               // max threads running in parallel
-	popPolicy   DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
-	duration    float64
-
-	similarities *DatasetSimilarities // holds the similarities
+	// the slice of datasets
+	datasets []*Dataset
+	// max threads running in parallel
+	concurrency int
+	// the policy with which the similarities matrix will be populated
+	popPolicy DatasetSimilarityPopulationPolicy
+	// time duration for the execution
+	duration float64
+	// holds the similarities
+	similarities *DatasetSimilarities
 }
 
 func (e *OrderEstimator) Compute() error {
@@ -46,7 +50,7 @@ func (e *OrderEstimator) Compute() error {
 		for i := 0; i < len(e.datasets)-1; i++ {
 			go func(c, done chan bool, i int) {
 				<-c
-				e.calculateLine(i, i)
+				e.computeLine(i, i)
 				c <- true
 				done <- true
 			}(c, done, i)
@@ -62,7 +66,7 @@ func (e *OrderEstimator) Compute() error {
 			for i := 0.0; i < count; i++ {
 				idx, val := e.similarities.LeastSimilar()
 				log.Println("Computing the similarities for ", idx, val)
-				e.calculateLine(0, idx)
+				e.computeLine(0, idx)
 			}
 
 		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
@@ -70,7 +74,7 @@ func (e *OrderEstimator) Compute() error {
 			idx, val := e.similarities.LeastSimilar()
 			for val < threshold {
 				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				e.calculateLine(0, idx)
+				e.computeLine(0, idx)
 				idx, val = e.similarities.LeastSimilar()
 			}
 
@@ -210,7 +214,7 @@ func (e *OrderEstimator) Deserialize(b []byte) {
 }
 
 // calculates a table line
-func (e *OrderEstimator) calculateLine(start, lineNo int) {
+func (e *OrderEstimator) computeLine(start, lineNo int) {
 	a := e.datasets[lineNo]
 	for i := start; i < len(e.datasets); i++ {
 		b := e.datasets[i]

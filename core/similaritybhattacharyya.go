@@ -13,17 +13,26 @@ import (
 )
 
 type BhattacharyyaEstimator struct {
-	datasets          []*Dataset                        // datasets slice
-	inverseIndex      map[string]int                    // struct used to map dataset paths to indexes
-	concurrency       int                               // the max number of threads that run in parallel
-	kdTreeScaleFactor float64                           // determines the height of the kd tree to be used
-	popPolicy         DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
-	duration          float64                           // holds the duration of the calculation
-
-	similarities    *DatasetSimilarities // the similarities struct
-	kdTree          *kdTreeNode          // kd tree, utilized for dataset partitioning
-	pointsPerRegion [][]int              // holds the number of points for each dataset region
-	datasetsSize    []int                // holds the total number of points for each dataset
+	// datasets slice
+	datasets []*Dataset
+	// struct used to map dataset paths to indexes
+	inverseIndex map[string]int
+	// the max number of threads that run in parallel
+	concurrency int
+	// determines the height of the kd tree to be used
+	kdTreeScaleFactor float64
+	// the policy with which the similarities matrix will be populated
+	popPolicy DatasetSimilarityPopulationPolicy
+	// holds the duration of the calculation
+	duration float64
+	// the similarities struct
+	similarities *DatasetSimilarities
+	// kd tree, utilized for dataset partitioning
+	kdTree *kdTreeNode
+	// holds the number of points for each dataset region
+	pointsPerRegion [][]int
+	// holds the total number of points for each dataset
+	datasetsSize []int
 }
 
 func (e *BhattacharyyaEstimator) Compute() error {

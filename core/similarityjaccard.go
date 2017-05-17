@@ -14,12 +14,17 @@ import (
 // the cardinality of the intersection divided by the cardinality of the
 // union of the two datasets.
 type JaccardEstimator struct {
-	datasets    []*Dataset                        // the slice of datasets
-	concurrency int                               // max threads running in parallel
-	popPolicy   DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
-	duration    float64
+	// the slice of datasets
+	datasets []*Dataset
+	// max threads running in parallel
+	concurrency int
+	// the policy with which the similarities matrix will be populated
+	popPolicy DatasetSimilarityPopulationPolicy
+	// duration of the execution
+	duration float64
 
-	similarities *DatasetSimilarities // holds the similarities
+	// holds the similarities
+	similarities *DatasetSimilarities
 }
 
 func (e *JaccardEstimator) Compute() error {
@@ -46,7 +51,7 @@ func (e *JaccardEstimator) Compute() error {
 		for i := 0; i < len(e.datasets)-1; i++ {
 			go func(c, done chan bool, i int) {
 				<-c
-				e.calculateLine(i, i)
+				e.computeLine(i, i)
 				c <- true
 				done <- true
 			}(c, done, i)
@@ -62,7 +67,7 @@ func (e *JaccardEstimator) Compute() error {
 			for i := 0.0; i < count; i++ {
 				idx, val := e.similarities.LeastSimilar()
 				log.Println("Computing the similarities for ", idx, val)
-				e.calculateLine(0, idx)
+				e.computeLine(0, idx)
 			}
 
 		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
@@ -70,7 +75,7 @@ func (e *JaccardEstimator) Compute() error {
 			idx, val := e.similarities.LeastSimilar()
 			for val < threshold {
 				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				e.calculateLine(0, idx)
+				e.computeLine(0, idx)
 				idx, val = e.similarities.LeastSimilar()
 			}
 
@@ -135,7 +140,7 @@ func (e *JaccardEstimator) Serialize() []byte {
 	buffer.Write(getBytesInt(len(sim)))
 	buffer.Write(sim)
 
-	// serialize dataste names
+	// serialize dataset names
 	buffer.Write(getBytesInt(len(e.datasets)))
 	for _, d := range e.datasets {
 		buffer.WriteString(d.Path() + "\n")
@@ -177,7 +182,7 @@ func (e *JaccardEstimator) Deserialize(b []byte) {
 }
 
 // calculates a table line
-func (e *JaccardEstimator) calculateLine(start, lineNo int) {
+func (e *JaccardEstimator) computeLine(start, lineNo int) {
 	a := e.datasets[lineNo]
 	for i := start; i < len(e.datasets); i++ {
 		b := e.datasets[i]

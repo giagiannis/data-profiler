@@ -12,16 +12,26 @@ import (
 
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
-	Compute() error                                     // computes the similarity matrix
-	Datasets() []*Dataset                               // returns the datasets slice
-	Similarity(a, b *Dataset) float64                   // returns the similarity for 2 datasets
-	GetSimilarities() *DatasetSimilarities              // returns the similarity struct
-	Configure(map[string]string)                        // provides configuration options
-	Options() map[string]string                         // list of options for the estimator
-	PopulationPolicy(DatasetSimilarityPopulationPolicy) // sets the population policy for the estimator
-	Serialize() []byte                                  // returns a serialized esimator object
-	Deserialize([]byte)                                 // instantiates an estimator from a serialized object
-	Duration() float64                                  // returns the seconds needed to execute the computation
+	// computes the similarity matrix
+	Compute() error // returns the datasets slice
+	// returns the datasets slice
+	Datasets() []*Dataset
+	// returns the similarity for 2 datasets
+	Similarity(a, b *Dataset) float64
+	// returns the similarity struct
+	GetSimilarities() *DatasetSimilarities
+	// provides configuration options
+	Configure(map[string]string)
+	// list of options for the estimator
+	Options() map[string]string
+	// sets the population policy for the estimator
+	PopulationPolicy(DatasetSimilarityPopulationPolicy)
+	// returns a serialized esimator object
+	Serialize() []byte
+	// instantiates an estimator from a serialized object
+	Deserialize([]byte)
+	// returns the seconds needed to execute the computation
+	Duration() float64
 }
 
 type DatasetSimilarityEstimatorType uint
@@ -31,6 +41,7 @@ const (
 	SIMILARITY_TYPE_BHATTACHARYYA DatasetSimilarityEstimatorType = iota + 1
 	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
 	SIMILARITY_TYPE_ORDER         DatasetSimilarityEstimatorType = iota + 3
+	SIMILARITY_TYPE_COMPOSITE     DatasetSimilarityEstimatorType = iota + 4
 )
 
 func (t DatasetSimilarityEstimatorType) String() string {
@@ -151,10 +162,14 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarities struct {
-	similarities  [][]float64   // the actual similarities holder
-	indexDisabled bool          // indicates whether the closestIndex is disabled or not
-	closestIndex  *closestIndex // index that hold the closest datasets
-	capacity      int           // represents the capacity of the sim matrix
+	// the actual similarities holder
+	similarities [][]float64
+	// indicates whether the closestIndex is disabled or not
+	indexDisabled bool
+	// index that hold the closest datasets
+	closestIndex *closestIndex
+	// represents the capacity of the sim matrix
+	capacity int
 }
 
 // NewDatasetSimilarities is the constructor for the DatasetSimilarities struct,
@@ -369,8 +384,8 @@ func (s *closestIndex) Set(srcIdx, dstIdx int, similarity float64) {
 	s.similarity[srcIdx] = similarity
 }
 
-// Sets the index and the similarity of the most similar dataset, iff the provided similarity
-// is higher than the one previously stored
+// Sets the index and the similarity of the most similar dataset,
+// iff the provided similarity is higher than the one previously stored
 func (s *closestIndex) CheckAndSet(srcIdx, dstIdx int, similarity float64) {
 	if s.similarity[srcIdx] < similarity {
 		s.closestIdx[srcIdx] = dstIdx
@@ -378,8 +393,8 @@ func (s *closestIndex) CheckAndSet(srcIdx, dstIdx int, similarity float64) {
 	}
 }
 
-// Returns the dataset index (and its respective value) with the lowest similarity
-// to its most close dataset
+// Returns the dataset index (and its respective value) with the lowest
+// similarity to its most close dataset
 func (s *closestIndex) LeastSimilar() (int, float64) {
 	minIdx, minV := 0, s.similarity[0]
 	for i, v := range s.similarity {
