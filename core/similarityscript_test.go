@@ -47,7 +47,7 @@ func TestScriptSimilarityCompute(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
 			if s.Get(i, j) != s.Get(j, i) {
@@ -76,13 +76,13 @@ func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 			"threshold": 0.95,
 		},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
 			if s.Get(i, j) != s.Get(j, i) {
@@ -111,13 +111,13 @@ func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 			"count": 10,
 		},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 
 	for i := range datasets {
 		for j := range datasets {
@@ -144,7 +144,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 		PolicyType: POPULATION_POL_FULL,
 		Parameters: map[string]float64{},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -200,8 +200,8 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 			}
 		}
 	}
-	if newEst.Similarity(datasets[0], datasets[1]) != newEst.GetSimilarities().Get(0, 1) {
-		t.Log("Something is seriously wrong here", newEst.GetSimilarities().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
+	if newEst.Similarity(datasets[0], datasets[1]) != newEst.SimilarityMatrix().Get(0, 1) {
+		t.Log("Something is seriously wrong here", newEst.SimilarityMatrix().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
 		t.Fail()
 	}
 
@@ -221,10 +221,10 @@ func TestScriptSimilarityCosine(t *testing.T) {
 		t.FailNow()
 	}
 
-	mat := s.GetSimilarities()
+	mat := s.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
-			if mat.Get(i, j) < 0.0 || mat.Get(i, j) > 1.0 {
+			if mat.Get(i, j) < -1.0 || mat.Get(i, j) > 1.0 {
 				t.Logf("Cosine Similarity out of bounds between [%d, %d] -> %.3f\n", i, j, mat.Get(i, j))
 				//				t.FailNow()
 			}

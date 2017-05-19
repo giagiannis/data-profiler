@@ -16,7 +16,7 @@ func TestNewOnlineIndexer(t *testing.T) {
 		"concurrency": "10",
 	})
 	estim.Compute()
-	md := NewMDScaling(estim.GetSimilarities(), 2, MDSCALING_SCRIPT)
+	md := NewMDScaling(estim.SimilarityMatrix(), 2, MDSCALING_SCRIPT)
 	md.Compute()
 
 	indexer := NewOnlineIndexer(estim, md.Coordinates(), ONLINE_INDEXING_SCRIPT)

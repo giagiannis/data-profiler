@@ -15,16 +15,11 @@ import (
 // algorithm and utilizes various norms to measure the differences between the
 // analysis outputs.
 type ScriptSimilarityEstimator struct {
-	analysisScript string                            // the analysis script to be executed
-	datasets       []*Dataset                        // the input datasets
-	concurrency    int                               // max number of threads to run in parallel
-	simType        ScriptSimilarityEstimatorType     // similarity type - cosine, manhattan, euclidean
-	popPolicy      DatasetSimilarityPopulationPolicy // the policy with which the similarities matrix will be populated
-	duration       float64
-
-	similarities       *DatasetSimilarities // the similarities struct
-	inverseIndex       map[string]int       // inverse index that maps datasets to ints
-	datasetCoordinates [][]float64          // holds the dataset coordinates
+	AbstractDatasetSimilarityEstimator
+	analysisScript     string                        // the analysis script to be executed
+	simType            ScriptSimilarityEstimatorType // similarity type - cosine, manhattan, euclidean
+	inverseIndex       map[string]int                // inverse index that maps datasets to ints
+	datasetCoordinates [][]float64                   // holds the dataset coordinates
 }
 
 type ScriptSimilarityEstimatorType uint8
@@ -53,45 +48,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 	for i, d := range s.datasets {
 		s.inverseIndex[d.Path()] = i
 	}
-	if s.popPolicy.PolicyType == POPULATION_POL_FULL {
-		s.similarities.IndexDisabled(true) // I don't need the index
-		c, done := make(chan bool, s.concurrency), make(chan bool)
-		for i := 0; i < s.concurrency; i++ {
-			c <- true
-		}
-
-		for i := 0; i < len(s.datasets); i++ {
-			go func(c, done chan bool, line int) {
-				<-c
-				s.computeLine(line, line)
-				c <- true
-				done <- true
-			}(c, done, i)
-		}
-
-		for i := 0; i < len(s.datasets); i++ {
-			<-done
-		}
-	} else if s.popPolicy.PolicyType == POPULATION_POL_APRX {
-		s.similarities.IndexDisabled(false) // I need the index
-		if count, ok := s.popPolicy.Parameters["count"]; ok {
-			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
-			for i := 0.0; i < count; i++ {
-				idx, val := s.similarities.LeastSimilar()
-				log.Println("Computing the similarities for ", idx, val)
-				s.computeLine(0, idx)
-			}
-
-		} else if threshold, ok := s.popPolicy.Parameters["threshold"]; ok {
-			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
-			idx, val := s.similarities.LeastSimilar()
-			for val < threshold {
-				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				s.computeLine(0, idx)
-				idx, val = s.similarities.LeastSimilar()
-			}
-		}
-	}
+	EstimatorCompute(s)
 	s.duration = time.Since(start).Seconds()
 	return nil
 }
@@ -133,7 +90,7 @@ func (e *ScriptSimilarityEstimator) Datasets() []*Dataset {
 	return e.datasets
 }
 
-func (s *ScriptSimilarityEstimator) GetSimilarities() *DatasetSimilarities {
+func (s *ScriptSimilarityEstimator) SimilarityMatrix() *DatasetSimilarityMatrix {
 	return s.similarities
 }
 
@@ -171,7 +128,7 @@ func (s *ScriptSimilarityEstimator) Options() map[string]string {
 	}
 }
 
-func (e *ScriptSimilarityEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+func (e *ScriptSimilarityEstimator) SetPopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
 	e.popPolicy = policy
 }
 
@@ -231,7 +188,7 @@ func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
 	count = getIntBytes(tempInit)
 	similarityBytes := make([]byte, count)
 	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarities)
+	e.similarities = new(DatasetSimilarityMatrix)
 	e.similarities.Deserialize(similarityBytes)
 
 	buffer.Read(tempInit)
@@ -329,21 +286,4 @@ func (s *ScriptSimilarityEstimator) cosine(a, b []float64) (float64, error) {
 		return -1, errors.New("Zero denominator to cosine similarity")
 	}
 	return nomin / denom, nil
-}
-
-func (s *ScriptSimilarityEstimator) computeLine(start, line int) {
-	a := s.datasets[line]
-	for j := start; j < len(s.datasets); j++ {
-		b := s.datasets[j]
-		//v, err := s.norm(s.datasetCoordinates[line], s.datasetCoordinates[j])
-		// converting distance to similarity
-		//		sim := DistanceToSimilarity(v)
-		//		if err != nil {
-		//			log.Panic(err)
-		//		}
-		s.similarities.Set(
-			s.inverseIndex[a.Path()],
-			s.inverseIndex[b.Path()],
-			s.Similarity(a, b))
-	}
 }

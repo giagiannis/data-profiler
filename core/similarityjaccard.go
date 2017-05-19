@@ -14,17 +14,7 @@ import (
 // the cardinality of the intersection divided by the cardinality of the
 // union of the two datasets.
 type JaccardEstimator struct {
-	// the slice of datasets
-	datasets []*Dataset
-	// max threads running in parallel
-	concurrency int
-	// the policy with which the similarities matrix will be populated
-	popPolicy DatasetSimilarityPopulationPolicy
-	// duration of the execution
-	duration float64
-
-	// holds the similarities
-	similarities *DatasetSimilarities
+	AbstractDatasetSimilarityEstimator
 }
 
 func (e *JaccardEstimator) Compute() error {
@@ -40,47 +30,7 @@ func (e *JaccardEstimator) Compute() error {
 	}
 
 	start := time.Now()
-	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
-		e.similarities.IndexDisabled(true) // I don't need the index
-		log.Printf("Starting Jaccard computation (%d threads)", e.concurrency)
-		c := make(chan bool, e.concurrency)
-		done := make(chan bool)
-		for j := 0; j < e.concurrency; j++ {
-			c <- true
-		}
-		for i := 0; i < len(e.datasets)-1; i++ {
-			go func(c, done chan bool, i int) {
-				<-c
-				e.computeLine(i, i)
-				c <- true
-				done <- true
-			}(c, done, i)
-		}
-		for j := 0; j < len(e.datasets)-1; j++ {
-			<-done
-		}
-		log.Println("Done")
-	} else if e.popPolicy.PolicyType == POPULATION_POL_APRX {
-		e.similarities.IndexDisabled(false) // I need the index
-		if count, ok := e.popPolicy.Parameters["count"]; ok {
-			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
-			for i := 0.0; i < count; i++ {
-				idx, val := e.similarities.LeastSimilar()
-				log.Println("Computing the similarities for ", idx, val)
-				e.computeLine(0, idx)
-			}
-
-		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
-			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
-			idx, val := e.similarities.LeastSimilar()
-			for val < threshold {
-				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				e.computeLine(0, idx)
-				idx, val = e.similarities.LeastSimilar()
-			}
-
-		}
-	}
+	EstimatorCompute(e)
 	e.duration = time.Since(start).Seconds()
 
 	return nil
@@ -96,7 +46,7 @@ func (e *JaccardEstimator) Similarity(a, b *Dataset) float64 {
 	return value
 }
 
-func (e *JaccardEstimator) GetSimilarities() *DatasetSimilarities {
+func (e *JaccardEstimator) SimilarityMatrix() *DatasetSimilarityMatrix {
 	return e.similarities
 }
 
@@ -121,7 +71,7 @@ func (e *JaccardEstimator) Options() map[string]string {
 	}
 }
 
-func (e *JaccardEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
+func (e *JaccardEstimator) SetPopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
 	e.popPolicy = policy
 }
 
@@ -168,7 +118,7 @@ func (e *JaccardEstimator) Deserialize(b []byte) {
 	count = getIntBytes(tempInt)
 	similarityBytes := make([]byte, count)
 	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarities)
+	e.similarities = new(DatasetSimilarityMatrix)
 	e.similarities.Deserialize(similarityBytes)
 
 	buffer.Read(tempInt)
@@ -178,16 +128,5 @@ func (e *JaccardEstimator) Deserialize(b []byte) {
 		line, _ := buffer.ReadString('\n')
 		line = strings.TrimSpace(line)
 		e.datasets[i] = NewDataset(line)
-	}
-}
-
-// calculates a table line
-func (e *JaccardEstimator) computeLine(start, lineNo int) {
-	a := e.datasets[lineNo]
-	for i := start; i < len(e.datasets); i++ {
-		b := e.datasets[i]
-		inter := len(DatasetsIntersection(a, b))
-		value := float64(inter) / float64(len(a.Data())+len(b.Data())-inter)
-		e.similarities.Set(lineNo, i, value)
 	}
 }

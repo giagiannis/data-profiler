@@ -16,7 +16,7 @@ import (
 type expOnlineIndexerParams struct {
 	indexer  *core.OnlineIndexer
 	datasets []*core.Dataset
-	sm       *core.DatasetSimilarities
+	sm       *core.DatasetSimilarityMatrix
 	coords   []core.DatasetCoordinates
 
 	outputStress *string
@@ -61,7 +61,7 @@ func expOnlineIndexerParseParams() *expOnlineIndexerParams {
 		log.Fatalln(err)
 	}
 	est := core.DeserializeSimilarityEstimator(buf)
-	params.sm = est.GetSimilarities()
+	params.sm = est.SimilarityMatrix()
 
 	// parse coordinates files
 	f, err = os.Open(*coordinatesPath)
@@ -142,7 +142,7 @@ func expOnlineIndexerRun() {
 
 }
 
-func getTotalStress(similarityMatrix *core.DatasetSimilarities, coords []core.DatasetCoordinates) float64 {
+func getTotalStress(similarityMatrix *core.DatasetSimilarityMatrix, coords []core.DatasetCoordinates) float64 {
 	stress := 0.0
 	for i := 0; i < len(coords); i++ {
 		for j := i + 1; j < len(coords); j++ {

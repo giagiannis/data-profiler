@@ -13,7 +13,7 @@ func TestOrderCompute(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
 			if s.Get(i, j) != s.Get(j, i) {
@@ -37,13 +37,13 @@ func TestOrderComputeAppxCnt(t *testing.T) {
 			"count": 20,
 		},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
 			if s.Get(i, j) != s.Get(j, i) {
@@ -67,13 +67,13 @@ func TestOrderComputeAppxThres(t *testing.T) {
 			"threshold": 0.95,
 		},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	for i := range datasets {
 		for j := range datasets {
 			if s.Get(i, j) != s.Get(j, i) {
@@ -98,7 +98,7 @@ func TestOrderSerialization(t *testing.T) {
 			"count": 5.0,
 		},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)

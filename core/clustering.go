@@ -9,15 +9,15 @@ import (
 // Clustering struct is responsible to execute the necessary actions in order
 // to cluster the datasets based on their availability
 type Clustering struct {
-	datasets     []*Dataset           // list of datasets
-	similarities *DatasetSimilarities // dataset similarities
-	results      *Dendrogram          // holds the clustering results
+	datasets     []*Dataset               // list of datasets
+	similarities *DatasetSimilarityMatrix // dataset similarities
+	results      *Dendrogram              // holds the clustering results
 	concurrency  int
 }
 
 // Constructor for creating a Clustering object, providing a DatasetSimilarities
 // object
-func NewClustering(similarities *DatasetSimilarities, datasets []*Dataset) *Clustering {
+func NewClustering(similarities *DatasetSimilarityMatrix, datasets []*Dataset) *Clustering {
 	c := new(Clustering)
 	c.similarities = similarities
 	c.concurrency = 1

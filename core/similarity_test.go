@@ -31,10 +31,10 @@ func TestDatasetSerialize(t *testing.T) {
 	datasets := createPoolBasedDatasets(5000, 10, 3)
 	e := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
 	e.Compute()
-	s := e.GetSimilarities()
+	s := e.SimilarityMatrix()
 	b := s.Serialize()
 
-	sim := new(DatasetSimilarities)
+	sim := new(DatasetSimilarityMatrix)
 	sim.Deserialize(b)
 
 	for i := range datasets {
@@ -129,7 +129,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
 		a, b := datasets[idxA], datasets[idxB]
 		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
-			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			newEst.Similarity(a, b) != est.SimilarityMatrix().Get(idxA, idxB) {
 			t.Log("Deserialization error")
 			t.Fail()
 		}
@@ -147,7 +147,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
 		a, b := datasets[idxA], datasets[idxB]
 		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
-			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			newEst.Similarity(a, b) != est.SimilarityMatrix().Get(idxA, idxB) {
 			t.Log("Deserialization error")
 			t.Fail()
 		}
@@ -166,7 +166,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
 		a, b := datasets[idxA], datasets[idxB]
 		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
-			newEst.Similarity(a, b) != est.GetSimilarities().Get(idxA, idxB) {
+			newEst.Similarity(a, b) != est.SimilarityMatrix().Get(idxA, idxB) {
 			t.Log("Deserialization error")
 			t.Fail()
 		}

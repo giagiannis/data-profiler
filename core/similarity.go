@@ -13,25 +13,121 @@ import (
 // DatasetSimilarityEstimator
 type DatasetSimilarityEstimator interface {
 	// computes the similarity matrix
-	Compute() error // returns the datasets slice
+	Compute() error
 	// returns the datasets slice
 	Datasets() []*Dataset
 	// returns the similarity for 2 datasets
 	Similarity(a, b *Dataset) float64
 	// returns the similarity struct
-	GetSimilarities() *DatasetSimilarities
+	SimilarityMatrix() *DatasetSimilarityMatrix
 	// provides configuration options
 	Configure(map[string]string)
 	// list of options for the estimator
 	Options() map[string]string
 	// sets the population policy for the estimator
-	PopulationPolicy(DatasetSimilarityPopulationPolicy)
+	SetPopulationPolicy(DatasetSimilarityPopulationPolicy)
+	// returns the population policy
+	PopulationPolicy() DatasetSimilarityPopulationPolicy
 	// returns a serialized esimator object
 	Serialize() []byte
 	// instantiates an estimator from a serialized object
 	Deserialize([]byte)
 	// returns the seconds needed to execute the computation
 	Duration() float64
+	// returns the max number of threads to be used
+	Concurrency() int
+}
+
+// AbstractDatasetSimilarityEstimator is the base struct for the similarity
+// estimator objects
+type AbstractDatasetSimilarityEstimator struct {
+	datasets     []*Dataset
+	concurrency  int
+	popPolicy    DatasetSimilarityPopulationPolicy
+	duration     float64
+	similarities *DatasetSimilarityMatrix
+}
+
+// Datasets returns the datasets of the estimator
+func (a *AbstractDatasetSimilarityEstimator) Datasets() []*Dataset {
+	return a.datasets
+}
+
+// GetSimilarities returns the similarity matrix
+func (a *AbstractDatasetSimilarityEstimator) SimilarityMatrix() *DatasetSimilarityMatrix {
+	return a.similarities
+}
+
+// PopulationPolicy sets the population policy to be used
+func (a *AbstractDatasetSimilarityEstimator) SetPopulationPolicy(pol DatasetSimilarityPopulationPolicy) {
+	a.popPolicy = pol
+}
+
+// PopulationPolicy gets the population policy to be used
+func (a *AbstractDatasetSimilarityEstimator) PopulationPolicy() DatasetSimilarityPopulationPolicy {
+	return a.popPolicy
+}
+
+// Duration returns the duration of the compution
+func (a *AbstractDatasetSimilarityEstimator) Duration() float64 {
+	return a.duration
+}
+func (a *AbstractDatasetSimilarityEstimator) Concurrency() int {
+	return a.concurrency
+}
+
+// EstimatorCompute is responsible to execute the computation code of the estimators.
+// The provided object must respect the DatasetSimilarityEstimator interface
+// and (optionally) extends the AbstractDatasetSimilarityEstimator struct
+func EstimatorCompute(e DatasetSimilarityEstimator) {
+	if e.PopulationPolicy().PolicyType == POPULATION_POL_FULL {
+		e.SimilarityMatrix().IndexDisabled(true) // I don't need the index
+		log.Println("Computing the similarities using", e.Concurrency(), "threads")
+		c := make(chan bool, e.Concurrency())
+		done := make(chan bool)
+		for j := 0; j < e.Concurrency(); j++ {
+			c <- true
+		}
+		for i := 0; i < len(e.Datasets())-1; i++ {
+			go func(c, done chan bool, i int) {
+				<-c
+				for j := i; j < len(e.Datasets()); j++ {
+					d1, d2 := e.Datasets()[i], e.Datasets()[j]
+					e.SimilarityMatrix().Set(i, j, e.Similarity(d1, d2))
+				}
+				c <- true
+				done <- true
+			}(c, done, i)
+		}
+		for j := 0; j < len(e.Datasets())-1; j++ {
+			<-done
+		}
+		log.Println("Done")
+	} else if e.PopulationPolicy().PolicyType == POPULATION_POL_APRX {
+		e.SimilarityMatrix().IndexDisabled(false) // I need the index
+		if count, ok := e.PopulationPolicy().Parameters["count"]; ok {
+			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
+			for i := 0.0; i < count; i++ {
+				idx, val := e.SimilarityMatrix().LeastSimilar()
+				log.Println("Computing the similarities for ", idx, val)
+				for j := 0; j < len(e.Datasets()); j++ {
+					d1, d2 := e.Datasets()[idx], e.Datasets()[j]
+					e.SimilarityMatrix().Set(idx, j, e.Similarity(d1, d2))
+				}
+			}
+		} else if threshold, ok := e.PopulationPolicy().Parameters["threshold"]; ok {
+			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
+			idx, val := e.SimilarityMatrix().LeastSimilar()
+			for val < threshold {
+				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
+				for j := 0; j < len(e.Datasets()); j++ {
+					d1, d2 := e.Datasets()[idx], e.Datasets()[j]
+					e.SimilarityMatrix().Set(idx, j, e.Similarity(d1, d2))
+				}
+				idx, val = e.SimilarityMatrix().LeastSimilar()
+			}
+		}
+	}
 }
 
 type DatasetSimilarityEstimatorType uint
@@ -112,26 +208,26 @@ func NewDatasetSimilarityEstimator(
 	policy.PolicyType = POPULATION_POL_FULL
 	if estType == SIMILARITY_TYPE_JACCARD {
 		a := new(JaccardEstimator)
-		a.PopulationPolicy(policy)
+		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		return a
 	} else if estType == SIMILARITY_TYPE_ORDER {
 		a := new(OrderEstimator)
-		a.PopulationPolicy(policy)
+		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		return a
 	} else if estType == SIMILARITY_TYPE_BHATTACHARYYA {
 		a := new(BhattacharyyaEstimator)
-		a.PopulationPolicy(policy)
+		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
 		return a
 	} else if estType == SIMILARITY_TYPE_SCRIPT {
 		a := new(ScriptSimilarityEstimator)
-		a.PopulationPolicy(policy)
+		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
@@ -161,7 +257,7 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 
 // DatasetSimilarities represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
-type DatasetSimilarities struct {
+type DatasetSimilarityMatrix struct {
 	// the actual similarities holder
 	similarities [][]float64
 	// indicates whether the closestIndex is disabled or not
@@ -175,8 +271,8 @@ type DatasetSimilarities struct {
 // NewDatasetSimilarities is the constructor for the DatasetSimilarities struct,
 // expecting the number of datasets that will be held by it. If capacity=0, this
 // implies that the Similarity Matrix will be deserialzed.
-func NewDatasetSimilarities(capacity int) *DatasetSimilarities {
-	r := new(DatasetSimilarities)
+func NewDatasetSimilarities(capacity int) *DatasetSimilarityMatrix {
+	r := new(DatasetSimilarityMatrix)
 	r.indexDisabled = false
 	r.capacity = capacity
 	if capacity != 0 {
@@ -187,14 +283,14 @@ func NewDatasetSimilarities(capacity int) *DatasetSimilarities {
 
 // IndexDisabled sets whether the closest dataset index should be disabled or not.
 // The index is useless if the FULL Estimator strategy is being followed.
-func (s *DatasetSimilarities) IndexDisabled(flag bool) {
+func (s *DatasetSimilarityMatrix) IndexDisabled(flag bool) {
 	s.indexDisabled = flag
 }
 
 // NumberOfFullNodes returns the number of nodes the similarity of which
 // has been calculated for all the nodes. This number can work as a measure
 // of how close to the full similarity matrix the current object is.
-func (s *DatasetSimilarities) FullyCalculatedNodes() int {
+func (s *DatasetSimilarityMatrix) FullyCalculatedNodes() int {
 	if s.indexDisabled {
 		return s.capacity
 	}
@@ -207,7 +303,7 @@ func (s *DatasetSimilarities) FullyCalculatedNodes() int {
 	return count
 }
 
-func (s *DatasetSimilarities) allocateStructs() {
+func (s *DatasetSimilarityMatrix) allocateStructs() {
 	s.similarities = make([][]float64, s.capacity-1)
 	for i := 0; i < s.capacity-1; i++ {
 		s.similarities[i] = make([]float64, s.capacity-i-1)
@@ -215,12 +311,12 @@ func (s *DatasetSimilarities) allocateStructs() {
 	s.closestIndex = newClosestIndex(s.capacity)
 }
 
-func (s *DatasetSimilarities) Capacity() int {
+func (s *DatasetSimilarityMatrix) Capacity() int {
 	return s.capacity
 }
 
 // Set is a setter function for the similarity between two datasets
-func (s *DatasetSimilarities) Set(idxA, idxB int, value float64) {
+func (s *DatasetSimilarityMatrix) Set(idxA, idxB int, value float64) {
 	if idxA == idxB { // do nothing
 		if !s.indexDisabled {
 			s.closestIndex.CheckAndSet(idxA, idxB, value)
@@ -240,7 +336,7 @@ func (s *DatasetSimilarities) Set(idxA, idxB int, value float64) {
 }
 
 // Get returns the similarity between two dataset paths
-func (s *DatasetSimilarities) Get(idxA, idxB int) float64 {
+func (s *DatasetSimilarityMatrix) Get(idxA, idxB int) float64 {
 	if !s.indexDisabled {
 		idxA, _ = s.closestIndex.Get(idxA)
 		idxB, _ = s.closestIndex.Get(idxB)
@@ -257,11 +353,11 @@ func (s *DatasetSimilarities) Get(idxA, idxB int) float64 {
 
 // LeastSimilar method returns the dataset that presents the lowest
 // similarity among the examined datasets
-func (s *DatasetSimilarities) LeastSimilar() (int, float64) {
+func (s *DatasetSimilarityMatrix) LeastSimilar() (int, float64) {
 	return s.closestIndex.LeastSimilar()
 }
 
-func (s DatasetSimilarities) String() string {
+func (s DatasetSimilarityMatrix) String() string {
 	var buf bytes.Buffer
 	for i := 0; i < s.capacity; i++ {
 		for j := 0; j < s.capacity; j++ {
@@ -273,7 +369,7 @@ func (s DatasetSimilarities) String() string {
 }
 
 // Serialize method returns a byte slice that represents the similarity matrix
-func (s *DatasetSimilarities) Serialize() []byte {
+func (s *DatasetSimilarityMatrix) Serialize() []byte {
 	buf := new(bytes.Buffer)
 	buf.Write(getBytesInt(s.capacity))
 	for i := 0; i < s.capacity-1; i++ {
@@ -311,7 +407,7 @@ func (s *DatasetSimilarities) Serialize() []byte {
 
 // Deserialize instantiates an empty DatasetSimilarities object. In case of
 // parse failure, an error is thrown
-func (s *DatasetSimilarities) Deserialize(buff []byte) error {
+func (s *DatasetSimilarityMatrix) Deserialize(buff []byte) error {
 	// decompress stream
 	re, err := gzip.NewReader(bytes.NewBuffer(buff))
 	if err != nil {

@@ -107,7 +107,7 @@ func similaritiesRun() {
 	datasets := core.DiscoverDatasets(*params.input)
 	est := core.NewDatasetSimilarityEstimator(*params.simType, datasets)
 	est.Configure(parseOptions(*params.options))
-	est.PopulationPolicy(*params.populationPolicy)
+	est.SetPopulationPolicy(*params.populationPolicy)
 	est.Compute()
 	log.Printf("Similarity Matrix computation took %.5f sec\n", est.Duration())
 
@@ -117,7 +117,7 @@ func similaritiesRun() {
 	}
 	defer outfile.Close()
 	// serializing similarity matrix
-	outfile.Write(est.GetSimilarities().Serialize())
+	outfile.Write(est.SimilarityMatrix().Serialize())
 
 	idxFile, er := os.OpenFile(*params.output+".idx", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	defer idxFile.Close()

@@ -12,7 +12,7 @@ import (
 )
 
 type heatmapParams struct {
-	similarities core.DatasetSimilarities
+	similarities core.DatasetSimilarityMatrix
 	scores       core.DatasetScores
 	logfile      *string
 	output       *string

@@ -13,20 +13,12 @@ import (
 )
 
 type BhattacharyyaEstimator struct {
-	// datasets slice
-	datasets []*Dataset
+	AbstractDatasetSimilarityEstimator
+
 	// struct used to map dataset paths to indexes
 	inverseIndex map[string]int
-	// the max number of threads that run in parallel
-	concurrency int
 	// determines the height of the kd tree to be used
 	kdTreeScaleFactor float64
-	// the policy with which the similarities matrix will be populated
-	popPolicy DatasetSimilarityPopulationPolicy
-	// holds the duration of the calculation
-	duration float64
-	// the similarities struct
-	similarities *DatasetSimilarities
 	// kd tree, utilized for dataset partitioning
 	kdTree *kdTreeNode
 	// holds the number of points for each dataset region
@@ -58,7 +50,6 @@ func (e *BhattacharyyaEstimator) Compute() error {
 	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
 	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
 	e.kdTree.Prune(newHeight)
-	//tree.Prune(1)
 	e.pointsPerRegion = make([][]int, len(e.datasets))
 	e.datasetsSize = make([]int, len(e.datasets))
 	for i, d := range e.datasets {
@@ -66,53 +57,9 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		e.datasetsSize[i] = len(d.Data())
 	}
 
-	if e.popPolicy.PolicyType == POPULATION_POL_FULL {
-		e.similarities.IndexDisabled(true) // I don't need the index
-		log.Println("Computing the similarities using", e.concurrency, "threads")
-		c := make(chan bool, e.concurrency)
-		done := make(chan bool)
-		for j := 0; j < e.concurrency; j++ {
-			c <- true
-		}
-		for i := 0; i < len(e.datasets)-1; i++ {
-			go func(c, done chan bool, i int) {
-				<-c
-				e.computeLine(i, i)
-				c <- true
-				done <- true
-			}(c, done, i)
-		}
-		for j := 0; j < len(e.datasets)-1; j++ {
-			<-done
-		}
-		log.Println("Done")
-	} else if e.popPolicy.PolicyType == POPULATION_POL_APRX {
-		e.similarities.IndexDisabled(false) // I need the index
-		if count, ok := e.popPolicy.Parameters["count"]; ok {
-			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
-			for i := 0.0; i < count; i++ {
-				idx, val := e.similarities.LeastSimilar()
-				log.Println("Computing the similarities for ", idx, val)
-				e.computeLine(0, idx)
-			}
-
-		} else if threshold, ok := e.popPolicy.Parameters["threshold"]; ok {
-			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
-			idx, val := e.similarities.LeastSimilar()
-			for val < threshold {
-				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
-				e.computeLine(0, idx)
-				idx, val = e.similarities.LeastSimilar()
-			}
-		}
-	}
+	EstimatorCompute(e)
 	e.duration = time.Since(start).Seconds()
 	return nil
-}
-
-// Duration returns the duration of the computation
-func (e *BhattacharyyaEstimator) Duration() float64 {
-	return e.duration
 }
 
 func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
@@ -144,14 +91,6 @@ func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
 	return e.getValue(indexA, indexB, countA, countB)
 }
 
-func (e *BhattacharyyaEstimator) GetSimilarities() *DatasetSimilarities {
-	return e.similarities
-}
-
-func (e *BhattacharyyaEstimator) Datasets() []*Dataset {
-	return e.datasets
-}
-
 func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["concurrency"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
@@ -174,19 +113,6 @@ func (e *BhattacharyyaEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
 		"tree.scale":  "determines the portion of the kd-tree to be used",
-	}
-}
-
-func (e *BhattacharyyaEstimator) PopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
-	e.popPolicy = policy
-}
-
-func (e *BhattacharyyaEstimator) computeLine(start, i int) {
-	for j := start; j < len(e.datasets); j++ {
-		r1, r2 := e.pointsPerRegion[i], e.pointsPerRegion[j]
-		c1, c2 := e.datasetsSize[i], e.datasetsSize[j]
-		val := e.getValue(r1, r2, c1, c2)
-		e.similarities.Set(i, j, val)
 	}
 }
 
@@ -264,7 +190,7 @@ func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
 	count = getIntBytes(tempInt)
 	similarityBytes := make([]byte, count)
 	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarities)
+	e.similarities = new(DatasetSimilarityMatrix)
 	e.similarities.Deserialize(similarityBytes)
 
 	buffer.Read(tempInt)

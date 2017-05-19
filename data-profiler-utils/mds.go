@@ -17,9 +17,9 @@ type mdsParams struct {
 	output  *string         // the output file
 	modules map[string]bool // which modules to activate for the util
 
-	script       *string                   // the mds script to run
-	k            *int                      // the number of the coordinates to eval
-	similarities *core.DatasetSimilarities // the similarity matrix
+	script       *string                       // the mds script to run
+	k            *int                          // the number of the coordinates to eval
+	similarities *core.DatasetSimilarityMatrix // the similarity matrix
 }
 
 var mdsModules = map[string]string{

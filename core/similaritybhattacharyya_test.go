@@ -18,7 +18,7 @@ func TestBhattacharyyaCompute(t *testing.T) {
 		t.FailNow()
 	}
 
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	if s == nil {
 		t.Log("Nil similarities returned")
 		t.FailNow()
@@ -59,7 +59,6 @@ func TestKdTree(t *testing.T) {
 	kd := NewKDTreePartition(dataset.Data())
 	kd.Prune(kd.Height() - 2)
 	ids := kd.GetLeafIndex(dataset.Data())
-	t.Log(len(ids))
 	sum := 0
 	for _, v := range ids {
 		sum += v
@@ -109,14 +108,14 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 			"count": 20,
 		},
 	}
-	est.PopulationPolicy(policy)
+	est.SetPopulationPolicy(policy)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	if s == nil {
 		t.Log("Nil similarities returned")
 		t.FailNow()
@@ -152,14 +151,14 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 			"threshold": 0.985,
 		},
 	}
-	est.PopulationPolicy(policy)
+	est.SetPopulationPolicy(policy)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
 
-	s := est.GetSimilarities()
+	s := est.SimilarityMatrix()
 	if s == nil {
 		t.Log("Nil similarities returned")
 		t.FailNow()
@@ -220,7 +219,7 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 		PolicyType: POPULATION_POL_FULL,
 		Parameters: map[string]float64{},
 	}
-	est.PopulationPolicy(pol)
+	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -274,8 +273,8 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 		}
 	}
 
-	if newEst.Similarity(datasets[0], datasets[1]) != newEst.GetSimilarities().Get(0, 1) {
-		t.Log("Something is seriously wrong here", newEst.GetSimilarities().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
+	if newEst.Similarity(datasets[0], datasets[1]) != newEst.SimilarityMatrix().Get(0, 1) {
+		t.Log("Something is seriously wrong here", newEst.SimilarityMatrix().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
 		t.Fail()
 	}
 }

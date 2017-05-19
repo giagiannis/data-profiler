@@ -19,7 +19,7 @@ func TestMDScalingScript(t *testing.T) {
 		t.Fail()
 	}
 
-	md := NewMDScaling(est.GetSimilarities(), 2, MDSCALING_SCRIPT+"-bad")
+	md := NewMDScaling(est.SimilarityMatrix(), 2, MDSCALING_SCRIPT+"-bad")
 	err = md.Compute()
 	if err == nil {
 		t.Log(err)
@@ -47,7 +47,7 @@ func TestMDScalingCompute(t *testing.T) {
 		t.Fail()
 	}
 	for _, k := range []int{1, 2, 3, 4, 5, 6} {
-		md := NewMDScaling(est.GetSimilarities(), k, MDSCALING_SCRIPT)
+		md := NewMDScaling(est.SimilarityMatrix(), k, MDSCALING_SCRIPT)
 		err = md.Compute()
 		if err != nil {
 			t.Log(err)

@@ -11,7 +11,7 @@ import (
 )
 
 type printUtilsParams struct {
-	similarities *core.DatasetSimilarities
+	similarities *core.DatasetSimilarityMatrix
 	scores       *core.DatasetScores
 }
 

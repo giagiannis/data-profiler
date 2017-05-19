@@ -12,12 +12,12 @@ import (
 )
 
 type clusteringParams struct {
-	input        *string                   //datasets directory to be discovered
-	similarities *core.DatasetSimilarities // similarities
-	scores       *core.DatasetScores       // scores file
-	logfile      *string                   // log file
-	concurrency  *int                      // max number of threads
-	output       *string                   // output file
+	input        *string                       //datasets directory to be discovered
+	similarities *core.DatasetSimilarityMatrix // similarities
+	scores       *core.DatasetScores           // scores file
+	logfile      *string                       // log file
+	concurrency  *int                          // max number of threads
+	output       *string                       // output file
 }
 
 func clusteringParseParams() *clusteringParams {

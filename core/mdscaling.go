@@ -18,9 +18,9 @@ type DatasetCoordinates []float64
 // algorithm in order to provide coefficients for each dataset, based on a
 // a similarity matrix.
 type MDScaling struct {
-	script string               // script to be used for the execution
-	k      int                  // number of output dimensions
-	matrix *DatasetSimilarities // the similarity matrix
+	script string                   // script to be used for the execution
+	k      int                      // number of output dimensions
+	matrix *DatasetSimilarityMatrix // the similarity matrix
 
 	coordinates []DatasetCoordinates // the coordinates matrix
 	gof         float64              // the gof factor
@@ -30,7 +30,7 @@ type MDScaling struct {
 // MDScaling object, based on the provided DatasetSimilarities struct and the
 // k factor that determines the number of target dimensions. If k<1, then
 // auto estimation takes place.
-func NewMDScaling(matrix *DatasetSimilarities, k int, script string) *MDScaling {
+func NewMDScaling(matrix *DatasetSimilarityMatrix, k int, script string) *MDScaling {
 	mds := new(MDScaling)
 	mds.matrix = matrix
 	mds.k = k
