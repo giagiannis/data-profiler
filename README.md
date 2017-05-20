@@ -1,4 +1,4 @@
-data-profiler ![travis-status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master)
+data-profiler ![travis-status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master) ![goreport](https://goreportcard.com/badge/github.com/giagiannis/data-profiler)
 =============
 data-profiler is a project used to perform data profiling in an operator agnostic way.
 
