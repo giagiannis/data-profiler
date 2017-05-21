@@ -1,5 +1,27 @@
-{{ template "base.html" . }}
+{{ define "title"}}
+Datasets List
+{{ end }}
 
 {{ define "body"}}
 <h1>Datasets</h1>
+<table class='tablelist'>
+<tr>
+		<th>Dataset Name</th>
+		<th>Path</th>
+		<th>Description</th>
+		<th></th>
+</tr>
+
+{{ range $key, $val := . }}
+<tr>
+		<td>{{ $val.Name }}</td>
+		<td>{{ $val.Path }}</td>
+		<td>{{ $val.Description }}</td>
+		<td><a href=''>View</a></td>
+</tr>
+{{end}}
+</table>
+
 {{ end }}
+
+{{ template "base.html" . }}

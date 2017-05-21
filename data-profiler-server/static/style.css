@@ -1,6 +1,6 @@
 html {
   font-family: Arial, Helvetica, sans-serif;
-  background: #d4d4d4;
+/*  background: #f4fef4; */
 }
 .navbar {
   background: #333333;
@@ -22,11 +22,10 @@ html {
 }
 
 #main {
-	width: 800px;
+	width: 900px;
 	margin: 0 auto;
 	box-shadow: 10px 10px 10px #888888;
-  	background: #eeeeee;
-	height:1000px;
+/*  	background: #f8fef8;*/
 }
 
 .copyright {
