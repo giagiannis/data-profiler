@@ -1,35 +1,57 @@
 html {
-  font-family: Arial, Helvetica, sans-serif;
-/*  background: #f4fef4; */
+		font-family: Arial, Helvetica, sans-serif;
+		/*  background: #f4fef4; */
 }
 .navbar {
-  background: #333333;
-  padding: 10 10;
-  margin: 0;
-  overflow: hidden;
+		background: #333333;
+		padding: 10 10;
+		margin: 0;
+		overflow: hidden;
 }
 
 .link {
-  transition: 0.3s ease;
-  color: #ffffff;
-  font-size: 20px;
-  text-decoration: none;
-  width:100px;
+		transition: 0.3s ease;
+		color: #ffffff;
+		font-size: 20px;
+		text-decoration: none;
+		width:100px;
 }
 
 .link:hover {
-	background: #33aa22;
+		background: #33aa22;
 }
 
 #main {
-	width: 900px;
-	margin: 0 auto;
-	box-shadow: 10px 10px 10px #888888;
-/*  	background: #f8fef8;*/
+		width: 900px;
+		margin: 0 auto;
+		box-shadow: 10px 10px 10px #888888;
+		/*  	background: #f8fef8;*/
 }
 
 .copyright {
-	text-align: center;
-	margin: 0 auto;
-	width:200px;
+		text-align: center;
+		margin: 0 auto;
+		width:200px;
 }
+
+table.tablelist {
+		border-collapse:collapse;
+		position: relative;
+		margin:0 auto;
+}
+
+.tablelist th, td {
+		text-align: left;
+		padding: 8px;
+}
+
+.tablelist tr:nth-child(even){
+		background-color: #f2f2f2
+}
+
+.tablelist th {
+/*		background-color: #4CAF50;*/
+		background-color: #33AA22;
+		color: white;
+}
+

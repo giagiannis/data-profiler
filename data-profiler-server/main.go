@@ -22,6 +22,7 @@ type Configuration struct {
 			Static    string
 		}
 	}
+	Database string
 }
 
 // LoadConfig loads the configuration file in memory

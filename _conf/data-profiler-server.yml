@@ -4,5 +4,4 @@ server:
     dirs:
             templates: "data-profiler-server/templates"
             static: "data-profiler-server/static"
-datasets:
-        - /home/giannis/fooo
+database: "sqlite3.db"

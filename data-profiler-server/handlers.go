@@ -15,18 +15,20 @@ type cntTmpltCouple struct {
 // TEMPLATE_DEPENDENCIES lists the necessary templates that need to be rendered
 // for each template
 var TEMPLATE_DEPENDENCIES = map[string][]string{
-	"about.html":    []string{"base.html"},
-	"datasets.html": []string{"base.html"},
-	"mds.html":      []string{"base.html"},
-	"sm.html":       []string{"base.html"},
-	"error.html":    []string{"base.html"},
+	"about.html":         []string{"base.html"},
+	"datasets.html":      []string{"base.html"},
+	"datasets_view.html": []string{"base.html"},
+	"tasks.html":         []string{"base.html"},
+	"error.html":         []string{"base.html"},
 }
 
 // ROUTING_CONTROLLER_TEMPLATES hold the controller and the respective template
 // that need to be rendered for each possible path
 var ROUTING_CONTROLLER_TEMPLATES = map[string]cntTmpltCouple{
-	"datasets/": cntTmpltCouple{controllerDatasetList, "datasets.html"},
-	"about/":    cntTmpltCouple{nil, "about.html"},
+	"datasets/":     cntTmpltCouple{controllerDatasetList, "datasets.html"},
+	"datasets/view": cntTmpltCouple{controllerDatasetView, "datasets_view.html"},
+	"about/":        cntTmpltCouple{nil, "about.html"},
+	"tasks/":        cntTmpltCouple{nil, "tasks.html"},
 }
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,10 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Request) Model, *template.Template) {
-	model, _, cmd := parseURL(url)
+	model, id, cmd := parseURL(url)
+	if id != "" && cmd == "" { // default action is view
+		cmd = "view"
+	}
 	route := model + "/" + cmd
 
 	var tmplt string

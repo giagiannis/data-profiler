@@ -12,12 +12,12 @@ Datasets List
 		<th></th>
 </tr>
 
-{{ range $key, $val := . }}
+{{ range $id, $val := . }}
 <tr>
 		<td>{{ $val.Name }}</td>
 		<td>{{ $val.Path }}</td>
 		<td>{{ $val.Description }}</td>
-		<td><a href=''>View</a></td>
+		<td><a href='/datasets/{{ $val.Id }}'><img src='/static/view.png' width="35" name="Show"/></a></td>
 </tr>
 {{end}}
 </table>
