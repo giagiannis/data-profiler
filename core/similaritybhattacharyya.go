@@ -341,7 +341,7 @@ func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
 	}
 	results := make([]int, 2<<uint(treeHeight-1))
 	for _, tup := range tuples {
-		results[dfs(r, 0, 0, tup)] += 1
+		results[dfs(r, 0, 0, tup)]++
 	}
 	return results
 }

@@ -116,7 +116,7 @@ func indexingRun() {
 	}
 	testCases := 0
 	for _, k := range strings.Split(*params.k, ",") {
-		kInt, err := strconv.Atoi(k)
+		kint, err := strconv.Atoi(k)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
@@ -133,14 +133,14 @@ func indexingRun() {
 			c <- true
 			done <- resultsStruct{k, coo, gof, duration}
 		}
-		if kInt == 0 || kInt == len(params.estimator.Datasets()) {
-			kInt = len(params.estimator.Datasets())
-			go execution(c, done, kInt)
-			testCases += 1
+		if kint == 0 || kint == len(params.estimator.Datasets()) {
+			kint = len(params.estimator.Datasets())
+			go execution(c, done, kint)
+			testCases++
 		} else {
 			for i := 0; i < *params.repetition; i++ {
-				go execution(c, done, kInt)
-				testCases += 1
+				go execution(c, done, kint)
+				testCases++
 			}
 		}
 	}

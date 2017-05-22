@@ -308,7 +308,7 @@ func NewDatasetSimilarityEstimator(
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
-		a.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
+		a.simType = scriptSimilarityTypeEuclidean
 		return a
 	} else if estType == SIMILARITY_TYPE_CORRELATION {
 		a := new(CorrelationEstimator)

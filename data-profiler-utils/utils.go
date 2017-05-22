@@ -113,7 +113,7 @@ func getRanks(a []float64) []int {
 	for i := range a {
 		for j := range a {
 			if a[j] < a[i] {
-				ranks[i] += 1
+				ranks[i]++
 			}
 		}
 	}
@@ -128,9 +128,9 @@ func getKendalTau(x, y []int) float64 {
 		for j := i + 1; j < len(y); j++ {
 			val := (x[i] - x[j]) * (y[i] - y[j])
 			if val > 0 {
-				c += 1
+				c++
 			} else if val < 0 {
-				nc += 1
+				nc++
 			}
 		}
 	}

@@ -199,7 +199,7 @@ func expOrderingRun() {
 		count := 0
 		for j, rank := range y {
 			if rank < k && set[j] {
-				count += 1
+				count++
 			}
 		}
 		return float64(count) / float64(k)

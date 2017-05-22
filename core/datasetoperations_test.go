@@ -54,7 +54,7 @@ func TestUniformPartition(t *testing.T) {
 	for _, f := range files {
 		file, _ := os.Open(f.Path())
 		lines += lineCounter(file)
-		lines -= 1
+		lines--
 		file.Close()
 	}
 	originalFile, _ := os.Open(part.input)

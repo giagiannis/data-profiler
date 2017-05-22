@@ -12,9 +12,9 @@ type cntTmpltCouple struct {
 	tmp string
 }
 
-// TEMPLATE_DEPENDENCIES lists the necessary templates that need to be rendered
+// templateDependencies lists the necessary templates that need to be rendered
 // for each template
-var TEMPLATE_DEPENDENCIES = map[string][]string{
+var templateDependencies = map[string][]string{
 	"about.html":         {"base.html"},
 	"datasets.html":      {"base.html"},
 	"datasets_view.html": {"base.html"},
@@ -22,9 +22,9 @@ var TEMPLATE_DEPENDENCIES = map[string][]string{
 	"error.html":         {"base.html"},
 }
 
-// ROUTING_CONTROLLER_TEMPLATES hold the controller and the respective template
+// routingControllerTemplates hold the controller and the respective template
 // that need to be rendered for each possible path
-var ROUTING_CONTROLLER_TEMPLATES = map[string]cntTmpltCouple{
+var routingControllerTemplates = map[string]cntTmpltCouple{
 	"datasets/":     {controllerDatasetList, "datasets.html"},
 	"datasets/view": {controllerDatasetView, "datasets_view.html"},
 	"about/":        {nil, "about.html"},
@@ -53,7 +53,7 @@ func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Re
 	var tmplt string
 	var cnt func(http.ResponseWriter, *http.Request) Model
 
-	if coup, ok := ROUTING_CONTROLLER_TEMPLATES[route]; ok {
+	if coup, ok := routingControllerTemplates[route]; ok {
 		cnt = coup.cnt
 		tmplt = coup.tmp
 	}
@@ -64,9 +64,9 @@ func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Re
 // loadTemplate attempts to load the specified template, else returns the
 // error page
 func loadTemplate(templateName string) *template.Template {
-	deps, ok := TEMPLATE_DEPENDENCIES[templateName]
+	deps, ok := templateDependencies[templateName]
 	if !ok { // error
-		deps = TEMPLATE_DEPENDENCIES["error.html"]
+		deps = templateDependencies["error.html"]
 		templateName = "error.html"
 	}
 	newDeps := make([]string, len(deps))

@@ -20,7 +20,7 @@ type Model interface{}
 
 // ModelDataset is the struct that represents a set of datasets
 type ModelDataset struct {
-	Id          string
+	ID          string
 	Name        string
 	Path        string
 	Description string
@@ -40,7 +40,7 @@ func modelDatasetsList() []*ModelDataset {
 	result := make([]*ModelDataset, 0)
 	for rows.Next() {
 		obj := new(ModelDataset)
-		rows.Scan(&obj.Id, &obj.Path, &obj.Name, &obj.Description)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Name, &obj.Description)
 		result = append(result, obj)
 	}
 	return result
@@ -59,6 +59,6 @@ func modelDatasetGet(id string) *ModelDataset {
 	defer rows.Close()
 	rows.Next()
 	obj := new(ModelDataset)
-	rows.Scan(&obj.Id, &obj.Path, &obj.Name, &obj.Description)
+	rows.Scan(&obj.ID, &obj.Path, &obj.Name, &obj.Description)
 	return obj
 }

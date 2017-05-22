@@ -137,7 +137,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est := *new(ScriptSimilarityEstimator)
 	est.datasets = datasets
-	est.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
+	est.simType = scriptSimilarityTypeEuclidean
 	est.analysisScript = ANALYSIS_SCRIPT
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
