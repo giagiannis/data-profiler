@@ -7,7 +7,6 @@ import (
 	"math"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -79,14 +78,6 @@ func (e *OrderEstimator) Similarity(a, b *Dataset) float64 {
 	return 1 - math.Sqrt(value/maxDistance)
 }
 
-func (e *OrderEstimator) SimilarityMatrix() *DatasetSimilarityMatrix {
-	return e.similarities
-}
-
-func (e *OrderEstimator) Datasets() []*Dataset {
-	return e.datasets
-}
-
 func (e *OrderEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["concurrency"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
@@ -104,30 +95,12 @@ func (e *OrderEstimator) Options() map[string]string {
 	}
 }
 
-func (e *OrderEstimator) SetPopulationPolicy(policy DatasetSimilarityPopulationPolicy) {
-	e.popPolicy = policy
-}
-
 func (e *OrderEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACCARD)))
-	buffer.Write(getBytesInt(e.concurrency))
 
-	pol := e.popPolicy.Serialize()
-	log.Println(len(pol))
-	buffer.Write(getBytesInt(len(pol)))
-	buffer.Write(pol)
-
-	sim := e.similarities.Serialize()
-	log.Println(len(sim))
-	buffer.Write(getBytesInt(len(sim)))
-	buffer.Write(sim)
-
-	// serialize dataste names
-	buffer.Write(getBytesInt(len(e.datasets)))
-	for _, d := range e.datasets {
-		buffer.WriteString(d.Path() + "\n")
-	}
+	buffer.Write(
+		datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator))
 
 	return buffer.Bytes()
 }
@@ -136,30 +109,10 @@ func (e *OrderEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)
 	buffer.Read(tempInt) // consume estimator type
-	var count int
-	buffer.Read(tempInt)
-	e.concurrency = getIntBytes(tempInt)
 
 	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	polBytes := make([]byte, count)
-	buffer.Read(polBytes)
-	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
-	e.popPolicy.Deserialize(polBytes)
-
-	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	similarityBytes := make([]byte, count)
-	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarityMatrix)
-	e.similarities.Deserialize(similarityBytes)
-
-	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	e.datasets = make([]*Dataset, count)
-	for i := range e.datasets {
-		line, _ := buffer.ReadString('\n')
-		line = strings.TrimSpace(line)
-		e.datasets[i] = NewDataset(line)
-	}
+	absEstBytes := make([]byte, getIntBytes(tempInt))
+	buffer.Read(absEstBytes)
+	e.AbstractDatasetSimilarityEstimator =
+		*datasetSimilarityEstimatorDeserialize(absEstBytes)
 }

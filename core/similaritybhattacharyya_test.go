@@ -209,7 +209,7 @@ func TestKdtreeNodeSerialization(t *testing.T) {
 }
 
 func TestBhattacharyyaSerialization(t *testing.T) {
-	datasets := createPoolBasedDatasets(10000, 100, 4)
+	datasets := createPoolBasedDatasets(1000, 50, 4)
 	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est := *new(BhattacharyyaEstimator)
 	est.datasets = datasets

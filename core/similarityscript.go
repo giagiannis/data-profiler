@@ -135,25 +135,12 @@ func (e *ScriptSimilarityEstimator) SetPopulationPolicy(policy DatasetSimilarity
 func (e *ScriptSimilarityEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_SCRIPT)))
-	buffer.Write(getBytesInt(e.concurrency))
+
+	buffer.Write(
+		datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator))
+	//	buffer.Write(getBytesInt(e.concurrency))
 	buffer.Write(getBytesInt(int(e.simType)))
 	buffer.WriteString(e.analysisScript + "\n")
-
-	pol := e.popPolicy.Serialize()
-	log.Println(len(pol))
-	buffer.Write(getBytesInt(len(pol)))
-	buffer.Write(pol)
-
-	sim := e.similarities.Serialize()
-	log.Println(len(sim))
-	buffer.Write(getBytesInt(len(sim)))
-	buffer.Write(sim)
-
-	// serialize dataset names
-	buffer.Write(getBytesInt(len(e.datasets)))
-	for _, d := range e.datasets {
-		buffer.WriteString(d.Path() + "\n")
-	}
 
 	// write number of coordinates per dataset
 	buffer.Write(getBytesInt(len(e.datasetCoordinates[0])))
@@ -167,44 +154,27 @@ func (e *ScriptSimilarityEstimator) Serialize() []byte {
 
 func (e *ScriptSimilarityEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
-	tempInit := make([]byte, 4)
-	buffer.Read(tempInit) // consume estimator type
-	var count int
-	buffer.Read(tempInit)
-	e.concurrency = getIntBytes(tempInit)
-	buffer.Read(tempInit)
-	e.simType = ScriptSimilarityEstimatorType(getIntBytes(tempInit))
+	tempInt := make([]byte, 4)
+	buffer.Read(tempInt) // consume estimator type
+	buffer.Read(tempInt)
+	absEstBytes := make([]byte, getIntBytes(tempInt))
+	buffer.Read(absEstBytes)
+	e.AbstractDatasetSimilarityEstimator =
+		*datasetSimilarityEstimatorDeserialize(absEstBytes)
+
+	buffer.Read(tempInt)
+	e.simType = ScriptSimilarityEstimatorType(getIntBytes(tempInt))
 	line, _ := buffer.ReadString('\n')
 	e.analysisScript = strings.TrimSpace(line)
 
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
-	polBytes := make([]byte, count)
-	buffer.Read(polBytes)
-	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
-	e.popPolicy.Deserialize(polBytes)
-
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
-	similarityBytes := make([]byte, count)
-	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarityMatrix)
-	e.similarities.Deserialize(similarityBytes)
-
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
-	e.datasets = make([]*Dataset, count)
 	e.inverseIndex = make(map[string]int)
-	for i := range e.datasets {
-		line, _ := buffer.ReadString('\n')
-		line = strings.TrimSpace(line)
-		e.datasets[i] = NewDataset(line)
-		e.inverseIndex[line] = i
+	for i, d := range e.datasets {
+		e.inverseIndex[d.Path()] = i
 	}
 
 	tempFloat := make([]byte, 8)
-	buffer.Read(tempInit)
-	count = getIntBytes(tempInit)
+	buffer.Read(tempInt)
+	count := getIntBytes(tempInt)
 	e.datasetCoordinates = make([][]float64, len(e.datasets))
 	for i := range e.datasets {
 		e.datasetCoordinates[i] = make([]float64, count)

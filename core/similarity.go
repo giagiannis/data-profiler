@@ -42,10 +42,10 @@ type DatasetSimilarityEstimator interface {
 // estimator objects
 type AbstractDatasetSimilarityEstimator struct {
 	datasets     []*Dataset
-	concurrency  int
 	popPolicy    DatasetSimilarityPopulationPolicy
-	duration     float64
 	similarities *DatasetSimilarityMatrix
+	duration     float64
+	concurrency  int
 }
 
 // Datasets returns the datasets of the estimator
@@ -78,7 +78,70 @@ func (a *AbstractDatasetSimilarityEstimator) Concurrency() int {
 	return a.concurrency
 }
 
-// estimatorCompute is responsible to execute the computation code of the estimators.
+// datasetSimilarityEstimatorSerialize is used to generate an array of bytes of
+// the abstract object
+func datasetSimilarityEstimatorSerialize(e AbstractDatasetSimilarityEstimator) []byte {
+	buffer := new(bytes.Buffer)
+
+	buffer.Write(getBytesInt(len(e.Datasets())))
+	for _, d := range e.Datasets() {
+		buffer.WriteString(d.Path() + "\n")
+	}
+	pop := e.PopulationPolicy()
+	pop_ser := pop.Serialize()
+	buffer.Write(getBytesInt(len(pop_ser)))
+	buffer.Write(pop_ser)
+
+	sim := e.SimilarityMatrix().Serialize()
+	buffer.Write(getBytesInt(len(sim)))
+	buffer.Write(sim)
+	buffer.Write(getBytesInt(e.Concurrency()))
+	buffer.Write(getBytesFloat(e.Duration()))
+	cnt := buffer.Bytes()
+	buf_len := getBytesInt(len(cnt))
+	return append(buf_len, cnt...)
+}
+
+// datasetSimilarityEstimatorDeserialize is used to generate an object based on
+// the byte stream
+func datasetSimilarityEstimatorDeserialize(b []byte) *AbstractDatasetSimilarityEstimator {
+	result := new(AbstractDatasetSimilarityEstimator)
+	buffer := bytes.NewBuffer(b)
+	tempInt := make([]byte, 4)
+	tempFloat := make([]byte, 8)
+
+	buffer.Read(tempInt)
+	count := getIntBytes(tempInt)
+	result.datasets = make([]*Dataset, count)
+	for i := range result.datasets {
+		line, _ := buffer.ReadString('\n')
+		line = strings.TrimSpace(line)
+		result.datasets[i] = NewDataset(line)
+	}
+
+	buffer.Read(tempInt)
+	count = getIntBytes(tempInt)
+	polBytes := make([]byte, count)
+	buffer.Read(polBytes)
+	result.popPolicy = *new(DatasetSimilarityPopulationPolicy)
+	result.popPolicy.Deserialize(polBytes)
+
+	buffer.Read(tempInt)
+	count = getIntBytes(tempInt)
+	similarityBytes := make([]byte, count)
+	buffer.Read(similarityBytes)
+	result.similarities = new(DatasetSimilarityMatrix)
+	result.similarities.Deserialize(similarityBytes)
+
+	buffer.Read(tempInt)
+	result.concurrency = getIntBytes(tempInt)
+
+	buffer.Read(tempFloat)
+	result.duration = getFloatBytes(tempFloat)
+	return result
+}
+
+// datasetSimilarityEstimatorCompute is responsible to execute the computation code of the estimators.
 // The provided object must respect the DatasetSimilarityEstimator interface
 // and (optionally) extends the AbstractDatasetSimilarityEstimator struct
 func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {

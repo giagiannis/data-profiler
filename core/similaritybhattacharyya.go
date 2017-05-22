@@ -8,7 +8,6 @@ import (
 	"math"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -127,25 +126,11 @@ func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) 
 
 func (e *BhattacharyyaEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_BHATTACHARYYA)))
-	buffer.Write(getBytesInt(e.concurrency))
+
+	bytes := datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator)
+	buffer.Write(bytes)
 	buffer.Write(getBytesFloat(e.kdTreeScaleFactor))
-
-	pol := e.popPolicy.Serialize()
-	log.Println(len(pol))
-	buffer.Write(getBytesInt(len(pol)))
-	buffer.Write(pol)
-
-	sim := e.similarities.Serialize()
-	buffer.Write(getBytesInt(len(sim)))
-	buffer.Write(sim)
-
-	// serialize dataset names
-	buffer.Write(getBytesInt(len(e.datasets)))
-	for _, d := range e.datasets {
-		buffer.WriteString(d.Path() + "\n")
-	}
 
 	// write points per region
 	buffer.Write(getBytesInt(len(e.pointsPerRegion[0])))
@@ -174,34 +159,17 @@ func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
 
 	var count int
 	buffer.Read(tempInt)
-	e.concurrency = getIntBytes(tempInt)
+	absEstBytes := make([]byte, getIntBytes(tempInt))
+	buffer.Read(absEstBytes)
+	e.AbstractDatasetSimilarityEstimator =
+		*datasetSimilarityEstimatorDeserialize(absEstBytes)
 
 	buffer.Read(tempFloat)
 	e.kdTreeScaleFactor = getFloatBytes(tempFloat)
 
-	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	polBytes := make([]byte, count)
-	buffer.Read(polBytes)
-	e.popPolicy = *new(DatasetSimilarityPopulationPolicy)
-	e.popPolicy.Deserialize(polBytes)
-
-	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	similarityBytes := make([]byte, count)
-	buffer.Read(similarityBytes)
-	e.similarities = new(DatasetSimilarityMatrix)
-	e.similarities.Deserialize(similarityBytes)
-
-	buffer.Read(tempInt)
-	count = getIntBytes(tempInt)
-	e.datasets = make([]*Dataset, count)
 	e.inverseIndex = make(map[string]int)
 	for i := range e.datasets {
-		line, _ := buffer.ReadString('\n')
-		line = strings.TrimSpace(line)
-		e.datasets[i] = NewDataset(line)
-		e.inverseIndex[line] = i
+		e.inverseIndex[e.datasets[i].Path()] = i
 	}
 
 	buffer.Read(tempInt)
