@@ -198,9 +198,8 @@ func TestKdtreeNodeSerialization(t *testing.T) {
 		}
 		if treeA.dim != treeB.dim || treeA.value != treeB.value {
 			return false
-		} else {
-			return dfsTraversal(treeA.left, treeB.left) && dfsTraversal(treeA.right, treeB.right)
 		}
+		return dfsTraversal(treeA.left, treeB.left) && dfsTraversal(treeA.right, treeB.right)
 	}
 	if !dfsTraversal(tree, newTree) {
 		t.Log("Trees not equal")

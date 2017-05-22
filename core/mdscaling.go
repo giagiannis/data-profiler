@@ -74,11 +74,11 @@ func (md *MDScaling) Compute() error {
 	// execute computation
 	if md.k < 1 || md.k > md.matrix.Capacity()-1 { // binary search in the interval [1, n-1]
 		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
-	} else { // execute solution
-		md.coordinates, md.gof, err = md.executeScript(writer.Name())
-		if err != nil {
-			return err
-		}
+	}
+	// execute solution
+	md.coordinates, md.gof, err = md.executeScript(writer.Name())
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -136,7 +136,7 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 	count := 0
 	for i := 1; i < len(lines) && len(lines[i]) > 0; i++ {
 		if len(lines[i]) > 0 {
-			count += 1
+			count++
 		}
 	}
 	// parse coordinates slices

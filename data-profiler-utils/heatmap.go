@@ -92,31 +92,31 @@ func heatmapRun() {
 	outfile.Close()
 }
 
-type ScoresPair struct {
+type scoresPair struct {
 	path  string
 	score float64
 }
 
-type ScoresPairList []ScoresPair
+type scoresPairList []scoresPair
 
-func (s ScoresPairList) Len() int {
+func (s scoresPairList) Len() int {
 	return len(s)
 }
 
-func (s ScoresPairList) Less(i, j int) bool {
+func (s scoresPairList) Less(i, j int) bool {
 	return s[i].score < s[j].score
 }
 
-func (s ScoresPairList) Swap(i, j int) {
+func (s scoresPairList) Swap(i, j int) {
 	t := s[i]
 	s[i] = s[j]
 	s[j] = t
 }
-func sortScores(scores map[string]float64) ScoresPairList {
+func sortScores(scores map[string]float64) scoresPairList {
 
-	var list ScoresPairList
+	var list scoresPairList
 	for d, v := range scores {
-		list = append(list, ScoresPair{d, v})
+		list = append(list, scoresPair{d, v})
 
 	}
 	sort.Sort(list)

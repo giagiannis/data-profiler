@@ -15,8 +15,8 @@ type Clustering struct {
 	concurrency  int
 }
 
-// Constructor for creating a Clustering object, providing a DatasetSimilarities
-// object
+// NewClustering is the the constructor for creating a Clustering object,
+// providing a DatasetSimilarities object
 func NewClustering(similarities *DatasetSimilarityMatrix, datasets []*Dataset) *Clustering {
 	c := new(Clustering)
 	c.similarities = similarities
@@ -25,11 +25,12 @@ func NewClustering(similarities *DatasetSimilarityMatrix, datasets []*Dataset) *
 	return c
 }
 
+// SetConcurrency sets the number of threads to be used
 func (c *Clustering) SetConcurrency(concurrency int) {
 	c.concurrency = concurrency
 }
 
-// Executes the clustering
+// Compute executes the clustering
 func (c *Clustering) Compute() error {
 	c.results = NewDendrogram(c.datasets)
 	for c.results.hasUnmerged() {
@@ -39,7 +40,7 @@ func (c *Clustering) Compute() error {
 	return nil
 }
 
-// Returns the results
+// Results returns the results
 func (c *Clustering) Results() *Dendrogram {
 	return c.results
 }
@@ -108,6 +109,7 @@ type Dendrogram struct {
 	unmerged map[int]*DendrogramNode // Dendrogram leaf nodes, indexed by their id
 }
 
+// DendrogramNode is the node of the Dendrogram
 type DendrogramNode struct {
 	id          int
 	datasets    []*Dataset
@@ -128,7 +130,7 @@ func (n DendrogramNode) String() string {
 	return buf.String()
 }
 
-// Dendrogram constructor
+// NewDendrogram is the constructor for a Dendrogram struct
 func NewDendrogram(datasets []*Dataset) *Dendrogram {
 	d := new(Dendrogram)
 	d.root = nil
