@@ -2,9 +2,18 @@ package main
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
+
+// dbConnect is responsible to establish the connection with the DB backend.
+// Written as separate function to increase modularity between the different
+// DB backends.
+func dbConnect() (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", Conf.Database)
+	return db, err
+}
 
 // Model is the interface returned by all the model functions
 type Model interface{}
@@ -18,7 +27,7 @@ type ModelDataset struct {
 }
 
 func modelDatasetsList() []*ModelDataset {
-	db, err := sql.Open("sqlite3", Conf.Database)
+	db, err := dbConnect()
 	if err != nil {
 		log.Println(err)
 	}
@@ -38,7 +47,7 @@ func modelDatasetsList() []*ModelDataset {
 }
 
 func modelDatasetGet(id string) *ModelDataset {
-	db, err := sql.Open("sqlite3", Conf.Database)
+	db, err := dbConnect()
 	if err != nil {
 		log.Println(err)
 	}
