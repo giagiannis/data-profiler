@@ -30,7 +30,7 @@ func (e *JaccardEstimator) Compute() error {
 	}
 
 	start := time.Now()
-	EstimatorCompute(e)
+	datasetSimilarityEstimatorCompute(e)
 	e.duration = time.Since(start).Seconds()
 
 	return nil

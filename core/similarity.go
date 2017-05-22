@@ -72,14 +72,16 @@ func (a *AbstractDatasetSimilarityEstimator) PopulationPolicy() DatasetSimilarit
 func (a *AbstractDatasetSimilarityEstimator) Duration() float64 {
 	return a.duration
 }
+
+// Concurrency returns the max number of threads to be used for the computation
 func (a *AbstractDatasetSimilarityEstimator) Concurrency() int {
 	return a.concurrency
 }
 
-// EstimatorCompute is responsible to execute the computation code of the estimators.
+// estimatorCompute is responsible to execute the computation code of the estimators.
 // The provided object must respect the DatasetSimilarityEstimator interface
 // and (optionally) extends the AbstractDatasetSimilarityEstimator struct
-func EstimatorCompute(e DatasetSimilarityEstimator) {
+func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 	if e.PopulationPolicy().PolicyType == POPULATION_POL_FULL {
 		e.SimilarityMatrix().IndexDisabled(true) // I don't need the index
 		log.Println("Computing the similarities using", e.Concurrency(), "threads")

@@ -57,7 +57,7 @@ func (e *BhattacharyyaEstimator) Compute() error {
 		e.datasetsSize[i] = len(d.Data())
 	}
 
-	EstimatorCompute(e)
+	datasetSimilarityEstimatorCompute(e)
 	e.duration = time.Since(start).Seconds()
 	return nil
 }

@@ -48,7 +48,7 @@ func (s *ScriptSimilarityEstimator) Compute() error {
 	for i, d := range s.datasets {
 		s.inverseIndex[d.Path()] = i
 	}
-	EstimatorCompute(s)
+	datasetSimilarityEstimatorCompute(s)
 	s.duration = time.Since(start).Seconds()
 	return nil
 }
