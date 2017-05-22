@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const DATASET_SEPARATOR = ","
+const datasetSeparator = ","
 
 // Dataset struct represents a dataset object.
 type Dataset struct {
@@ -32,8 +32,8 @@ func NewDataset(path string) *Dataset {
 	return d
 }
 
-// Id getter for dataset
-func (d Dataset) Id() string {
+// ID getter for dataset
+func (d Dataset) ID() string {
 	return d.id
 }
 
@@ -57,7 +57,7 @@ func (d Dataset) String() string {
 	return d.path
 }
 
-// Method used  to parse the Dataset into memory. If the data are previously read,
+// ReadFromFile is used to parse the Dataset into memory. If the data are previously read,
 // the method is not re-executed.
 func (d *Dataset) ReadFromFile() error {
 	if d.Header() != nil && d.Data() != nil { // previously read
@@ -74,7 +74,7 @@ func (d *Dataset) ReadFromFile() error {
 
 	// reading header
 	d.header = make([]string, 0)
-	for _, s := range strings.Split(datSplit[0], DATASET_SEPARATOR) {
+	for _, s := range strings.Split(datSplit[0], datasetSeparator) {
 		d.header = append(d.header, s)
 	}
 
@@ -95,15 +95,15 @@ type DatasetTuple struct {
 	Data []float64
 }
 
-// Deserializes a tuple from a string representation
+// Deserialize is used to construct a tuple from a string representation
 func (t *DatasetTuple) Deserialize(data string) {
-	for _, s := range strings.Split(data, DATASET_SEPARATOR) {
+	for _, s := range strings.Split(data, datasetSeparator) {
 		v, _ := strconv.ParseFloat(s, 64)
 		t.Data = append(t.Data, v)
 	}
 }
 
-// Serializes the tuple to a string representation
+// Serialize transforms the tuple to a string representation
 func (t *DatasetTuple) Serialize() string {
 	return t.String()
 }
@@ -131,6 +131,7 @@ func (t DatasetTuple) Equals(o DatasetTuple) bool {
 	return true
 }
 
+// DatasetTuples represents a slice of DatasetTuple objects
 type DatasetTuples []DatasetTuple
 
 func (slice DatasetTuples) Len() int {
