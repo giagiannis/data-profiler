@@ -79,3 +79,49 @@ func createPoolBasedDatasets(poolSize, datasets, attributes int) []*Dataset {
 
 	return result
 }
+
+// Creates a pool of tuples (its size is determined by poolSize) and a number of
+// datasets each containing tuples with the specified number of attributes.
+func createPoolBasedDatasetsStrict(poolSize, datasetSize, datasets, attributes int) []*Dataset {
+	pool := *new([][]float64)
+	for i := 0; i < poolSize; i++ {
+		pool = append(pool, randomTupleGenerator(attributes))
+	}
+	fileNames := make([]string, datasets)
+	for i := 0; i < datasets; i++ {
+		buffer := make([]byte, 4)
+		rand.Read(buffer)
+		fileNames[i] = fmt.Sprintf("%s%x.txt", TMP_DIR, buffer)
+		f, _ := os.Create(fileNames[i])
+		defer f.Close()
+
+		builder := bytes.Buffer{}
+		for i := 0; i < attributes-1; i++ {
+			builder.WriteString(fmt.Sprintf("x%d, ", i))
+		}
+		builder.WriteString("class\n")
+		tuplesChosen := make(map[int]bool)
+		for j := 0; j < datasetSize; j++ {
+			var idx int
+			for idx = rand.Int() % len(pool); tuplesChosen[idx]; idx = rand.Int() % len(pool) {
+			}
+			tuplesChosen[idx] = true
+			tuple := pool[idx]
+			tupleLength := len(tuple)
+			for i, v := range tuple {
+				builder.WriteString(fmt.Sprintf("%.5f", v))
+				if i < tupleLength-1 {
+					builder.WriteString(",")
+				}
+			}
+			builder.WriteString("\n")
+		}
+		f.Write(builder.Bytes())
+	}
+	result := make([]*Dataset, len(fileNames))
+	for i, f := range fileNames {
+		result[i] = NewDataset(f)
+	}
+
+	return result
+}

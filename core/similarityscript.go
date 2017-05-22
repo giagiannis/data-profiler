@@ -137,7 +137,9 @@ func (e *ScriptSimilarityEstimator) Serialize() []byte {
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_SCRIPT)))
 
 	buffer.Write(
-		datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator))
+		datasetSimilarityEstimatorSerialize(
+			e.AbstractDatasetSimilarityEstimator))
+
 	//	buffer.Write(getBytesInt(e.concurrency))
 	buffer.Write(getBytesInt(int(e.simType)))
 	buffer.WriteString(e.analysisScript + "\n")

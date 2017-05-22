@@ -5,12 +5,12 @@ import (
 	"math"
 )
 
-// Returns the similarity based on the distance
+// DistanceToSimilarity returns the similarity based on the distance
 func DistanceToSimilarity(distance float64) float64 {
 	return 1.0 / (1.0 + distance)
 }
 
-// Returns the distance based on the similarity
+// SimilarityToDistance returns the distance based on the similarity
 func SimilarityToDistance(similarity float64) float64 {
 	return 1.0/similarity - 1.0
 }

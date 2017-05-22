@@ -183,12 +183,14 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 		} else if threshold, ok := e.PopulationPolicy().Parameters["threshold"]; ok {
 			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
 			idx, val := e.SimilarityMatrix().LeastSimilar()
-			for val < threshold {
+			iterations := 0
+			for val < threshold && iterations < len(e.Datasets()) {
 				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
 				for j := 0; j < len(e.Datasets()); j++ {
 					d1, d2 := e.Datasets()[idx], e.Datasets()[j]
 					e.SimilarityMatrix().Set(idx, j, e.Similarity(d1, d2))
 				}
+				iterations++
 				idx, val = e.SimilarityMatrix().LeastSimilar()
 			}
 		}
@@ -203,6 +205,7 @@ const (
 	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
 	SIMILARITY_TYPE_ORDER         DatasetSimilarityEstimatorType = iota + 3
 	SIMILARITY_TYPE_COMPOSITE     DatasetSimilarityEstimatorType = iota + 4
+	SIMILARITY_TYPE_CORRELATION   DatasetSimilarityEstimatorType = iota + 5
 )
 
 func (t DatasetSimilarityEstimatorType) String() string {
@@ -212,6 +215,8 @@ func (t DatasetSimilarityEstimatorType) String() string {
 		return "Bhattacharyya"
 	} else if t == SIMILARITY_TYPE_ORDER {
 		return "Order"
+	} else if t == SIMILARITY_TYPE_CORRELATION {
+		return "Correlation"
 	} else if t == SIMILARITY_TYPE_SCRIPT {
 		return "Script"
 	}
@@ -296,6 +301,13 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		a.simType = SCRIPT_SIMILARITY_TYPE_EUCLIDEAN
+		return a
+	} else if estType == SIMILARITY_TYPE_CORRELATION {
+		a := new(CorrelationEstimator)
+		a.SetPopulationPolicy(policy)
+		a.estType = CorrelationSimilarityTypePearson
+		a.datasets = datasets
+		a.concurrency = 1
 		return a
 	}
 	return nil

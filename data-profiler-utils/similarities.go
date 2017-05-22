@@ -76,11 +76,15 @@ func similaritiesParseParams() *similaritiesParams {
 	} else if *estType == "SCRIPT" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.SIMILARITY_TYPE_SCRIPT
+	} else if *estType == "CORRELATION" {
+		params.simType = new(core.DatasetSimilarityEstimatorType)
+		*params.simType = core.SIMILARITY_TYPE_CORRELATION
 	}
 
 	if *params.options == "list" {
 		similarityTypes := []core.DatasetSimilarityEstimatorType{
-			core.SIMILARITY_TYPE_JACCARD, core.SIMILARITY_TYPE_BHATTACHARYYA, core.SIMILARITY_TYPE_SCRIPT,
+			core.SIMILARITY_TYPE_JACCARD, core.SIMILARITY_TYPE_BHATTACHARYYA,
+			core.SIMILARITY_TYPE_SCRIPT, core.SIMILARITY_TYPE_CORRELATION,
 		}
 		for i, v := range similarityTypes {
 			fmt.Println(i+1, v)
