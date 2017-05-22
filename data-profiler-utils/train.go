@@ -90,7 +90,7 @@ func trainRun() {
 			done <- true
 		}(*d, c, done)
 	}
-	for _ = range params.datasets {
+	for range params.datasets {
 		<-done
 	}
 	log.Println("Serializing output to ", *params.output)

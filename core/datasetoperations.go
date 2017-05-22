@@ -43,7 +43,7 @@ func DatasetsUnion(a, b *Dataset) []DatasetTuple {
 		dict[dt.Serialize()] = true
 	}
 	result := make([]DatasetTuple, 0)
-	for k, _ := range dict {
+	for k := range dict {
 		t := new(DatasetTuple)
 		t.Deserialize(k)
 		result = append(result, *t)

@@ -71,7 +71,7 @@ func main() {
 	} else if command == "indexing" {
 		indexingRun()
 	} else if len(command) > 3 && command[0:4] == "exp-" {
-		experiment := command[4:len(command)]
+		experiment := command[4:]
 		if experiment == "accuracy" {
 			expAccuracyRun()
 		} else if experiment == "ordering" {

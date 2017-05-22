@@ -71,7 +71,7 @@ func simcomparisonParseParams() *simcomparisonParams {
 func simcomparisonRun() {
 	params := simcomparisonParseParams()
 	if !sanityCheck(params.similarities) {
-		fmt.Fprintln(os.Stderr, "Similiarity files do not have the same datasets")
+		fmt.Fprintln(os.Stderr, "Similarity files do not have the same datasets")
 		os.Exit(1)
 	}
 	if val, ok := params.modules["aprx"]; ok && val {
