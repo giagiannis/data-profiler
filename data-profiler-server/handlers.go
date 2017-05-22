@@ -15,20 +15,20 @@ type cntTmpltCouple struct {
 // TEMPLATE_DEPENDENCIES lists the necessary templates that need to be rendered
 // for each template
 var TEMPLATE_DEPENDENCIES = map[string][]string{
-	"about.html":         []string{"base.html"},
-	"datasets.html":      []string{"base.html"},
-	"datasets_view.html": []string{"base.html"},
-	"tasks.html":         []string{"base.html"},
-	"error.html":         []string{"base.html"},
+	"about.html":         {"base.html"},
+	"datasets.html":      {"base.html"},
+	"datasets_view.html": {"base.html"},
+	"tasks.html":         {"base.html"},
+	"error.html":         {"base.html"},
 }
 
 // ROUTING_CONTROLLER_TEMPLATES hold the controller and the respective template
 // that need to be rendered for each possible path
 var ROUTING_CONTROLLER_TEMPLATES = map[string]cntTmpltCouple{
-	"datasets/":     cntTmpltCouple{controllerDatasetList, "datasets.html"},
-	"datasets/view": cntTmpltCouple{controllerDatasetView, "datasets_view.html"},
-	"about/":        cntTmpltCouple{nil, "about.html"},
-	"tasks/":        cntTmpltCouple{nil, "tasks.html"},
+	"datasets/":     {controllerDatasetList, "datasets.html"},
+	"datasets/view": {controllerDatasetView, "datasets_view.html"},
+	"about/":        {nil, "about.html"},
+	"tasks/":        {nil, "tasks.html"},
 }
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
