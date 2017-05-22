@@ -1,22 +1,32 @@
 <html>
-		<head>
-				<title>{{ template "title" . }}</title>
-				<link href='/static/style.css' rel='stylesheet' type='text/css'/>
-		</head>
-		<body>
-				<nav class="navbar">
-						<a href='/datasets/' class="navbar link">Datasets</a>
-						<a href='/tasks/' class="navbar link">Tasks</a></li>
-						<a href='/about/' class="navbar link">About</a></li>
-				</nav>
-				<div id='main'>
-				{{ template "body" . }}
+				<head>
+								<title>{{ template "title" . }}</title>
+								<link href='/static/style.css' rel='stylesheet' type='text/css'/>
+								<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+								<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+								<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+				</head>
+				<body>
+								<nav class="navbar">
+												<a href='/datasets/' class="navbar link">Datasets</a>
+												<a href='/tasks/' class="navbar link">Tasks</a></li>
+								<a href='/about/' class="navbar link">About</a></li>
+				<div class='searchbar'>
+								<form method='post' action='/search/'>
+												<input type='text' name='searchtag' style='height:auto'/>
+												<input id='searchbutton' type='submit' value='Search' class="ui-button ui-widget ui-corner-all"/>
+								</form>
 				</div>
-				<footer>
-								<div class='copyright'>
-								<hr/>
-								Copyright &copy;	2017
+								</nav>
+								<div id='main'>
+												{{ template "body" . }}
 								</div>
-				</footer>
-		</body>
+								<footer>
+												<div class='copyright'>
+																<hr/>
+																Copyright &copy;	2017
+												</div>
+								</footer>
+				</body>
 </html>

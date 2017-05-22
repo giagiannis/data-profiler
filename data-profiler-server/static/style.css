@@ -9,6 +9,17 @@ html {
 		overflow: hidden;
 }
 
+.searchbar {
+		float:right;
+		height:20px;
+}
+
+#searchbutton {
+		height:25px;
+		padding:0 0;
+		margin:0 auto;
+}
+
 .link {
 		transition: 0.3s ease;
 		color: #ffffff;
