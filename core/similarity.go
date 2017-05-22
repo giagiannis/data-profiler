@@ -10,7 +10,8 @@ import (
 	"strings"
 )
 
-// DatasetSimilarityEstimator
+// DatasetSimilarityEstimator is the interface that each Similarity estimator
+// obeys.
 type DatasetSimilarityEstimator interface {
 	// computes the similarity matrix
 	Compute() error
@@ -53,12 +54,12 @@ func (a *AbstractDatasetSimilarityEstimator) Datasets() []*Dataset {
 	return a.datasets
 }
 
-// GetSimilarities returns the similarity matrix
+// SimilarityMatrix returns the similarity matrix of the estimator
 func (a *AbstractDatasetSimilarityEstimator) SimilarityMatrix() *DatasetSimilarityMatrix {
 	return a.similarities
 }
 
-// PopulationPolicy sets the population policy to be used
+// SetPopulationPolicy sets the population policy to be used
 func (a *AbstractDatasetSimilarityEstimator) SetPopulationPolicy(pol DatasetSimilarityPopulationPolicy) {
 	a.popPolicy = pol
 }
@@ -88,9 +89,9 @@ func datasetSimilarityEstimatorSerialize(e AbstractDatasetSimilarityEstimator) [
 		buffer.WriteString(d.Path() + "\n")
 	}
 	pop := e.PopulationPolicy()
-	pop_ser := pop.Serialize()
-	buffer.Write(getBytesInt(len(pop_ser)))
-	buffer.Write(pop_ser)
+	popSer := pop.Serialize()
+	buffer.Write(getBytesInt(len(popSer)))
+	buffer.Write(popSer)
 
 	sim := e.SimilarityMatrix().Serialize()
 	buffer.Write(getBytesInt(len(sim)))
@@ -98,8 +99,8 @@ func datasetSimilarityEstimatorSerialize(e AbstractDatasetSimilarityEstimator) [
 	buffer.Write(getBytesInt(e.Concurrency()))
 	buffer.Write(getBytesFloat(e.Duration()))
 	cnt := buffer.Bytes()
-	buf_len := getBytesInt(len(cnt))
-	return append(buf_len, cnt...)
+	bufLen := getBytesInt(len(cnt))
+	return append(bufLen, cnt...)
 }
 
 // datasetSimilarityEstimatorDeserialize is used to generate an object based on
@@ -197,6 +198,7 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 	}
 }
 
+// DatasetSimilarityEstimatorType represents the type of the Similarity Estimator
 type DatasetSimilarityEstimatorType uint
 
 const (
@@ -223,11 +225,15 @@ func (t DatasetSimilarityEstimatorType) String() string {
 	return ""
 }
 
+// DatasetSimilarityPopulationPolicy is the struct that hold the Population
+// Policy of the Similarity Matrix along with the configuration parameters of it.
 type DatasetSimilarityPopulationPolicy struct {
 	PolicyType DatasetSimilarityPopulationPolicyType
 	Parameters map[string]float64
 }
 
+// Serialize method returns a slice of bytes containing the serialized form of
+// the Population Policy
 func (s *DatasetSimilarityPopulationPolicy) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(s.PolicyType)))
@@ -239,6 +245,8 @@ func (s *DatasetSimilarityPopulationPolicy) Serialize() []byte {
 	return buffer.Bytes()
 }
 
+// Deserialize is responsible to instantiate a Population Policy object based on
+// its byte representation.
 func (s *DatasetSimilarityPopulationPolicy) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)
@@ -332,7 +340,7 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 	return nil
 }
 
-// DatasetSimilarities represent the struct that holds the results of  a
+// DatasetSimilarityMatrix represent the struct that holds the results of  a
 // dataset similarity estimation. It also provides the necessary
 type DatasetSimilarityMatrix struct {
 	// the actual similarities holder
@@ -364,7 +372,7 @@ func (s *DatasetSimilarityMatrix) IndexDisabled(flag bool) {
 	s.indexDisabled = flag
 }
 
-// NumberOfFullNodes returns the number of nodes the similarity of which
+// FullyCalculatedNodes returns the number of nodes the similarity of which
 // has been calculated for all the nodes. This number can work as a measure
 // of how close to the full similarity matrix the current object is.
 func (s *DatasetSimilarityMatrix) FullyCalculatedNodes() int {
@@ -374,7 +382,7 @@ func (s *DatasetSimilarityMatrix) FullyCalculatedNodes() int {
 	count := 0
 	for i := 0; i < s.capacity; i++ {
 		if idx, _ := s.closestIndex.Get(i); idx == i {
-			count += 1
+			count++
 		}
 	}
 	return count
@@ -388,6 +396,7 @@ func (s *DatasetSimilarityMatrix) allocateStructs() {
 	s.closestIndex = newClosestIndex(s.capacity)
 }
 
+// Capacity returns the capacity of the Similarity Matrix
 func (s *DatasetSimilarityMatrix) Capacity() int {
 	return s.capacity
 }
