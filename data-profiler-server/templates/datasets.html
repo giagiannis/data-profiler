@@ -3,25 +3,34 @@ Datasets List
 {{ end }}
 
 {{ define "body"}}
-<h1>Datasets</h1>
+<h1>Datasets
+<!--		  
+<button class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="location.href='/datasets/insert'">
+<span class="ui-icon ui-icon-plusthick"></span>
+</button>
+-->
+</h1>
 <table class='tablelist'>
 <tr>
-		<th>Dataset Name</th>
-		<th>Path</th>
-		<th>Description</th>
-		<th></th>
+<th>Dataset Name</th>
+<th>Path</th>
+<th>Description</th>
+<th></th>
 </tr>
-
 {{ range $id, $val := . }}
 <tr>
-		<td>{{ $val.Name }}</td>
-		<td>{{ $val.Path }}</td>
-		<td>{{ $val.Description }}</td>
-		<td><a href='/datasets/{{ $val.Id }}'><img src='/static/view.png' width="35" name="Show"/></a></td>
+<td>{{ $val.Name }}</td>
+<td>{{ $val.Path }}</td>
+<td>{{ $val.Description }}</td>
+<!--<td><a href='/datasets/{{ $val.ID }}'><img src='/static/view.png' width="35" name="Show"/></a></td>-->
+<td>
+<button style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="location.href='/datasets/{{ $val.ID }}'" title="Show {{ $val.Name }}">
+<span class="ui-icon ui-icon-zoomin" ></span>
+</button>
+</td>
 </tr>
 {{end}}
 </table>
-
 {{ end }}
 
 {{ template "base.html" . }}

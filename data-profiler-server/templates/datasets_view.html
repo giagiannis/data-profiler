@@ -2,16 +2,28 @@
 
 {{ define "body" }}
 <h1>{{ .Name }}</h1>
+<div>
 <h2>Details</h2>
 <table class='tablelist'>
-				<tr><th>Path</th><td>{{.Path}}</td></tr>
-				<tr><th>Description</th><td>{{.Description}}</td></tr>
+<tr><th>Path</th><td>{{.Path}}</td></tr>
+<tr><th>Description</th><td>{{.Description}}</td></tr>
 </table>
+</div>
+<div>
+<h2>Files</h2>
+TBD
+</div>
+<div>
 <h2>Operators</h2>
 TBD
+</div>
+<div>
 <h2>Similarity Matrices</h2>
 TBD
+</div>
+<div>
 <h2>Coordinates</h2>
 TBD
+</div>
 {{ end }}
 {{ template "base.html" . }}
