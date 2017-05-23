@@ -27,62 +27,55 @@ var utilsDescription = map[string]string{
 	"help":        "prints this help message",
 }
 
+var commandsToFunctions = map[string]func(){
+	"partition":          partitionerRun,
+	"heatmap":            heatmapRun,
+	"similarities":       similaritiesRun,
+	"train":              trainRun,
+	"clustering":         clusteringRun,
+	"simcomparison":      simcomparisonRun,
+	"mds":                mdsRun,
+	"indexing":           indexingRun,
+	"exp-accuracy":       expAccuracyRun,
+	"exp-ordering":       expOrderingRun,
+	"exp-online-indexer": expOnlineIndexerRun,
+	"print-utils":        printUtilsRun,
+	"help":               helpRun,
+}
+
 func main() {
-	// consume the first command
 	rand.Seed(int64(time.Now().Nanosecond()))
-	if len(os.Args) < 2 || os.Args[1] == "help" {
-		fmt.Fprintf(os.Stderr, "Usage: %s [command]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintln(os.Stderr, "List of utils:")
-		for name, description := range utilsDescription {
-			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
-		}
-
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintln(os.Stderr, "List of commands:")
-		for name, description := range commandsDescription {
-			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintln(os.Stderr, "List of experiments:")
-		for name, description := range expDescription {
-			fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
-		}
-
-		os.Exit(1)
+	if len(os.Args) < 2 {
+		helpRun()
 	}
+
+	// consume the first command
 	command := os.Args[1]
 	os.Args = os.Args[1:]
-
-	if command == "partition" {
-		partitionerRun()
-	} else if command == "heatmap" {
-		heatmapRun()
-	} else if command == "similarities" {
-		similaritiesRun()
-	} else if command == "train" {
-		trainRun()
-	} else if command == "clustering" {
-		clusteringRun()
-	} else if command == "simcomparison" {
-		simcomparisonRun()
-	} else if command == "mds" {
-		mdsRun()
-	} else if command == "indexing" {
-		indexingRun()
-	} else if len(command) > 3 && command[0:4] == "exp-" {
-		experiment := command[4:]
-		if experiment == "accuracy" {
-			expAccuracyRun()
-		} else if experiment == "ordering" {
-			expOrderingRun()
-		} else if experiment == "online-indexer" {
-			expOnlineIndexerRun()
-		}
-	} else if command == "print-utils" {
-		printUtilsRun()
+	if fun, ok := commandsToFunctions[command]; ok {
+		fun()
 	} else {
 		fmt.Fprintln(os.Stderr, "Command not identified")
 	}
+}
 
+func helpRun() {
+	fmt.Fprintf(os.Stderr, "Usage: %s [command]\n", "data-profiler-utils")
+	fmt.Fprintf(os.Stderr, "\n")
+	fmt.Fprintln(os.Stderr, "List of utils:")
+	for name, description := range utilsDescription {
+		fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
+	}
+
+	fmt.Fprintf(os.Stderr, "\n")
+	fmt.Fprintln(os.Stderr, "List of commands:")
+	for name, description := range commandsDescription {
+		fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
+	}
+	fmt.Fprintf(os.Stderr, "\n")
+	fmt.Fprintln(os.Stderr, "List of experiments:")
+	for name, description := range expDescription {
+		fmt.Fprintf(os.Stderr, "\t%s - %s\n", name, description)
+	}
+	os.Exit(1)
 }
