@@ -1,6 +1,13 @@
-{{ define "title" }}{{ .Name }} page{{ end }}
+{{ define "title" }}
+{{ if .  }}
+{{ .Name }} page
+{{else}}
+Dataset Not Found
+{{end}}
+{{ end }}
 
 {{ define "body" }}
+{{ if .  }}
 <h1>{{ .Name }}</h1>
 <div>
 <h2>Details</h2>
@@ -25,5 +32,8 @@ TBD
 <h2>Coordinates</h2>
 TBD
 </div>
+{{else}}
+<h1>Dataset Not Found</h1>
+{{end}}
 {{ end }}
 {{ template "base.html" . }}

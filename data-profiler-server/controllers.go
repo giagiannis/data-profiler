@@ -1,21 +1,14 @@
 package main
 
-import (
-	"errors"
-	"net/http"
-)
+import "net/http"
 
 // /datasets/
-func controllerDatasetList(w http.ResponseWriter, r *http.Request) (Model, error) {
-	return modelDatasetsList(), nil
+func controllerDatasetList(w http.ResponseWriter, r *http.Request) Model {
+	return modelDatasetsList()
 }
 
 // /datasets/<id>/
-func controllerDatasetView(w http.ResponseWriter, r *http.Request) (Model, error) {
+func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
-	m := modelDatasetGetInfo(id)
-	if m == nil {
-		return nil, errors.New("Not found")
-	}
-	return m, nil
+	return modelDatasetGetInfo(id)
 }

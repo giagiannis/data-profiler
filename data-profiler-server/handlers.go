@@ -8,7 +8,7 @@ import (
 )
 
 type cntTmpltCouple struct {
-	cnt func(http.ResponseWriter, *http.Request) (Model, error)
+	cnt func(http.ResponseWriter, *http.Request) Model
 	tmp string
 }
 
@@ -34,12 +34,8 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 func uiHandler(w http.ResponseWriter, r *http.Request) {
 	cnt, t := selectControllerAndTemplate(r.URL.Path)
 	var m Model
-	var err error
 	if cnt != nil {
-		m, err = cnt(w, r)
-		if err != nil {
-			t = loadTemplate("error.html")
-		}
+		m = cnt(w, r)
 	}
 	if t.Lookup("error.html") != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -47,7 +43,7 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, m)
 }
 
-func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Request) (Model, error), *template.Template) {
+func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Request) Model, *template.Template) {
 	model, id, cmd := parseURL(url)
 	if id != "" && cmd == "" { // default action is view
 		cmd = "view"
@@ -55,7 +51,7 @@ func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Re
 	route := model + "/" + cmd
 
 	var tmplt string
-	var cnt func(http.ResponseWriter, *http.Request) (Model, error)
+	var cnt func(http.ResponseWriter, *http.Request) Model
 
 	if coup, ok := routingControllerTemplates[route]; ok {
 		cnt = coup.cnt
