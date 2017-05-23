@@ -1,9 +1,6 @@
 package core
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func TestScriptSimilarityDatasetAnalysis(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
@@ -28,10 +25,7 @@ func TestScriptSimilarityDatasetAnalysis(t *testing.T) {
 			t.FailNow()
 		}
 	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }
 func TestScriptSimilarityCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 4)
@@ -48,17 +42,8 @@ func TestScriptSimilarityCompute(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestScriptSimilarityComputeAppxThres(t *testing.T) {
@@ -83,17 +68,9 @@ func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
@@ -119,17 +96,8 @@ func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 	}
 	s := est.SimilarityMatrix()
 
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestScriptSimilaritySerialization(t *testing.T) {
@@ -138,8 +106,13 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	est := *new(ScriptSimilarityEstimator)
 	est.datasets = datasets
 	est.simType = scriptSimilarityTypeEuclidean
-	est.analysisScript = analysisScript
-	est.concurrency = 10
+	conf := map[string]string{
+		"concurrency": "10",
+		"script":      analysisScript,
+		"norm":        "1",
+	}
+	est.Configure(conf)
+
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
@@ -154,10 +127,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 
 	newEst := *new(ScriptSimilarityEstimator)
 	newEst.Deserialize(bytes)
-	if est.concurrency != newEst.concurrency {
-		t.Log("Concurrency differs")
-		t.Fail()
-	}
+	estimatorsCheck(est.AbstractDatasetSimilarityEstimator, newEst.AbstractDatasetSimilarityEstimator, t)
 
 	if est.analysisScript != newEst.analysisScript {
 		t.Log("Analysis script differs")
@@ -167,22 +137,6 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	if est.simType != newEst.simType {
 		t.Log("norm degree differs")
 		t.Fail()
-	}
-
-	for i := range est.datasets {
-		if est.datasets[i].Path() != newEst.datasets[i].Path() {
-			t.Log("Dataset names are different", est.datasets[i], newEst.datasets[i])
-			t.Fail()
-		}
-	}
-
-	for i := 0; i < est.similarities.Capacity(); i++ {
-		for j := 0; j < est.similarities.Capacity(); j++ {
-			if est.similarities.Get(i, j) != newEst.similarities.Get(i, j) {
-				t.Log("SM differs", i, j)
-				t.Fail()
-			}
-		}
 	}
 
 	for k, v := range est.inverseIndex {
@@ -204,6 +158,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 		t.Log("Something is seriously wrong here", newEst.SimilarityMatrix().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
 		t.Fail()
 	}
+	cleanDatasets(datasets)
 
 }
 
@@ -230,8 +185,5 @@ func TestScriptSimilarityCosine(t *testing.T) {
 			}
 		}
 	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }

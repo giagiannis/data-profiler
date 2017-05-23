@@ -3,7 +3,6 @@ package core
 import (
 	"log"
 	"math"
-	"os"
 	"testing"
 )
 
@@ -17,46 +16,20 @@ func TestBhattacharyyaCompute(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
-
 	s := est.SimilarityMatrix()
-	if s == nil {
-		t.Log("Nil similarities returned")
-		t.FailNow()
-	}
-	for i := range datasets {
-		for j := range datasets {
-			v1 := s.Get(i, j)
-			v2 := s.Get(j, i)
-			if v1 != v2 {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-			if v1 < 0 || v1 > 1.0 {
-				t.Log("Similarity value out of range [0,1]", v1, v2)
-				t.FailNow()
-			}
-			if v1 == 0 {
-				t.Log("Zero element found (?)")
-			}
-			if v1 == 1 && i != j {
-				t.Log("Similarity of 1 in non-diagonal element")
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestKdTree(t *testing.T) {
-	dataset := createPoolBasedDatasets(20000, 1, 5)[0]
+	datasets := createPoolBasedDatasets(20000, 1, 5)
+	dataset := datasets[0]
 	err := dataset.ReadFromFile()
 	if err != nil {
 		log.Println(err)
 		t.FailNow()
 	}
-	kd := NewKDTreePartition(dataset.Data())
+	kd := newKDTreePartition(dataset.Data())
 	kd.Prune(kd.Height() - 2)
 	ids := kd.GetLeafIndex(dataset.Data())
 	sum := 0
@@ -67,12 +40,13 @@ func TestKdTree(t *testing.T) {
 		log.Println("Not all tuples are indexed!!")
 		t.FailNow()
 	}
-	os.Remove(dataset.Path())
+	cleanDatasets(datasets)
 
 }
 
 func TestKdPruning(t *testing.T) {
-	dataset := createPoolBasedDatasets(20000, 1, 5)[0]
+	datasets := createPoolBasedDatasets(20000, 1, 5)
+	dataset := datasets[0]
 	err := dataset.ReadFromFile()
 	if err != nil {
 		t.Log(err)
@@ -80,7 +54,7 @@ func TestKdPruning(t *testing.T) {
 	}
 	height := int(math.Log2(float64(len(dataset.Data())))) + 1
 	for i := 0; i < height; i++ {
-		kd := NewKDTreePartition(dataset.Data())
+		kd := newKDTreePartition(dataset.Data())
 		if i < kd.Height() {
 			kd.Prune(kd.Height() - i)
 			ids := kd.GetLeafIndex(dataset.Data())
@@ -94,7 +68,7 @@ func TestKdPruning(t *testing.T) {
 		}
 	}
 
-	os.Remove(dataset.Path())
+	cleanDatasets(datasets)
 }
 
 func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
@@ -116,28 +90,8 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 	}
 
 	s := est.SimilarityMatrix()
-	if s == nil {
-		t.Log("Nil similarities returned")
-		t.FailNow()
-	}
-	for i := range datasets {
-		for j := range datasets {
-			v1 := s.Get(i, j)
-			v2 := s.Get(j, i)
-			if v1 != v2 {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-			if v1 < 0 || v1 > 1.0 {
-				t.Log("Similarity value out of range [0,1]", v1, v2)
-				t.FailNow()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestBhattacharyyaComputeAppxThres(t *testing.T) {
@@ -148,7 +102,7 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 	policy := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
-			"threshold": 0.985,
+			"threshold": 0.995,
 		},
 	}
 	est.SetPopulationPolicy(policy)
@@ -159,34 +113,14 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 	}
 
 	s := est.SimilarityMatrix()
-	if s == nil {
-		t.Log("Nil similarities returned")
-		t.FailNow()
-	}
-	for i := range datasets {
-		for j := range datasets {
-			v1 := s.Get(i, j)
-			v2 := s.Get(j, i)
-			if v1 != v2 {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-			if v1 < 0 || v1 > 1.0 {
-				t.Log("Similarity value out of range [0,1]", v1, v2)
-				t.FailNow()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestKdtreeNodeSerialization(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 1, 2)
 	datasets[0].ReadFromFile()
-	tree := NewKDTreePartition(datasets[0].Data())
+	tree := newKDTreePartition(datasets[0].Data())
 	tree.Prune(tree.MinHeight() * 4 / 5)
 	b := tree.Serialize()
 	newTree := new(kdTreeNode)
@@ -205,6 +139,7 @@ func TestKdtreeNodeSerialization(t *testing.T) {
 		t.Log("Trees not equal")
 		t.FailNow()
 	}
+	cleanDatasets(datasets)
 }
 
 func TestBhattacharyyaSerialization(t *testing.T) {
@@ -212,13 +147,12 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est := *new(BhattacharyyaEstimator)
 	est.datasets = datasets
-	est.kdTreeScaleFactor = 0.75
-	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)
+	est.Configure(map[string]string{"concurrency": "10", "tree.scale": "0.75"})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -228,27 +162,9 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 
 	newEst := *new(BhattacharyyaEstimator)
 	newEst.Deserialize(bytes)
-	if est.concurrency != newEst.concurrency {
-		t.Log("Concurrency differs")
-		t.Fail()
-	}
 
-	for i := range est.datasets {
-		if est.datasets[i].Path() != newEst.datasets[i].Path() {
-			t.Log("Dataset names are different", est.datasets[i], newEst.datasets[i])
-			t.Fail()
-		}
-	}
-
-	for i := 0; i < est.similarities.Capacity(); i++ {
-		for j := 0; j < est.similarities.Capacity(); j++ {
-			if est.similarities.Get(i, j) != newEst.similarities.Get(i, j) {
-				t.Log("SM differs", i, j)
-				t.Fail()
-			}
-		}
-	}
-
+	estimatorsCheck(newEst.AbstractDatasetSimilarityEstimator,
+		est.AbstractDatasetSimilarityEstimator, t)
 	for k, v := range est.inverseIndex {
 		if newEst.inverseIndex[k] != v {
 			t.Log("Inverse index failed")
@@ -272,8 +188,5 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 		}
 	}
 
-	if newEst.Similarity(datasets[0], datasets[1]) != newEst.SimilarityMatrix().Get(0, 1) {
-		t.Log("Something is seriously wrong here", newEst.SimilarityMatrix().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
-		t.Fail()
-	}
+	cleanDatasets(datasets)
 }

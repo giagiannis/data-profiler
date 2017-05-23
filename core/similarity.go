@@ -3,11 +3,13 @@ package core
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 // DatasetSimilarityEstimator is the interface that each Similarity estimator
@@ -37,6 +39,11 @@ type DatasetSimilarityEstimator interface {
 	Duration() float64
 	// returns the max number of threads to be used
 	Concurrency() int
+
+	// sets the duration
+	setDuration(float64)
+	// sets the similarity matrix
+	setSimilarityMatrix(*DatasetSimilarityMatrix)
 }
 
 // AbstractDatasetSimilarityEstimator is the base struct for the similarity
@@ -59,6 +66,10 @@ func (a *AbstractDatasetSimilarityEstimator) SimilarityMatrix() *DatasetSimilari
 	return a.similarities
 }
 
+func (a *AbstractDatasetSimilarityEstimator) setSimilarityMatrix(sm *DatasetSimilarityMatrix) {
+	a.similarities = sm
+}
+
 // SetPopulationPolicy sets the population policy to be used
 func (a *AbstractDatasetSimilarityEstimator) SetPopulationPolicy(pol DatasetSimilarityPopulationPolicy) {
 	a.popPolicy = pol
@@ -72,6 +83,11 @@ func (a *AbstractDatasetSimilarityEstimator) PopulationPolicy() DatasetSimilarit
 // Duration returns the duration of the compution
 func (a *AbstractDatasetSimilarityEstimator) Duration() float64 {
 	return a.duration
+}
+
+// setDuration sets the duration of the compution
+func (a *AbstractDatasetSimilarityEstimator) setDuration(d float64) {
+	a.duration = d
 }
 
 // Concurrency returns the max number of threads to be used for the computation
@@ -145,7 +161,18 @@ func datasetSimilarityEstimatorDeserialize(b []byte) *AbstractDatasetSimilarityE
 // datasetSimilarityEstimatorCompute is responsible to execute the computation code of the estimators.
 // The provided object must respect the DatasetSimilarityEstimator interface
 // and (optionally) extends the AbstractDatasetSimilarityEstimator struct
-func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
+func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) error {
+	start := time.Now()
+	e.setSimilarityMatrix(NewDatasetSimilarities(len(e.Datasets())))
+	log.Println("Fetching datasets in memory")
+	if e.Datasets() == nil || len(e.Datasets()) == 0 {
+		log.Println("No datasets were given")
+		return errors.New("Datasets not set correctly")
+	}
+	for _, d := range e.Datasets() {
+		d.ReadFromFile()
+	}
+
 	if e.PopulationPolicy().PolicyType == PopulationPolicyFull {
 		e.SimilarityMatrix().IndexDisabled(true) // I don't need the index
 		log.Println("Computing the similarities using", e.Concurrency(), "threads")
@@ -196,6 +223,8 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 			}
 		}
 	}
+	e.setDuration(time.Since(start).Seconds())
+	return nil
 }
 
 // DatasetSimilarityEstimatorType represents the type of the Similarity Estimator
@@ -365,6 +394,14 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 		return a
 	} else if estimatorType == SimilarityTypeBhattacharyya {
 		a := new(BhattacharyyaEstimator)
+		a.Deserialize(b)
+		return a
+	} else if estimatorType == SimilarityTypeComposite {
+		a := new(CompositeEstimator)
+		a.Deserialize(b)
+		return a
+	} else if estimatorType == SimilarityTypeCorrelation {
+		a := new(CorrelationEstimator)
 		a.Deserialize(b)
 		return a
 	} else if estimatorType == SimilarityTypeScript {

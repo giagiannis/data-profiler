@@ -1,9 +1,6 @@
 package core
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func TestMDScalingScript(t *testing.T) {
 	datasets := createPoolBasedDatasets(2000, 10, 4)
@@ -27,10 +24,7 @@ func TestMDScalingScript(t *testing.T) {
 		t.Log("Script should not have succeeded")
 		t.FailNow()
 	}
-
-	for _, d := range datasets {
-		os.Remove(d.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestMDScalingCompute(t *testing.T) {
@@ -62,5 +56,5 @@ func TestMDScalingCompute(t *testing.T) {
 			t.Fail()
 		}
 	}
-
+	cleanDatasets(datasets)
 }

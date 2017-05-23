@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // ScriptSimilarityEstimator utilizes a script to analyze the data based on some external
@@ -31,28 +30,9 @@ const (
 	scriptSimilarityTypeCosine    ScriptSimilarityEstimatorType = iota + 2
 )
 
-// Compute function executes the analysis
+// Compute method constructs the Similarity Matrix
 func (e *ScriptSimilarityEstimator) Compute() error {
-	if e.analysisScript == "" {
-		log.Println("Analysis script not defined - exiting")
-		return errors.New("Analysis script not defined")
-	}
-
-	// execute analysis for each dataset
-	log.Println("Analyzing datasets")
-	e.datasetCoordinates = e.analyzeDatasets()
-
-	start := time.Now()
-	// compare the analysis outcomes
-	log.Println("Calculating similarities")
-	e.similarities = NewDatasetSimilarities(len(e.datasets))
-	e.inverseIndex = make(map[string]int)
-	for i, d := range e.datasets {
-		e.inverseIndex[d.Path()] = i
-	}
-	datasetSimilarityEstimatorCompute(e)
-	e.duration = time.Since(start).Seconds()
-	return nil
+	return datasetSimilarityEstimatorCompute(e)
 }
 
 // Similarity returns the similarity between the two datasets
@@ -110,6 +90,17 @@ func (e *ScriptSimilarityEstimator) Configure(conf map[string]string) {
 		} else {
 			log.Println("Similarity Type not known, valid values: [cosine manhattan euclidean]")
 		}
+	}
+	// execute analysis for each dataset
+	if e.analysisScript == "" {
+		log.Println("Analysis script not defined - exiting")
+	}
+	log.Println("Analyzing datasets")
+	e.datasetCoordinates = e.analyzeDatasets()
+
+	e.inverseIndex = make(map[string]int)
+	for i, d := range e.datasets {
+		e.inverseIndex[d.Path()] = i
 	}
 
 }

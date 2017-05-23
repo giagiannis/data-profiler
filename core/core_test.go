@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	trainSet       = "../_testdata/datatraining.csv"
-	testSet        = "../_testdata/datatest.csv"
-	analysisScript = "../_rscripts/pca.R"
-	mlScript       = "../_rscripts/lm.R"
-	mdsScript      = "../_rscripts/mdscaling.R"
-	tmpDir         = "/tmp/"
+	trainSet             = "../_testdata/datatraining.csv"
+	testSet              = "../_testdata/datatest.csv"
+	analysisScript       = "../_rscripts/pca.R"
+	mlScript             = "../_rscripts/lm.R"
+	mdsScript            = "../_rscripts/mdscaling.R"
+	tmpDir               = "/tmp/"
+	onlineIndexingScript = "../_rscripts/sa.R"
 )
 
 func init() {

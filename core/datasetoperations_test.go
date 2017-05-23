@@ -17,10 +17,7 @@ func TestDatatesetIntersection(t *testing.T) {
 		t.Log(len(datasets[1].Data()))
 		t.FailNow()
 	}
-
-	for _, d := range datasets {
-		os.Remove(d.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestDatasetUnion(t *testing.T) {
@@ -32,10 +29,7 @@ func TestDatasetUnion(t *testing.T) {
 		t.Log(len(datasets[1].Data()))
 		t.FailNow()
 	}
-
-	for _, d := range datasets {
-		os.Remove(d.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestUniformPartition(t *testing.T) {

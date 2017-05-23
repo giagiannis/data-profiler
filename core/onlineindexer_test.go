@@ -2,11 +2,8 @@ package core
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 )
-
-const ONLINE_INDEXING_SCRIPT = "../_rscripts/sa.R"
 
 func TestNewOnlineIndexer(t *testing.T) {
 	datasets := createPoolBasedDatasets(200, 100, 4)
@@ -19,13 +16,11 @@ func TestNewOnlineIndexer(t *testing.T) {
 	md := NewMDScaling(estim.SimilarityMatrix(), 2, mdsScript)
 	md.Compute()
 
-	indexer := NewOnlineIndexer(estim, md.Coordinates(), ONLINE_INDEXING_SCRIPT)
+	indexer := NewOnlineIndexer(estim, md.Coordinates(), onlineIndexingScript)
 	coords, _, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
 	if err != nil || coords == nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -45,7 +46,6 @@ func (md *MDScaling) Compute() error {
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
 	log.Println("Writing distances to file", writer.Name())
 	//defer os.Remove(writer.Name())
 	maxDistance := 0.0
@@ -70,7 +70,7 @@ func (md *MDScaling) Compute() error {
 		}
 		writer.WriteString("\n")
 	}
-
+	writer.Close()
 	// execute computation
 	if md.k < 1 || md.k > md.matrix.Capacity()-1 { // binary search in the interval [1, n-1]
 		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
@@ -80,6 +80,7 @@ func (md *MDScaling) Compute() error {
 	if err != nil {
 		return err
 	}
+	os.Remove(writer.Name())
 	return nil
 }
 

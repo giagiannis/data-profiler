@@ -2,11 +2,9 @@ package core
 
 import (
 	"bytes"
-	"errors"
 	"log"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // CorrelationEstimator estimates the similarity between two datasets based
@@ -87,28 +85,9 @@ func (e *CorrelationEstimator) Deserialize(b []byte) {
 	e.estType = CorrelationEstimatorType(getIntBytes(tempInt))
 }
 
-// Compute runs the CorrelationEstimator for the provided datasets and generates
-// the SimilarityMatrix object
+// Compute method constructs the Similarity Matrix
 func (e *CorrelationEstimator) Compute() error {
-	e.similarities = NewDatasetSimilarities(len(e.datasets))
-
-	log.Println("Fetching datasets in memory")
-	if e.datasets == nil || len(e.datasets) == 0 {
-		log.Println("No datasets were given")
-		return errors.New("Empty dataset slice")
-	}
-	for _, d := range e.datasets {
-		err := d.ReadFromFile()
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-	}
-
-	start := time.Now()
-	datasetSimilarityEstimatorCompute(e)
-	e.duration = time.Since(start).Seconds()
-	return nil
+	return datasetSimilarityEstimatorCompute(e)
 }
 
 // Similarity returns the similarity between two datasets. Since all the

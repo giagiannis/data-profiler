@@ -2,15 +2,15 @@ package core
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"log"
 	"math"
 	"sort"
 	"strconv"
-	"time"
 )
 
+// BhattacharyyaEstimator is the similarity estimator that quantifies the similarity
+// of the distribution between the datasets.
 type BhattacharyyaEstimator struct {
 	AbstractDatasetSimilarityEstimator
 
@@ -26,41 +26,12 @@ type BhattacharyyaEstimator struct {
 	datasetsSize []int
 }
 
+// Compute method constructs the Similarity Matrix
 func (e *BhattacharyyaEstimator) Compute() error {
-	// allocation of similarities struct
-	e.similarities = NewDatasetSimilarities(len(e.datasets))
-
-	log.Println("Fetching datasets in memory")
-	if e.datasets == nil || len(e.datasets) == 0 {
-		log.Println("No datasets were given")
-		return errors.New("Empty dataset slice")
-	}
-	e.inverseIndex = make(map[string]int)
-	for i, d := range e.datasets {
-		log.Println(i, d.Path())
-		e.inverseIndex[d.Path()] = i
-		d.ReadFromFile()
-	}
-
-	start := time.Now()
-	log.Println("Estimating a KD-tree partition")
-	e.kdTree = NewKDTreePartition(e.datasets[0].Data())
-	oldHeight := e.kdTree.Height()
-	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
-	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
-	e.kdTree.Prune(newHeight)
-	e.pointsPerRegion = make([][]int, len(e.datasets))
-	e.datasetsSize = make([]int, len(e.datasets))
-	for i, d := range e.datasets {
-		e.pointsPerRegion[i] = e.kdTree.GetLeafIndex(d.Data())
-		e.datasetsSize[i] = len(d.Data())
-	}
-
-	datasetSimilarityEstimatorCompute(e)
-	e.duration = time.Since(start).Seconds()
-	return nil
+	return datasetSimilarityEstimatorCompute(e)
 }
 
+// Similarity returns the similarity between two datasets
 func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
 	var indexA, indexB []int
 	var countA, countB int
@@ -90,6 +61,7 @@ func (e *BhattacharyyaEstimator) Similarity(a, b *Dataset) float64 {
 	return e.getValue(indexA, indexB, countA, countB)
 }
 
+// Configure sets a the configuration parameters of the estimator
 func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["concurrency"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
@@ -106,8 +78,32 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 			log.Println(err)
 		}
 	}
+	// initialization step
+	e.inverseIndex = make(map[string]int)
+	for i, d := range e.datasets {
+		e.inverseIndex[d.Path()] = i
+	}
+
+	for _, d := range e.datasets {
+		d.ReadFromFile()
+	}
+
+	log.Println("Estimating a KD-tree partition")
+	e.kdTree = newKDTreePartition(e.datasets[0].Data())
+	oldHeight := e.kdTree.Height()
+	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
+	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
+	e.kdTree.Prune(newHeight)
+	e.pointsPerRegion = make([][]int, len(e.datasets))
+	e.datasetsSize = make([]int, len(e.datasets))
+	for i, d := range e.datasets {
+		e.pointsPerRegion[i] = e.kdTree.GetLeafIndex(d.Data())
+		e.datasetsSize[i] = len(d.Data())
+	}
+
 }
 
+// Options returns a list of parameters that can be set by the user
 func (e *BhattacharyyaEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
@@ -124,6 +120,7 @@ func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) 
 	return sum
 }
 
+// Serialize returns a byte array containing a serialized form of the estimator
 func (e *BhattacharyyaEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(SimilarityTypeBhattacharyya)))
@@ -150,8 +147,8 @@ func (e *BhattacharyyaEstimator) Serialize() []byte {
 	return buffer.Bytes()
 }
 
+// Deserialize constructs a similarity object based on the byte stream
 func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
-	// FIXME: implement the Deserialized method
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)
 	tempFloat := make([]byte, 8)
@@ -279,9 +276,8 @@ func (r *kdTreeNode) Height() int {
 		right := 1 + treeHeight(node.right)
 		if left > right {
 			return left
-		} else {
-			return right
 		}
+		return right
 	}
 	return treeHeight(r)
 }
@@ -296,9 +292,8 @@ func (r *kdTreeNode) MinHeight() int {
 		right := 1 + treeHeight(node.right)
 		if left < right {
 			return left
-		} else {
-			return right
 		}
+		return right
 	}
 	return treeHeight(r)
 }
@@ -335,9 +330,8 @@ func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
 		}
 		if tup.Data[node.dim] <= node.value {
 			return dfs(node.left, (id<<1)|0, level+1, tup)
-		} else {
-			return dfs(node.right, (id<<1)|1, level+1, tup)
 		}
+		return dfs(node.right, (id<<1)|1, level+1, tup)
 	}
 	results := make([]int, 2<<uint(treeHeight-1))
 	for _, tup := range tuples {
@@ -349,20 +343,19 @@ func (r *kdTreeNode) GetLeafIndex(tuples []DatasetTuple) []int {
 func (r kdTreeNode) String() string {
 	var myString func(*kdTreeNode, string) string
 	myString = func(node *kdTreeNode, pad string) string {
-		if node == nil {
-			return ""
-		} else {
+		if node != nil {
 			return fmt.Sprintf("%s(%d - %.5f)\n",
 				pad, node.dim, node.value) +
 				myString(node.left, pad+"\t") +
 				myString(node.right, pad+"\t")
 		}
+		return ""
 	}
 	return myString(&r, "")
 }
 
 // partitions the tuples and stores the tree structure in the kdTreeNode ptr
-func NewKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
+func newKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 	findMedian :=
 		func(tuples []DatasetTuple, dim int) (float64, []DatasetTuple, []DatasetTuple) {
 			values := make([]float64, 0)

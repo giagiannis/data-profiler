@@ -1,10 +1,13 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/Knetic/govaluate"
 )
 
 // CompositeEstimator returns a similarity function based on
@@ -22,26 +25,88 @@ type CompositeEstimator struct {
 	expression string
 }
 
-// Compute runs the similarity estimation and forms the SimilarityMatrix
+// Compute method constructs the Similarity Matrix
 func (e *CompositeEstimator) Compute() error {
-	// TODO: implement the method
-	return nil
+	for _, est := range e.estimators {
+		est.Compute()
+	}
+	return datasetSimilarityEstimatorCompute(e)
 }
 
 // Similarity returns the similarity between two datasets
 func (e *CompositeEstimator) Similarity(a, b *Dataset) float64 {
-	// TODO: implement the method
-	return .0
+	expression, err := govaluate.NewEvaluableExpression(e.expression)
+	if err != nil {
+		log.Println(err)
+		return 0.0
+	}
+	params := make(map[string]interface{})
+	for k, est := range e.estimators {
+		params[k] = est.Similarity(a, b)
+	}
+	result, err := expression.Evaluate(params)
+	if err != nil {
+		log.Println(err)
+		return 0.0
+	}
+	if val, ok := result.(float64); ok {
+		return val
+	}
+	return -1.0
 }
 
 // Serialize returns an array of bytes representing the Estimator.
 func (e *CompositeEstimator) Serialize() []byte {
-	// TODO: implement the method
-	return nil
+	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(int(SimilarityTypeComposite)))
+
+	buffer.Write(datasetSimilarityEstimatorSerialize(
+		e.AbstractDatasetSimilarityEstimator))
+
+	// serialize expression
+	buffer.WriteString(e.expression + "\n")
+
+	// serialize estimators
+	buffer.Write(getBytesInt(len(e.estimators)))
+	for k, est := range e.estimators {
+		buffer.WriteString(k + "\n")
+		temp := est.Serialize()
+		buffer.Write(getBytesInt(len(temp)))
+		buffer.Write(temp)
+	}
+
+	return buffer.Bytes()
 }
 
 // Deserialize constructs an Estimator object based on the byte array provided.
-func (e *CompositeEstimator) Deserialize([]byte) {
+func (e *CompositeEstimator) Deserialize(b []byte) {
+	buffer := bytes.NewBuffer(b)
+	tempInt := make([]byte, 4)
+	buffer.Read(tempInt) // consume estimator type
+	buffer.Read(tempInt)
+	absEstBytes := make([]byte, getIntBytes(tempInt))
+	buffer.Read(absEstBytes)
+	e.AbstractDatasetSimilarityEstimator =
+		*datasetSimilarityEstimatorDeserialize(absEstBytes)
+
+	// parse expression
+	line, _ := buffer.ReadString('\n')
+	e.expression = strings.TrimSpace(line)
+
+	// parse the estimators
+	buffer.Read(tempInt)
+	count := getIntBytes(tempInt)
+	e.estimators = make(map[string]DatasetSimilarityEstimator)
+	for i := 0; i < count; i++ {
+		line, _ := buffer.ReadString('\n')
+		key := strings.TrimSpace(line)
+		buffer.Read(tempInt)
+		length := getIntBytes(tempInt)
+		tempBuff := make([]byte, length)
+		buffer.Read(tempBuff)
+		est := DeserializeSimilarityEstimator(tempBuff)
+		e.estimators[key] = est
+	}
 	// TODO: implement the method
 }
 

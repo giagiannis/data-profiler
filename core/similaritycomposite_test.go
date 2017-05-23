@@ -7,40 +7,80 @@ import (
 )
 
 func TestCompositeCompute(t *testing.T) {
-}
-
-func TestCompositeConfiguration(t *testing.T) {
-	datasets := createPoolBasedDatasets(1000, 100, 3)
+	datasets := createPoolBasedDatasets(10000, 10, 3)
 	var configuration = map[string]string{
 		"concurrency": "10",
 		"expression":  "0.8*x + 0.2*y",
-		"x":           "type=bhattacharyya|tree.scale=0.8",
+		"x":           "type=bhattacharyya|tree.scale=0.5",
 		"y":           "type=jaccard|concurrency=10",
 	}
 	e := new(CompositeEstimator)
 	e.datasets = datasets
 	e.Configure(configuration)
+
+	err := e.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	sm := e.SimilarityMatrix()
+	smSanityCheck(sm, t)
+	cleanDatasets(datasets)
+}
+
+func TestCompositeConfiguration(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 100, 3)
+	e := createCompositeEstimator(datasets)
 	if len(e.estimators) != 2 {
-		t.Logf("Expected %d estimators and found %d\n", 2, e.estimators)
+		t.Logf("Expected %d estimators and found %d\n", 2, len(e.estimators))
 		t.Fail()
 	}
-	if reflect.TypeOf(e.estimators["x"]).String() != "*core.BhattacharyyaEstimator" {
-		t.Logf("Expected type %s and found %s\n",
-			"*core.BhattacharyyaEstimator",
-			reflect.TypeOf(e.estimators["x"]).String())
+	if _, ok := (e.estimators["x"]).(*BhattacharyyaEstimator); !ok {
+		t.Logf("Expected type %s was not identified\n",
+			"*core.BhattacharyyaEstimator")
 		t.Fail()
 	}
-	if reflect.TypeOf(e.estimators["y"]).String() != "*core.JaccardEstimator" {
-		t.Logf("Expected type %s and found %s\n",
-			"*core.JaccardEstimator",
-			reflect.TypeOf(e.estimators["y"]).String())
+	if _, ok := (e.estimators["y"]).(*JaccardEstimator); !ok {
+		t.Logf("Expected type %s was not identified\n",
+			"*core.JaccardEstimator")
 		t.Fail()
 	}
 
 	cleanDatasets(datasets)
 }
 
-func TestDeSerializeConfigurationOptions(t *testing.T) {
+func TestCompositeSerialization(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 10, 3)
+	e := createCompositeEstimator(datasets)
+	e.Compute()
+	ser := e.Serialize()
+	if ser == nil {
+		t.Log("Nil serialization object")
+		t.Fail()
+	}
+	newEst := new(CompositeEstimator)
+	newEst.Deserialize(ser)
+	if newEst.expression != e.expression {
+		t.Log("Difference in expressions")
+		t.Fail()
+	}
+	for k, est := range newEst.estimators {
+		if val, ok := e.estimators[k]; ok {
+			if reflect.TypeOf(val) != reflect.TypeOf(est) {
+				t.Log("Estimator types are different")
+				t.Fail()
+			}
+		} else {
+			t.Log("Estimator not found")
+			t.Fail()
+		}
+	}
+	estimatorsCheck(newEst.AbstractDatasetSimilarityEstimator,
+		e.AbstractDatasetSimilarityEstimator, t)
+	cleanDatasets(datasets)
+}
+
+func TestConfigurationOptionsSerialization(t *testing.T) {
 	letters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
 		"l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 	randomString := func(count int) string {
@@ -69,4 +109,17 @@ func TestDeSerializeConfigurationOptions(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func createCompositeEstimator(datasets []*Dataset) *CompositeEstimator {
+	var configuration = map[string]string{
+		"concurrency": "10",
+		"expression":  "0.8*x + 0.2*y",
+		"x":           "type=bhattacharyya|tree.scale=0.5",
+		"y":           "type=jaccard|concurrency=10",
+	}
+	e := new(CompositeEstimator)
+	e.datasets = datasets
+	e.Configure(configuration)
+	return e
 }

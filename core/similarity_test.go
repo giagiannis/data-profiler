@@ -3,7 +3,6 @@ package core
 import (
 	"log"
 	"math/rand"
-	"os"
 	"testing"
 )
 
@@ -30,6 +29,7 @@ func TestDatasetSimilarityPolicySerialization(t *testing.T) {
 func TestDatasetSerialize(t *testing.T) {
 	datasets := createPoolBasedDatasets(5000, 10, 3)
 	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	e.Configure(nil)
 	e.Compute()
 	s := e.SimilarityMatrix()
 	b := s.Serialize()
@@ -57,9 +57,7 @@ func TestDatasetSerialize(t *testing.T) {
 		}
 	}
 
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestDatasetSimilarityClosestIndex(t *testing.T) {
@@ -82,9 +80,7 @@ func TestDatasetSimilarityClosestIndex(t *testing.T) {
 		}
 	}
 
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
@@ -108,10 +104,7 @@ func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 			t.FailNow()
 		}
 	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }
 
 func TestDeserializeSimilarityEstimator(t *testing.T) {
@@ -169,6 +162,137 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 			newEst.Similarity(a, b) != est.SimilarityMatrix().Get(idxA, idxB) {
 			t.Log("Deserialization error")
 			t.Fail()
+		}
+	}
+	cleanDatasets(datasets)
+}
+
+func smGetCountOfOnesAndZeros(sm *DatasetSimilarityMatrix) (int, int) {
+	zeroElem, oneElem := 0, 0
+	for i := 0; i < sm.Capacity(); i++ {
+		for j := 0; j < sm.Capacity(); j++ {
+			val := sm.Get(i, j)
+			if val == 0.0 {
+				zeroElem++
+			}
+			if val == 1.0 {
+				oneElem++
+			}
+		}
+	}
+	return zeroElem, oneElem
+}
+
+func smCheckSymmetry(sm *DatasetSimilarityMatrix) bool {
+	for i := 0; i < sm.Capacity(); i++ {
+		for j := 0; j < sm.Capacity(); j++ {
+			if sm.Get(i, j) != sm.Get(j, i) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func smCheckDiagonal(sm *DatasetSimilarityMatrix) bool {
+	for i := 0; i < sm.Capacity(); i++ {
+		if sm.Get(i, i) != 1.0 {
+			return false
+		}
+	}
+	return true
+
+}
+
+func smElementsInRange(sm *DatasetSimilarityMatrix) bool {
+	for i := 0; i < sm.Capacity(); i++ {
+		for j := 0; j < sm.Capacity(); j++ {
+			if sm.Get(i, j) < 0 || sm.Get(i, j) > 1.0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func smSanityCheck(s *DatasetSimilarityMatrix, t *testing.T) {
+	if s == nil {
+		t.Log("Nil similarities returned")
+		t.FailNow()
+	}
+	if !smCheckSymmetry(s) {
+		t.Log("SM not symmetrical")
+		t.Fail()
+	}
+
+	if !smCheckDiagonal(s) {
+		t.Log("The diagonal elements are not 1s!")
+		t.Fail()
+	}
+	if !smElementsInRange(s) {
+		t.Log("Elements out of range found!")
+		t.Fail()
+	}
+	zeros, ones := smGetCountOfOnesAndZeros(s)
+	if zeros > s.Capacity()*s.Capacity()/2 {
+		t.Logf("Too many zero elements found (%d)\n", zeros)
+		t.Fail()
+	}
+
+	if ones < s.Capacity() || ones > 4*s.Capacity()*s.Capacity()/5 {
+		t.Logf("Wrong number of 1s found in the SM (%d)\n", ones)
+		t.Fail()
+	}
+
+}
+
+func estimatorsCheck(a, b AbstractDatasetSimilarityEstimator, t *testing.T) {
+	if a.concurrency != b.concurrency {
+		t.Logf("Concurrency: expected %d, found %d\n", a.concurrency, b.concurrency)
+		t.Fail()
+	}
+
+	if a.duration != b.duration {
+		t.Logf("Duration: expected %.5f, found %.5f\n", a.duration, b.duration)
+		t.Fail()
+	}
+
+	for i := range a.datasets {
+		if a.datasets[i].Path() != b.datasets[i].Path() {
+			t.Logf("Dataset paths differ")
+			t.Fail()
+		}
+	}
+	if a.popPolicy.PolicyType != b.popPolicy.PolicyType {
+		t.Logf("Dataset paths differ")
+		t.Fail()
+	}
+	if len(a.popPolicy.Parameters) != len(b.popPolicy.Parameters) {
+		t.Logf("Poppolicy parameters differ")
+		t.Fail()
+	}
+	for k, v := range a.popPolicy.Parameters {
+		if val, ok := b.popPolicy.Parameters[k]; ok {
+			if val != v {
+				t.Log("Parameter is different")
+				t.Fail()
+			}
+		} else {
+			t.Log("Parameter not found")
+			t.Fail()
+		}
+	}
+	count := a.similarities.Capacity()
+	if count != b.similarities.Capacity() {
+		t.Log("SM have different size")
+		t.Fail()
+	}
+	for i := 0; i < count; i++ {
+		for j := 0; j < count; j++ {
+			if a.similarities.Get(i, j) != b.similarities.Get(i, j) {
+				t.Log("SM have different elements")
+				t.Fail()
+			}
 		}
 	}
 }

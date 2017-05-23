@@ -2,10 +2,8 @@ package core
 
 import (
 	"bytes"
-	"errors"
 	"log"
 	"strconv"
-	"time"
 )
 
 // JaccardEstimator estimates the Jaccard coefficients between the different
@@ -16,24 +14,9 @@ type JaccardEstimator struct {
 	AbstractDatasetSimilarityEstimator
 }
 
-// Compute runs the similarity evaluation and constructs the Similarity Matrix
+// Compute method constructs the Similarity Matrix
 func (e *JaccardEstimator) Compute() error {
-	e.similarities = NewDatasetSimilarities(len(e.datasets))
-
-	log.Println("Fetching datasets in memory")
-	if e.datasets == nil || len(e.datasets) == 0 {
-		log.Println("No datasets were given")
-		return errors.New("Empty dataset slice")
-	}
-	for _, d := range e.datasets {
-		d.ReadFromFile()
-	}
-
-	start := time.Now()
-	datasetSimilarityEstimatorCompute(e)
-	e.duration = time.Since(start).Seconds()
-
-	return nil
+	return datasetSimilarityEstimatorCompute(e)
 }
 
 // Similarity returns the similarity between two datasets

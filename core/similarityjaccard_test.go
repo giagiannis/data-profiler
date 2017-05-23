@@ -1,9 +1,6 @@
 package core
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func TestJaccardCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
@@ -14,18 +11,8 @@ func TestJaccardCompute(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestJaccardComputeAppxCnt(t *testing.T) {
@@ -44,18 +31,8 @@ func TestJaccardComputeAppxCnt(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestJaccardComputeAppxThres(t *testing.T) {
@@ -74,18 +51,8 @@ func TestJaccardComputeAppxThres(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestJaccardSerialization(t *testing.T) {
@@ -109,24 +76,7 @@ func TestJaccardSerialization(t *testing.T) {
 
 	newEst := *new(JaccardEstimator)
 	newEst.Deserialize(bytes)
-	if est.concurrency != newEst.concurrency {
-		t.Log("Concurrency differs")
-		t.Fail()
-	}
 
-	for i := range est.datasets {
-		if est.datasets[i].Path() != newEst.datasets[i].Path() {
-			t.Log("Dataset names are different", est.datasets[i], newEst.datasets[i])
-			t.Fail()
-		}
-	}
-
-	for i := 0; i < est.similarities.Capacity(); i++ {
-		for j := 0; j < est.similarities.Capacity(); j++ {
-			if est.similarities.Get(i, j) != newEst.similarities.Get(i, j) {
-				t.Log("SM differs", i, j)
-				t.Fail()
-			}
-		}
-	}
+	estimatorsCheck(est.AbstractDatasetSimilarityEstimator, newEst.AbstractDatasetSimilarityEstimator, t)
+	cleanDatasets(datasets)
 }

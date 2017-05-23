@@ -3,7 +3,6 @@ package core
 import (
 	"math"
 	"math/rand"
-	"os"
 	"testing"
 )
 
@@ -24,17 +23,8 @@ func TestCorrelationEstimatorCompute(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 
 }
 
@@ -54,18 +44,8 @@ func TestCorrelationComputeAppxCnt(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestCorrelationComputeAppxThres(t *testing.T) {
@@ -74,7 +54,7 @@ func TestCorrelationComputeAppxThres(t *testing.T) {
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
-			"threshold": 0.3,
+			"threshold": 0.8,
 		},
 	}
 	est.SetPopulationPolicy(pol)
@@ -84,18 +64,8 @@ func TestCorrelationComputeAppxThres(t *testing.T) {
 		t.FailNow()
 	}
 	s := est.SimilarityMatrix()
-	for i := range datasets {
-		for j := range datasets {
-			if s.Get(i, j) != s.Get(j, i) {
-				t.Log("Similarity matrix not symmetrical")
-				t.Fail()
-			}
-		}
-	}
-
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	smSanityCheck(s, t)
+	cleanDatasets(datasets)
 }
 
 func TestCorrelationEstimatorSerialization(t *testing.T) {
@@ -119,34 +89,11 @@ func TestCorrelationEstimatorSerialization(t *testing.T) {
 
 	newEst := *new(CorrelationEstimator)
 	newEst.Deserialize(bytes)
-	if est.concurrency != newEst.concurrency {
-		t.Log("Concurrency differs")
-		t.Fail()
-	}
-
-	for i := range est.datasets {
-		if est.datasets[i].Path() != newEst.datasets[i].Path() {
-			t.Log("Dataset names are different", est.datasets[i], newEst.datasets[i])
-			t.Fail()
-		}
-	}
-
-	for i := 0; i < est.similarities.Capacity(); i++ {
-		for j := 0; j < est.similarities.Capacity(); j++ {
-			if est.similarities.Get(i, j) != newEst.similarities.Get(i, j) {
-				t.Log("SM differs", i, j)
-				t.Fail()
-			}
-		}
-	}
-
-	if newEst.Similarity(datasets[0], datasets[1]) != newEst.SimilarityMatrix().Get(0, 1) {
-		t.Log("Something is seriously wrong here", newEst.SimilarityMatrix().Get(0, 1), newEst.Similarity(datasets[0], datasets[1]))
-		t.Fail()
-	}
+	estimatorsCheck(est.AbstractDatasetSimilarityEstimator, newEst.AbstractDatasetSimilarityEstimator, t)
+	cleanDatasets(datasets)
 
 }
-func TestCorrelations(t *testing.T) {
+func TestCorrelationEvaluation(t *testing.T) {
 	getArray := func(d *Dataset) []float64 {
 		err := d.ReadFromFile()
 		if err != nil {
@@ -184,7 +131,5 @@ func TestCorrelations(t *testing.T) {
 		t.Logf("Kendall t does not seem correct (%.5f)\n", tau)
 		t.Fail()
 	}
-	for _, f := range datasets {
-		os.Remove(f.Path())
-	}
+	cleanDatasets(datasets)
 }
