@@ -126,3 +126,9 @@ func createPoolBasedDatasetsStrict(poolSize, datasetSize, datasets, attributes i
 
 	return result
 }
+
+func cleanDatasets(datasets []*Dataset) {
+	for _, f := range datasets {
+		os.Remove(f.Path())
+	}
+}

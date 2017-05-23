@@ -51,11 +51,7 @@ func similaritiesParseParams() *similaritiesParams {
 		idx := strings.Index(*popPolicy, ",")
 		if idx > -1 {
 			for k, v := range parseOptions((*popPolicy)[idx+1 : len(*popPolicy)]) {
-				val, err := strconv.ParseFloat(v, 64)
-				if err != nil {
-					log.Println("Error parsing population policy")
-					os.Exit(1)
-				}
+				val, _ := strconv.ParseFloat(v, 64)
 				params.populationPolicy.Parameters[k] = val
 			}
 		}
@@ -64,26 +60,14 @@ func similaritiesParseParams() *similaritiesParams {
 		os.Exit(1)
 	}
 
-	if *estType == "BHATTACHARYYA" {
-		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SimilarityTypeBhattacharyya
-	} else if *estType == "JACCARD" {
-		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SimilarityTypeJaccard
-	} else if *estType == "SCRIPT" {
-		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SimilarityTypeScript
-	} else if *estType == "CORRELATION" {
-		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SimilarityTypeCorrelation
+	params.simType = new(core.DatasetSimilarityEstimatorType)
+	simEstType := core.NewDatasetSimilarityEstimatorType(*estType)
+	if simEstType != nil {
+		*params.simType = *simEstType
 	}
 
 	if *params.options == "list" {
-		similarityTypes := []core.DatasetSimilarityEstimatorType{
-			core.SimilarityTypeJaccard, core.SimilarityTypeBhattacharyya,
-			core.SimilarityTypeScript, core.SimilarityTypeCorrelation,
-		}
-		for i, v := range similarityTypes {
+		for i, v := range core.DatasetSimilarityEstimatorAvailableTypes {
 			fmt.Println(i+1, v)
 			a := core.NewDatasetSimilarityEstimator(v, nil)
 			for k, v := range a.Options() {

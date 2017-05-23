@@ -214,6 +214,31 @@ const (
 	SimilarityTypeCorrelation DatasetSimilarityEstimatorType = iota + 5
 )
 
+// DatasetSimilarityEstimatorAvailableTypes lists the available similarity types
+var DatasetSimilarityEstimatorAvailableTypes = []DatasetSimilarityEstimatorType{
+	SimilarityTypeBhattacharyya,
+	SimilarityTypeJaccard,
+	SimilarityTypeCorrelation,
+	SimilarityTypeComposite,
+	SimilarityTypeScript,
+}
+
+// NewDatasetSimilarityEstimatorType transforms the similarity type from a
+// string to a DatasetSimilarityEstimatorType object
+func NewDatasetSimilarityEstimatorType(estimatorType string) *DatasetSimilarityEstimatorType {
+	lower := strings.ToLower(estimatorType)
+	types := map[string]DatasetSimilarityEstimatorType{
+		"bhattacharyya": SimilarityTypeBhattacharyya,
+		"jaccard":       SimilarityTypeJaccard,
+		"correlation":   SimilarityTypeCorrelation,
+		"composite":     SimilarityTypeComposite,
+		"script":        SimilarityTypeScript,
+	}
+	if val, ok := types[lower]; ok {
+		return &val
+	}
+	return nil
+}
 func (t DatasetSimilarityEstimatorType) String() string {
 	if t == SimilarityTypeJaccard {
 		return "Jaccard"
@@ -319,7 +344,14 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		return a
+	} else if estType == SimilarityTypeComposite {
+		a := new(CompositeEstimator)
+		a.SetPopulationPolicy(policy)
+		a.datasets = datasets
+		a.concurrency = 1
+		return a
 	}
+
 	return nil
 }
 
