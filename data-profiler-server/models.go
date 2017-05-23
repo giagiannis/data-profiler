@@ -93,3 +93,15 @@ func modelDatasetGetFiles(path string) []string {
 	}
 	return results
 }
+
+func modelSimilarityMatrixWrite(datsetID string, buffer []byte) {
+	// TODO: write to file
+
+	// TODO: insert to DB
+}
+
+func modelEstimatorWrite(datsetID string, buffer []byte) {
+	// TODO: write to file
+
+	// TODO: insert to DB
+}

@@ -63,9 +63,11 @@ func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 		if err != nil {
 			return err
 		}
-		// TODO: serialize them and write them to the DB
-		//est.Serialize()
-		//est.SimilarityMatrix().Serialize()
+		modelEstimatorWrite(datasetID, est.Serialize())
+		sm := est.SimilarityMatrix()
+		if sm != nil {
+			modelSimilarityMatrixWrite(datasetID, sm.Serialize())
+		}
 		return nil
 	}
 	return task

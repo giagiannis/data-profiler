@@ -4,9 +4,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
-
-	"github.com/giagiannis/data-profiler/core"
 )
 
 // /datasets/
@@ -35,19 +32,15 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println(r.PostForm)
-	//confParams := r.PostForm
-	simType := r.PostFormValue("type")
-	estType := core.NewDatasetSimilarityEstimatorType(simType)
-	log.Println(estType)
-	// TODO: do the rest of the stuff here
-	myFunc := func() error {
-		time.Sleep(10 * time.Second)
-		return nil
+	conf := make(map[string]string)
+	for k, v := range r.PostForm {
+		if len(v) > 0 {
+			conf[k] = v[0]
+		} else {
+			conf[k] = ""
+		}
 	}
-	task := new(Task)
-	task.fnc = myFunc
-	TEngine.Submit(task)
+	TEngine.Submit(NewSMComputationTask(id, conf))
 	http.Redirect(w, r, "/datasets/"+id, 301)
 	return nil
 }
