@@ -84,7 +84,7 @@ func modelDatasetGetFiles(path string) *ModelDataset {
 	return nil
 }
 
-func modelOperatorsGet(datasetId string) []*ModelOperator {
+func modelOperatorsGet(datasetID string) []*ModelOperator {
 	// FIXME: add implementation
 	return nil
 }
