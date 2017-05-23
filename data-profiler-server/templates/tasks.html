@@ -4,7 +4,27 @@ Tasks
 
 {{ define "body"}}
 <h1>Tasks</h1>
-<h2></h2>
+{{ if . }}
+<table class='tablelist'>
+<tr>
+		<th>Description</th>
+		<th>Status</th>
+		<th>Started</th>
+		<th>Duration</th>
+</tr>
+{{ range $i, $task := . }}
+<tr>
+		<td>{{ $task.Description }} </td>
+		<td>{{ $task.Status }} </td>
+		<td>{{ $task.Started }} </td>
+		<td>{{ $task.Duration }} </td>
+</tr>
+{{ end }}
+</table>
+{{ else }}
+No tasks found
+{{ end }}
+
 {{ end }}
 
 {{ template "base.html" . }}

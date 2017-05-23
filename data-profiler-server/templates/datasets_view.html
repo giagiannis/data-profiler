@@ -18,20 +18,39 @@ Dataset Not Found
 </div>
 <div>
 <h2>Files</h2>
+{{ if .Files }}
+<code style='width:800px;'>
+<ul style='column-count:4;'>
+{{ range $id, $f := .Files }}
+<li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>{{ $f }}</a></li>
+{{ end }}
+</ul>
+</code>
+{{ else }}
+No files found
+{{ end }}
+</div>
+
+<div>
+<h2>Similarity Matrices
+<button style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick='createSM({{ $.ID}});'>
+<span class="ui-icon ui-icon-plusthick" ></span>
+</h2>
 TBD
 </div>
+
+
 <div>
 <h2>Operators</h2>
 TBD
 </div>
-<div>
-<h2>Similarity Matrices</h2>
-TBD
-</div>
+
+
 <div>
 <h2>Coordinates</h2>
 TBD
 </div>
+
 {{else}}
 <h1>Dataset Not Found</h1>
 {{end}}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"io/ioutil"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -29,7 +30,7 @@ type ModelOperator struct {
 	Description string
 }
 
-// FUNCTIOND
+// FUNCTIONS
 
 // dbConnect is responsible to establish the connection with the DB backend.
 // Written as separate function to increase modularity between the different
@@ -79,12 +80,16 @@ func modelDatasetGetInfo(id string) *ModelDataset {
 	return nil
 }
 
-func modelDatasetGetFiles(path string) *ModelDataset {
-	// FIXME: add implementation
-	return nil
-}
-
-func modelOperatorsGet(datasetID string) []*ModelOperator {
-	// FIXME: add implementation
-	return nil
+func modelDatasetGetFiles(path string) []string {
+	var results []string
+	fs, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Println(err)
+	}
+	for _, f := range fs {
+		if !f.IsDir() {
+			results = append(results, f.Name())
+		}
+	}
+	return results
 }

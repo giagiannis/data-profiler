@@ -13,6 +13,9 @@ import (
 // Conf object holds the server configuration
 var Conf *Configuration
 
+// TEngine is the TaskEngine used to submit new tasks
+var TEngine *TaskEngine
+
 // Configuration dictates the schema of the yml conf file
 type Configuration struct {
 	Server struct {
@@ -23,6 +26,7 @@ type Configuration struct {
 		}
 	}
 	Database string
+	Logfile  string
 }
 
 // LoadConfig loads the configuration file in memory
@@ -52,8 +56,25 @@ func main() {
 	if Conf == nil {
 		os.Exit(1)
 	}
+	setLogger(Conf.Logfile)
+	TEngine = NewTaskEngine()
+
 	fs := http.FileServer(http.Dir(Conf.Server.Dirs.Static))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", uiHandler)
 	http.ListenAndServe(Conf.Server.Listen, nil)
+}
+
+func setLogger(logfile string) {
+	if logfile != "" {
+		f, er := os.OpenFile(logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if er != nil {
+			fmt.Println(er)
+			os.Exit(1)
+		} else {
+			log.SetOutput(f)
+		}
+	}
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
+
 }

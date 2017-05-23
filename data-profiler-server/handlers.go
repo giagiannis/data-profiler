@@ -15,20 +15,26 @@ type cntTmpltCouple struct {
 // templateDependencies lists the necessary templates that need to be rendered
 // for each template
 var templateDependencies = map[string][]string{
-	"about.html":         {"base.html"},
-	"datasets.html":      {"base.html"},
-	"datasets_view.html": {"base.html"},
-	"tasks.html":         {"base.html"},
-	"error.html":         {"base.html"},
+	"about.html":             {"base.html"},
+	"datasets.html":          {"base.html"},
+	"datasets_view.html":     {"base.html"},
+	"tasks.html":             {"base.html"},
+	"error.html":             {"base.html"},
+	"forms/new_sm_form.html": {},
 }
 
 // routingControllerTemplates hold the controller and the respective template
 // that need to be rendered for each possible path
 var routingControllerTemplates = map[string]cntTmpltCouple{
-	"datasets/":     {controllerDatasetList, "datasets.html"},
-	"datasets/view": {controllerDatasetView, "datasets_view.html"},
-	"about/":        {nil, "about.html"},
-	"tasks/":        {nil, "tasks.html"},
+	"datasets/":      {controllerDatasetList, "datasets.html"},
+	"datasets/view":  {controllerDatasetView, "datasets_view.html"},
+	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
+	"download/":      {controllerDownload, ""},
+	"tasks/":         {controllerTasksList, "tasks.html"},
+
+	// TODO
+	"about/":  {nil, "about.html"},
+	"search/": {nil, ""}, // does nothing for now
 }
 
 func uiHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +43,12 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 	if cnt != nil {
 		m = cnt(w, r)
 	}
-	if t.Lookup("error.html") != nil {
-		w.WriteHeader(http.StatusNotFound)
+	if t != nil {
+		if t.Lookup("error.html") != nil {
+			w.WriteHeader(http.StatusNotFound)
+		}
+		t.Execute(w, m)
 	}
-	t.Execute(w, m)
 }
 
 func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Request) Model, *template.Template) {
@@ -64,6 +72,9 @@ func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Re
 // loadTemplate attempts to load the specified template, else returns the
 // error page
 func loadTemplate(templateName string) *template.Template {
+	if templateName == "" { // no template is needed
+		return nil
+	}
 	deps, ok := templateDependencies[templateName]
 	if !ok { // error
 		deps = templateDependencies["error.html"]

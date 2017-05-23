@@ -5,3 +5,4 @@ server:
             templates: "data-profiler-server/templates"
             static: "data-profiler-server/static"
 database: "sqlite3.db"
+logfile: ""
