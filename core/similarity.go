@@ -162,17 +162,11 @@ func datasetSimilarityEstimatorDeserialize(b []byte) *AbstractDatasetSimilarityE
 // The provided object must respect the DatasetSimilarityEstimator interface
 // and (optionally) extends the AbstractDatasetSimilarityEstimator struct
 func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) error {
+	err := readDatasets(e)
+	if err != nil {
+		return err
+	}
 	start := time.Now()
-	e.setSimilarityMatrix(NewDatasetSimilarities(len(e.Datasets())))
-	log.Println("Fetching datasets in memory")
-	if e.Datasets() == nil || len(e.Datasets()) == 0 {
-		log.Println("No datasets were given")
-		return errors.New("Datasets not set correctly")
-	}
-	for _, d := range e.Datasets() {
-		d.ReadFromFile()
-	}
-
 	if e.PopulationPolicy().PolicyType == PopulationPolicyFull {
 		e.SimilarityMatrix().IndexDisabled(true) // I don't need the index
 		log.Println("Computing the similarities using", e.Concurrency(), "threads")
@@ -224,6 +218,19 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) error {
 		}
 	}
 	e.setDuration(time.Since(start).Seconds())
+	return nil
+}
+
+func readDatasets(e DatasetSimilarityEstimator) error {
+	e.setSimilarityMatrix(NewDatasetSimilarities(len(e.Datasets())))
+	log.Println("Fetching datasets in memory")
+	if e.Datasets() == nil || len(e.Datasets()) == 0 {
+		log.Println("No datasets were given")
+		return errors.New("Datasets not set correctly")
+	}
+	for _, d := range e.Datasets() {
+		d.ReadFromFile()
+	}
 	return nil
 }
 
