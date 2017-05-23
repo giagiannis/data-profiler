@@ -70,9 +70,6 @@ func similaritiesParseParams() *similaritiesParams {
 	} else if *estType == "JACCARD" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.SIMILARITY_TYPE_JACCARD
-	} else if *estType == "ORDER" {
-		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_ORDER
 	} else if *estType == "SCRIPT" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
 		*params.simType = core.SIMILARITY_TYPE_SCRIPT

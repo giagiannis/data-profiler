@@ -11,7 +11,7 @@ func TestScriptSimilarityDatasetAnalysis(t *testing.T) {
 	est.datasets = datasets
 	conf := map[string]string{
 		"concurrency": "10",
-		"script":      ANALYSIS_SCRIPT,
+		"script":      analysisScript,
 		"norm":        "1",
 	}
 	est.Configure(conf)
@@ -38,7 +38,7 @@ func TestScriptSimilarityCompute(t *testing.T) {
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
-		"script":      ANALYSIS_SCRIPT,
+		"script":      analysisScript,
 		"norm":        "1",
 	}
 	est.Configure(conf)
@@ -66,7 +66,7 @@ func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
-		"script":      ANALYSIS_SCRIPT,
+		"script":      analysisScript,
 		"norm":        "1",
 	}
 	est.Configure(conf)
@@ -101,7 +101,7 @@ func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
-		"script":      ANALYSIS_SCRIPT,
+		"script":      analysisScript,
 		"norm":        "1",
 	}
 	est.Configure(conf)
@@ -138,7 +138,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	est := *new(ScriptSimilarityEstimator)
 	est.datasets = datasets
 	est.simType = scriptSimilarityTypeEuclidean
-	est.analysisScript = ANALYSIS_SCRIPT
+	est.analysisScript = analysisScript
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: POPULATION_POL_FULL,
@@ -211,7 +211,7 @@ func TestScriptSimilarityCosine(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 3)
 	s := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
 	s.Configure(map[string]string{
-		"script":      ANALYSIS_SCRIPT,
+		"script":      analysisScript,
 		"concurrency": "1",
 		"type":        "cosine",
 	})

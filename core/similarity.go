@@ -205,7 +205,6 @@ const (
 	SIMILARITY_TYPE_JACCARD       DatasetSimilarityEstimatorType = iota
 	SIMILARITY_TYPE_BHATTACHARYYA DatasetSimilarityEstimatorType = iota + 1
 	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
-	SIMILARITY_TYPE_ORDER         DatasetSimilarityEstimatorType = iota + 3
 	SIMILARITY_TYPE_COMPOSITE     DatasetSimilarityEstimatorType = iota + 4
 	SIMILARITY_TYPE_CORRELATION   DatasetSimilarityEstimatorType = iota + 5
 )
@@ -215,8 +214,6 @@ func (t DatasetSimilarityEstimatorType) String() string {
 		return "Jaccard"
 	} else if t == SIMILARITY_TYPE_BHATTACHARYYA {
 		return "Bhattacharyya"
-	} else if t == SIMILARITY_TYPE_ORDER {
-		return "Order"
 	} else if t == SIMILARITY_TYPE_CORRELATION {
 		return "Correlation"
 	} else if t == SIMILARITY_TYPE_SCRIPT {
@@ -286,12 +283,6 @@ func NewDatasetSimilarityEstimator(
 	policy.PolicyType = POPULATION_POL_FULL
 	if estType == SIMILARITY_TYPE_JACCARD {
 		a := new(JaccardEstimator)
-		a.SetPopulationPolicy(policy)
-		a.datasets = datasets
-		a.concurrency = 1
-		return a
-	} else if estType == SIMILARITY_TYPE_ORDER {
-		a := new(OrderEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1

@@ -155,7 +155,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 
 	// script
 	est = NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
-	est.Configure(map[string]string{"concurrency": "10", "script": ANALYSIS_SCRIPT})
+	est.Configure(map[string]string{"concurrency": "10", "script": analysisScript})
 	err = est.Compute()
 	if err != nil {
 		t.Log(err)

@@ -3,7 +3,7 @@ package core
 import "testing"
 
 func TestDatasetRead(t *testing.T) {
-	a := NewDataset(TRAINSET)
+	a := NewDataset(trainSet)
 
 	err := a.ReadFromFile()
 	if err != nil {

@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	TRAINSET        = "../_testdata/datatraining.csv"
-	TESTSET         = "../_testdata/datatest.csv"
-	ANALYSIS_SCRIPT = "../_rscripts/pca.R"
-	ML_SCRIPT       = "../_rscripts/lm.R"
-	TMP_DIR         = "/tmp/"
+	trainSet       = "../_testdata/datatraining.csv"
+	testSet        = "../_testdata/datatest.csv"
+	analysisScript = "../_rscripts/pca.R"
+	mlScript       = "../_rscripts/lm.R"
+	mdsScript      = "../_rscripts/mdscaling.R"
+	tmpDir         = "/tmp/"
 )
 
 func init() {
@@ -45,7 +46,7 @@ func createPoolBasedDatasets(poolSize, datasets, attributes int) []*Dataset {
 		dSize := rand.Int()%(poolSize/2) + poolSize/2
 		buffer := make([]byte, 4)
 		rand.Read(buffer)
-		fileNames[i] = fmt.Sprintf("%s%x.txt", TMP_DIR, buffer)
+		fileNames[i] = fmt.Sprintf("%s%x.txt", tmpDir, buffer)
 		f, _ := os.Create(fileNames[i])
 		defer f.Close()
 
@@ -91,7 +92,7 @@ func createPoolBasedDatasetsStrict(poolSize, datasetSize, datasets, attributes i
 	for i := 0; i < datasets; i++ {
 		buffer := make([]byte, 4)
 		rand.Read(buffer)
-		fileNames[i] = fmt.Sprintf("%s%x.txt", TMP_DIR, buffer)
+		fileNames[i] = fmt.Sprintf("%s%x.txt", tmpDir, buffer)
 		f, _ := os.Create(fileNames[i])
 		defer f.Close()
 

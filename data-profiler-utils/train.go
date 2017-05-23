@@ -57,7 +57,7 @@ func trainRun() {
 	confparams := make(map[string]string)
 	confparams["script"] = *params.script
 	confparams["testset"] = params.testset.Path()
-	eval, err := core.NewDatasetEvaluator(core.ONLINE_EVAL, confparams)
+	eval, err := core.NewDatasetEvaluator(core.OnlineEval, confparams)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)

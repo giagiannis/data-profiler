@@ -16,6 +16,7 @@ type JaccardEstimator struct {
 	AbstractDatasetSimilarityEstimator
 }
 
+// Compute runs the similarity evaluation and constructs the Similarity Matrix
 func (e *JaccardEstimator) Compute() error {
 	e.similarities = NewDatasetSimilarities(len(e.datasets))
 
@@ -35,6 +36,7 @@ func (e *JaccardEstimator) Compute() error {
 	return nil
 }
 
+// Similarity returns the similarity between two datasets
 func (e *JaccardEstimator) Similarity(a, b *Dataset) float64 {
 	inter := len(DatasetsIntersection(a, b))
 	union := len(DatasetsUnion(a, b))
@@ -42,6 +44,7 @@ func (e *JaccardEstimator) Similarity(a, b *Dataset) float64 {
 	return value
 }
 
+// Configure sets the necessary parameters before the similarity execution
 func (e *JaccardEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["concurrency"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
@@ -53,12 +56,14 @@ func (e *JaccardEstimator) Configure(conf map[string]string) {
 	}
 }
 
+// Options returns a list of applicable parameters
 func (e *JaccardEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
 	}
 }
 
+// Serialize returns a byte array containing the estimator.
 func (e *JaccardEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
 	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACCARD)))
@@ -67,6 +72,7 @@ func (e *JaccardEstimator) Serialize() []byte {
 	return buffer.Bytes()
 }
 
+// Deserialize instantiates the estimator based on a byte array
 func (e *JaccardEstimator) Deserialize(b []byte) {
 	buffer := bytes.NewBuffer(b)
 	tempInt := make([]byte, 4)

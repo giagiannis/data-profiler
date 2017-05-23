@@ -52,10 +52,12 @@ func DatasetsUnion(a, b *Dataset) []DatasetTuple {
 	return result
 }
 
+// PartitionerType represents the type of the partitioning
 type PartitionerType uint8
 
 const (
-	PARTITIONER_TYPE_UNIFORM PartitionerType = iota + 1
+	// PartitionerUniform represents a uniform partitioner
+	PartitionerUniform PartitionerType = iota + 1
 )
 
 // DatasetPartitioner accepts a single dataset and it is responsible to
@@ -67,6 +69,7 @@ type DatasetPartitioner struct {
 	partitionType PartitionerType // type of the partitioner
 }
 
+// NewDatasetPartitioner initializes a new DatasetPartitioner object
 func NewDatasetPartitioner(input, output string, splits int, partitionType PartitionerType) *DatasetPartitioner {
 	a := new(DatasetPartitioner)
 	a.input = input
@@ -97,7 +100,7 @@ func (a *DatasetPartitioner) Partition() {
 		f.WriteString(header + "\n")
 	}
 
-	if a.partitionType == PARTITIONER_TYPE_UNIFORM {
+	if a.partitionType == PartitionerUniform {
 		a.uniform(scanner, newFiles)
 	}
 

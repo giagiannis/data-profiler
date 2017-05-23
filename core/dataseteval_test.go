@@ -6,13 +6,13 @@ import (
 )
 
 func TestDatasetEvaluator(t *testing.T) {
-	params := map[string]string{"script": ML_SCRIPT, "testset": TESTSET}
-	eval, err := NewDatasetEvaluator(ONLINE_EVAL, params)
+	params := map[string]string{"script": mlScript, "testset": testSet}
+	eval, err := NewDatasetEvaluator(OnlineEval, params)
 	if err != nil || eval == nil {
 		log.Println(err)
 		t.FailNow()
 	}
-	val, err := eval.Evaluate(TRAINSET)
+	val, err := eval.Evaluate(trainSet)
 	if err != nil {
 		log.Println(err)
 		t.FailNow()

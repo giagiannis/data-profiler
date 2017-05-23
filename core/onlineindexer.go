@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// Class used to execute online indexing. The user can supply a map containing
+// OnlineIndexer is used to execute online indexing. The user can supply a map containing
 // distances from original datasets and the indexer returns the coordinates of the
 // specified dataset.
 type OnlineIndexer struct {

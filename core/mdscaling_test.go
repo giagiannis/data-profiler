@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-const MDSCALING_SCRIPT = "../_rscripts/mdscaling.R"
-
 func TestMDScalingScript(t *testing.T) {
 	datasets := createPoolBasedDatasets(2000, 10, 4)
 	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
@@ -19,7 +17,7 @@ func TestMDScalingScript(t *testing.T) {
 		t.Fail()
 	}
 
-	md := NewMDScaling(est.SimilarityMatrix(), 2, MDSCALING_SCRIPT+"-bad")
+	md := NewMDScaling(est.SimilarityMatrix(), 2, mdsScript+"-bad")
 	err = md.Compute()
 	if err == nil {
 		t.Log(err)
@@ -47,7 +45,7 @@ func TestMDScalingCompute(t *testing.T) {
 		t.Fail()
 	}
 	for _, k := range []int{1, 2, 3, 4, 5, 6} {
-		md := NewMDScaling(est.SimilarityMatrix(), k, MDSCALING_SCRIPT)
+		md := NewMDScaling(est.SimilarityMatrix(), k, mdsScript)
 		err = md.Compute()
 		if err != nil {
 			t.Log(err)
