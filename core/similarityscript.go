@@ -126,7 +126,7 @@ func (e *ScriptSimilarityEstimator) Options() map[string]string {
 // Serialize returns a byte array that represents the struct is a serialized version
 func (e *ScriptSimilarityEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_SCRIPT)))
+	buffer.Write(getBytesInt(int(SimilarityTypeScript)))
 
 	buffer.Write(
 		datasetSimilarityEstimatorSerialize(

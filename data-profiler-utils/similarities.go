@@ -45,9 +45,9 @@ func similaritiesParseParams() *similaritiesParams {
 	params.populationPolicy = new(core.DatasetSimilarityPopulationPolicy)
 	params.populationPolicy.Parameters = make(map[string]float64)
 	if popPolicyType == "FULL" {
-		params.populationPolicy.PolicyType = core.POPULATION_POL_FULL
+		params.populationPolicy.PolicyType = core.PopulationPolicyFull
 	} else if popPolicyType == "APRX" {
-		params.populationPolicy.PolicyType = core.POPULATION_POL_APRX
+		params.populationPolicy.PolicyType = core.PopulationPolicyAprx
 		idx := strings.Index(*popPolicy, ",")
 		if idx > -1 {
 			for k, v := range parseOptions((*popPolicy)[idx+1 : len(*popPolicy)]) {
@@ -66,22 +66,22 @@ func similaritiesParseParams() *similaritiesParams {
 
 	if *estType == "BHATTACHARYYA" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_BHATTACHARYYA
+		*params.simType = core.SimilarityTypeBhattacharyya
 	} else if *estType == "JACCARD" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_JACCARD
+		*params.simType = core.SimilarityTypeJaccard
 	} else if *estType == "SCRIPT" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_SCRIPT
+		*params.simType = core.SimilarityTypeScript
 	} else if *estType == "CORRELATION" {
 		params.simType = new(core.DatasetSimilarityEstimatorType)
-		*params.simType = core.SIMILARITY_TYPE_CORRELATION
+		*params.simType = core.SimilarityTypeCorrelation
 	}
 
 	if *params.options == "list" {
 		similarityTypes := []core.DatasetSimilarityEstimatorType{
-			core.SIMILARITY_TYPE_JACCARD, core.SIMILARITY_TYPE_BHATTACHARYYA,
-			core.SIMILARITY_TYPE_SCRIPT, core.SIMILARITY_TYPE_CORRELATION,
+			core.SimilarityTypeJaccard, core.SimilarityTypeBhattacharyya,
+			core.SimilarityTypeScript, core.SimilarityTypeCorrelation,
 		}
 		for i, v := range similarityTypes {
 			fmt.Println(i+1, v)

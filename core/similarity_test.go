@@ -10,7 +10,7 @@ import (
 func TestDatasetSimilarityPolicySerialization(t *testing.T) {
 	pol := new(DatasetSimilarityPopulationPolicy)
 	pol.Parameters = map[string]float64{"count": 10.0, "foo": 100.0}
-	pol.PolicyType = POPULATION_POL_APRX
+	pol.PolicyType = PopulationPolicyAprx
 	bytes := pol.Serialize()
 	newPol := new(DatasetSimilarityPopulationPolicy)
 	newPol.Deserialize(bytes)
@@ -29,7 +29,7 @@ func TestDatasetSimilarityPolicySerialization(t *testing.T) {
 
 func TestDatasetSerialize(t *testing.T) {
 	datasets := createPoolBasedDatasets(5000, 10, 3)
-	e := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	e.Compute()
 	s := e.SimilarityMatrix()
 	b := s.Serialize()
@@ -117,7 +117,7 @@ func TestDatasetSimilaritiesDisabledIndex(t *testing.T) {
 func TestDeserializeSimilarityEstimator(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 10, 2)
 	// jaccard
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {
@@ -135,7 +135,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 		}
 	}
 	// bhat
-	est = NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	est = NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	est.Configure(map[string]string{"concurrency": "10"})
 	err = est.Compute()
 	if err != nil {
@@ -154,7 +154,7 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 	}
 
 	// script
-	est = NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	est = NewDatasetSimilarityEstimator(SimilarityTypeScript, datasets)
 	est.Configure(map[string]string{"concurrency": "10", "script": analysisScript})
 	err = est.Compute()
 	if err != nil {

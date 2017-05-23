@@ -64,7 +64,7 @@ func (e *CorrelationEstimator) Options() map[string]string {
 // struct.
 func (e *CorrelationEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_CORRELATION)))
+	buffer.Write(getBytesInt(int(SimilarityTypeCorrelation)))
 	buffer.Write(
 		datasetSimilarityEstimatorSerialize(
 			e.AbstractDatasetSimilarityEstimator))

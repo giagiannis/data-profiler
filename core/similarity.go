@@ -146,7 +146,7 @@ func datasetSimilarityEstimatorDeserialize(b []byte) *AbstractDatasetSimilarityE
 // The provided object must respect the DatasetSimilarityEstimator interface
 // and (optionally) extends the AbstractDatasetSimilarityEstimator struct
 func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
-	if e.PopulationPolicy().PolicyType == POPULATION_POL_FULL {
+	if e.PopulationPolicy().PolicyType == PopulationPolicyFull {
 		e.SimilarityMatrix().IndexDisabled(true) // I don't need the index
 		log.Println("Computing the similarities using", e.Concurrency(), "threads")
 		c := make(chan bool, e.Concurrency())
@@ -169,7 +169,7 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 			<-done
 		}
 		log.Println("Done")
-	} else if e.PopulationPolicy().PolicyType == POPULATION_POL_APRX {
+	} else if e.PopulationPolicy().PolicyType == PopulationPolicyAprx {
 		e.SimilarityMatrix().IndexDisabled(false) // I need the index
 		if count, ok := e.PopulationPolicy().Parameters["count"]; ok {
 			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
@@ -202,21 +202,28 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) {
 type DatasetSimilarityEstimatorType uint
 
 const (
-	SIMILARITY_TYPE_JACCARD       DatasetSimilarityEstimatorType = iota
-	SIMILARITY_TYPE_BHATTACHARYYA DatasetSimilarityEstimatorType = iota + 1
-	SIMILARITY_TYPE_SCRIPT        DatasetSimilarityEstimatorType = iota + 2
-	SIMILARITY_TYPE_COMPOSITE     DatasetSimilarityEstimatorType = iota + 4
-	SIMILARITY_TYPE_CORRELATION   DatasetSimilarityEstimatorType = iota + 5
+	// SimilarityTypeJaccard estimates the Jaccard coefficient
+	SimilarityTypeJaccard DatasetSimilarityEstimatorType = iota
+	// SimilarityTypeBhattacharyya estimates the Bhattacharyya coefficient
+	SimilarityTypeBhattacharyya DatasetSimilarityEstimatorType = iota + 1
+	// SimilarityTypeScript uses a script to transform the data
+	SimilarityTypeScript DatasetSimilarityEstimatorType = iota + 2
+	// SimilarityTypeComposite utilizes multiple estimators concurrently
+	SimilarityTypeComposite DatasetSimilarityEstimatorType = iota + 4
+	// SimilarityTypeCorrelation estimates correlation metrics
+	SimilarityTypeCorrelation DatasetSimilarityEstimatorType = iota + 5
 )
 
 func (t DatasetSimilarityEstimatorType) String() string {
-	if t == SIMILARITY_TYPE_JACCARD {
+	if t == SimilarityTypeJaccard {
 		return "Jaccard"
-	} else if t == SIMILARITY_TYPE_BHATTACHARYYA {
+	} else if t == SimilarityTypeBhattacharyya {
 		return "Bhattacharyya"
-	} else if t == SIMILARITY_TYPE_CORRELATION {
+	} else if t == SimilarityTypeCorrelation {
 		return "Correlation"
-	} else if t == SIMILARITY_TYPE_SCRIPT {
+	} else if t == SimilarityTypeComposite {
+		return "Composite"
+	} else if t == SimilarityTypeScript {
 		return "Script"
 	}
 	return ""
@@ -265,43 +272,47 @@ func (s *DatasetSimilarityPopulationPolicy) Deserialize(b []byte) {
 
 }
 
+// DatasetSimilarityPopulationPolicyType is the type that represents the
+// Similarity Matrix population policy
 type DatasetSimilarityPopulationPolicyType uint
 
 const (
-	// FULL policy needs no params
-	POPULATION_POL_FULL DatasetSimilarityPopulationPolicyType = iota
-	// APRX must have defined one of two params: count (how many points)
-	// or threshold (percentage in similarity gain)
-	POPULATION_POL_APRX DatasetSimilarityPopulationPolicyType = iota + 1
+	// PopulationPolicyFull policy needs no params
+	PopulationPolicyFull DatasetSimilarityPopulationPolicyType = iota
+	// PopulationPolicyAprx must have defined one of two params:
+	// count (how many points) or threshold (percentage in similarity gain)
+	PopulationPolicyAprx DatasetSimilarityPopulationPolicyType = iota + 1
 )
 
-// Factory method for creating a DatasetSimilarityEstimator
+// NewDatasetSimilarityEstimator is a factory method for the
+// DatasetSimilarityEstimator structs, used to initialize the estimator and
+// return it to the user.
 func NewDatasetSimilarityEstimator(
 	estType DatasetSimilarityEstimatorType,
 	datasets []*Dataset) DatasetSimilarityEstimator {
 	policy := *new(DatasetSimilarityPopulationPolicy)
-	policy.PolicyType = POPULATION_POL_FULL
-	if estType == SIMILARITY_TYPE_JACCARD {
+	policy.PolicyType = PopulationPolicyFull
+	if estType == SimilarityTypeJaccard {
 		a := new(JaccardEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		return a
-	} else if estType == SIMILARITY_TYPE_BHATTACHARYYA {
+	} else if estType == SimilarityTypeBhattacharyya {
 		a := new(BhattacharyyaEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
 		return a
-	} else if estType == SIMILARITY_TYPE_SCRIPT {
+	} else if estType == SimilarityTypeScript {
 		a := new(ScriptSimilarityEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		a.concurrency = 1
 		a.simType = scriptSimilarityTypeEuclidean
 		return a
-	} else if estType == SIMILARITY_TYPE_CORRELATION {
+	} else if estType == SimilarityTypeCorrelation {
 		a := new(CorrelationEstimator)
 		a.SetPopulationPolicy(policy)
 		a.estType = CorrelationSimilarityTypePearson
@@ -312,18 +323,19 @@ func NewDatasetSimilarityEstimator(
 	return nil
 }
 
-// Factory method used to deserialize the Estimator according to its type
+// DeserializeSimilarityEstimator method is used to deserialize the
+// Estimator according to its type
 func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 	estimatorType := DatasetSimilarityEstimatorType(getIntBytes(b[0:4]))
-	if estimatorType == SIMILARITY_TYPE_JACCARD {
+	if estimatorType == SimilarityTypeJaccard {
 		a := new(JaccardEstimator)
 		a.Deserialize(b)
 		return a
-	} else if estimatorType == SIMILARITY_TYPE_BHATTACHARYYA {
+	} else if estimatorType == SimilarityTypeBhattacharyya {
 		a := new(BhattacharyyaEstimator)
 		a.Deserialize(b)
 		return a
-	} else if estimatorType == SIMILARITY_TYPE_SCRIPT {
+	} else if estimatorType == SimilarityTypeScript {
 		a := new(ScriptSimilarityEstimator)
 		a.Deserialize(b)
 		return a

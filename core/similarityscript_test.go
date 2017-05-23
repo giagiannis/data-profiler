@@ -35,7 +35,7 @@ func TestScriptSimilarityDatasetAnalysis(t *testing.T) {
 }
 func TestScriptSimilarityCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeScript, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
 		"script":      analysisScript,
@@ -63,7 +63,7 @@ func TestScriptSimilarityCompute(t *testing.T) {
 
 func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeScript, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
 		"script":      analysisScript,
@@ -71,7 +71,7 @@ func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 	}
 	est.Configure(conf)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"threshold": 0.95,
 		},
@@ -98,7 +98,7 @@ func TestScriptSimilarityComputeAppxThres(t *testing.T) {
 
 func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeScript, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
 		"script":      analysisScript,
@@ -106,7 +106,7 @@ func TestScriptSimilarityComputeAppxCnt(t *testing.T) {
 	}
 	est.Configure(conf)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"count": 10,
 		},
@@ -141,7 +141,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 	est.analysisScript = analysisScript
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_FULL,
+		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)
@@ -209,7 +209,7 @@ func TestScriptSimilaritySerialization(t *testing.T) {
 
 func TestScriptSimilarityCosine(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 3)
-	s := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_SCRIPT, datasets)
+	s := NewDatasetSimilarityEstimator(SimilarityTypeScript, datasets)
 	s.Configure(map[string]string{
 		"script":      analysisScript,
 		"concurrency": "1",

@@ -9,7 +9,7 @@ import (
 
 func TestBhattacharyyaCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(20000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	conf := map[string]string{"concurrency": "10"}
 	est.Configure(conf)
 	err := est.Compute()
@@ -99,11 +99,11 @@ func TestKdPruning(t *testing.T) {
 
 func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 	datasets := createPoolBasedDatasets(200, 200, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	conf := map[string]string{"concurrency": "10"}
 	est.Configure(conf)
 	policy := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"count": 20,
 		},
@@ -142,11 +142,11 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 
 func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 	datasets := createPoolBasedDatasets(200, 200, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_BHATTACHARYYA, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	conf := map[string]string{"concurrency": "10"}
 	est.Configure(conf)
 	policy := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"threshold": 0.985,
 		},
@@ -215,7 +215,7 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 	est.kdTreeScaleFactor = 0.75
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_FULL,
+		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)

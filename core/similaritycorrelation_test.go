@@ -40,9 +40,9 @@ func TestCorrelationEstimatorCompute(t *testing.T) {
 
 func TestCorrelationComputeAppxCnt(t *testing.T) {
 	datasets := createPoolBasedDatasetsStrict(1000, 500, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_CORRELATION, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeCorrelation, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"count": 20,
 		},
@@ -70,9 +70,9 @@ func TestCorrelationComputeAppxCnt(t *testing.T) {
 
 func TestCorrelationComputeAppxThres(t *testing.T) {
 	datasets := createPoolBasedDatasetsStrict(1000, 500, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_CORRELATION, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeCorrelation, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"threshold": 0.3,
 		},
@@ -106,7 +106,7 @@ func TestCorrelationEstimatorSerialization(t *testing.T) {
 	est.estType = CorrelationSimilarityTypePearson
 	est.concurrency = 10
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_FULL,
+		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)

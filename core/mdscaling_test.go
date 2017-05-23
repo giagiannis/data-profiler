@@ -7,7 +7,7 @@ import (
 
 func TestMDScalingScript(t *testing.T) {
 	datasets := createPoolBasedDatasets(2000, 10, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	est.Configure(map[string]string{
 		"concurrency": "10",
 	})
@@ -35,7 +35,7 @@ func TestMDScalingScript(t *testing.T) {
 
 func TestMDScalingCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(100, 50, 2)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	est.Configure(map[string]string{
 		"concurrency": "10",
 	})

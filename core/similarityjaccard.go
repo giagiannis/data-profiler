@@ -66,7 +66,7 @@ func (e *JaccardEstimator) Options() map[string]string {
 // Serialize returns a byte array containing the estimator.
 func (e *JaccardEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_JACCARD)))
+	buffer.Write(getBytesInt(int(SimilarityTypeJaccard)))
 	buffer.Write(
 		datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator))
 	return buffer.Bytes()

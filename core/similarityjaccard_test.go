@@ -7,7 +7,7 @@ import (
 
 func TestJaccardCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -30,9 +30,9 @@ func TestJaccardCompute(t *testing.T) {
 
 func TestJaccardComputeAppxCnt(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"count": 20,
 		},
@@ -60,9 +60,9 @@ func TestJaccardComputeAppxCnt(t *testing.T) {
 
 func TestJaccardComputeAppxThres(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
-	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
+	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"threshold": 0.95,
 		},
@@ -94,7 +94,7 @@ func TestJaccardSerialization(t *testing.T) {
 	est := *new(JaccardEstimator)
 	est.datasets = datasets
 	pol := DatasetSimilarityPopulationPolicy{
-		PolicyType: POPULATION_POL_APRX,
+		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
 			"count": 5.0,
 		},

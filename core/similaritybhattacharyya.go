@@ -126,7 +126,7 @@ func (e *BhattacharyyaEstimator) getValue(indA, indB []int, countA, countB int) 
 
 func (e *BhattacharyyaEstimator) Serialize() []byte {
 	buffer := new(bytes.Buffer)
-	buffer.Write(getBytesInt(int(SIMILARITY_TYPE_BHATTACHARYYA)))
+	buffer.Write(getBytesInt(int(SimilarityTypeBhattacharyya)))
 
 	bytes := datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator)
 	buffer.Write(bytes)
