@@ -289,12 +289,12 @@ func modelEstimatorGetBySM(id string) *ModelEstimator {
 
 func writeBufferToFile(dts *ModelDataset, prefix string, buffer []byte) string {
 	dstDir := dts.Path + "/" + prefix
-	err := os.Mkdir(dstDir, 777)
+	err := os.Mkdir(dstDir, 0777)
 	if err != nil {
 		log.Println(err)
 	}
 	dstPath := dstDir + "/" + prefix + currentTimeSuffix() + ".mat"
-	err = ioutil.WriteFile(dstPath, buffer, 777)
+	err = ioutil.WriteFile(dstPath, buffer, 0777)
 	if err != nil {
 		log.Println(err)
 	}

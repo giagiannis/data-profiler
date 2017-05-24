@@ -13,7 +13,7 @@
 <option value="popCount">Datasets count</option>
 <option value="popThreshold">Similarity threshold</option>
 </select>
-<input style='width:auto'type='text' name='popParameterValue'/>
+<input style='width:auto'type='text' name='popParameterValue' class='ui-widget ui-widget-content ui-corner-all' />
 </div>
 </fieldSet>
 </div>
@@ -31,7 +31,7 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Jaccard Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <input type='hidden' name='estimatorType' value='jaccard'/>
 </table>
 {{ template "appx" . }}
@@ -47,8 +47,8 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Bhattacharyya Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
-<tr><th>Tree Scale</th><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<tr><th>Concurrency</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Tree Scale</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='tree.scale' value='0.5'/></td></tr>
 <input type='hidden' name='estimatorType' value='bhattacharyya'/>
 </table>
 {{ template "appx" . }}
@@ -63,8 +63,8 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Correlation Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
-<tr><th>Column to examine</th><td><input type='text' name='column' value='0'/></td></tr>
+<tr><th>Concurrency</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Column to examine</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='column' value='0'/></td></tr>
 <tr><th>Correlation Type</th>
 <td>
 <select name="type">
@@ -99,8 +99,8 @@ TODO
 <!--
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <table>
-<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'/></td></tr>
-<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
 <input type='hidden' name='type' value='composite'/>
 </table>
 {{ template "appx" . }}
@@ -117,8 +117,8 @@ TODO
 <!--
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <table>
-<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'/></td></tr>
-<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <input type='hidden' name='type' value='script'/>
 </table>
 {{ template "appx" . }}

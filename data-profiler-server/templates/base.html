@@ -3,6 +3,7 @@
 <title>{{ template "title" . }}</title>
 <link href='/static/style.css' rel='stylesheet' type='text/css'/>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="/static/script.js"></script>
@@ -14,7 +15,7 @@
 <a href='/about/' class="navbar link">About</a></li>
 <div class='searchbar'>
 <form method='post' action='/search/'>
-<input type='text' name='searchtag' style='height:auto'/>
+<input type='text' name='searchtag' style='height:auto' class='ui-widget ui-widget-content ui-corner-all'/>
 <input id='searchbutton' type='submit' value='Search' class="ui-button ui-widget ui-corner-all"/>
 </form>
 </div>
