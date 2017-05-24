@@ -61,8 +61,17 @@ table.tablelist {
 }
 
 .tablelist th {
-/*		background-color: #4CAF50;*/
+		/*		background-color: #4CAF50;*/
 		background-color: #33AA22;
+		color: white;
+}
+#popPolicyDiv {
+		margin:0 auto;
+}
+
+
+.ui-dialog .ui-dialog-titlebar {
+		background: #33AA22;
 		color: white;
 }
 

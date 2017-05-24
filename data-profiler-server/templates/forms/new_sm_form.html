@@ -1,9 +1,139 @@
+{{ define "appx" }}
+<h3>Population Policy</h3>
+<div id='popPolicyDiv'>
+<fieldSet>
+<legend>Select approxiximation policy</legend>
+<label for="full">Full</label>
+<input type='radio' name='popPolicy' value='full' checked/>
+<label for="aprx">Approximate</label>
+<input type='radio' name='popPolicy' value='aprx'/>
+<br/>
+<div id='popParametersDiv'>
+<select name='popParameter'>
+<option value="popCount">Datasets count</option>
+<option value="popThreshold">Similarity threshold</option>
+</select>
+<input style='width:auto'type='text' name='popParameterValue'/>
+</div>
+</fieldSet>
+</div>
+{{end}}
+
+<div name='tabs' title="Estimate Similarity Matrix">
+<ul>
+<li> <a href='#jaccard'>Jaccard Estimator</a></li>
+<li> <a href='#bhattacharyya'>Bhattacharyya Estimator</a></li>
+<li> <a href='#correlation'>Correlation Estimator</a></li>
+<li> <a href='#composite'>Composite Estimator</a></li>
+<li> <a href='#script'>Script Estimator</a></li>
+</ul>
 <div id='jaccard'>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
-<table>
-<tr><td>Concurrency</td><td><input type='text' name='concurrency'/></td></tr>
-<tr><td><input type='hidden' name='type' value='jaccard'/></td><td><input type='submit'/></td></tr>
+<h3>Jaccard Estimator Parameters<h3>
+<table class='tablelist'>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
+<input type='hidden' name='estimatorType' value='jaccard'/>
 </table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
 </form>
 </div>
-<!-- TODO: implement the rest of the estimators as well -->
+
+
+<div id='bhattacharyya'>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<h3>Bhattacharyya Estimator Parameters<h3>
+<table class='tablelist'>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Tree Scale</th><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<input type='hidden' name='estimatorType' value='bhattacharyya'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
+</div>
+
+<div id='correlation'>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<h3>Correlation Estimator Parameters<h3>
+<table class='tablelist'>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Column to examine</th><td><input type='text' name='column' value='0'/></td></tr>
+<tr><th>Correlation Type</th>
+<td>
+<select name="type">
+<option value="pearson">Pearson</option>
+<option value="spearman">Spearman</option>
+<option value="kendall">Kendall</option>
+</select>
+</td>
+</tr>
+<tr><th>Normalization Type</th>
+<td>
+<select name="normalization">
+<option value="abs">Absolute value</option>
+<option value="scale">Scale</option>
+<option value="pos">Positive only</option>
+</select>
+</td>
+</tr>
+<input type='hidden' name='estimatorType' value='correlation'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
+</div>
+
+<div id='composite'>
+<h3>Composite Estimator Parameters<h3>
+TODO
+<!--
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<table>
+<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'/></td></tr>
+<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<input type='hidden' name='type' value='composite'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
+-->
+</div>
+<div id='script'>
+<h3>Script Estimator Parameters<h3>
+TODO
+<!--
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<table>
+<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'/></td></tr>
+<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5'/></td></tr>
+<input type='hidden' name='type' value='script'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
+-->
+</div>
+</div>
+
+
+
+<script type='text/javascript'>
+$( "div[name=tabs]" ).tabs();
+$( "select" ).selectmenu();
+</script>

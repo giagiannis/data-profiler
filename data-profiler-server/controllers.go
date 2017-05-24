@@ -15,8 +15,10 @@ func controllerDatasetList(w http.ResponseWriter, r *http.Request) Model {
 func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	m := modelDatasetGetInfo(id)
-	files := modelDatasetGetFiles(m.Path)
+	files := modelDatasetGetFiles(m.ID)
 	m.Files = files
+	m.Matrices = modelDatasetGetMatrices(m.ID)
+	//	m.Estimators = modelDatasetGetEstimators(m.ID)
 	return m
 }
 
@@ -41,7 +43,7 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 		}
 	}
 	TEngine.Submit(NewSMComputationTask(id, conf))
-	http.Redirect(w, r, "/datasets/"+id, 301)
+	http.Redirect(w, r, "/tasks/", 301)
 	return nil
 }
 
@@ -53,6 +55,8 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 	var filePath string
 	if fileType == "datafile" {
 		filePath = modelDatasetGetInfo(datasetID).Path + "/" + name
+	} else if fileType == "sm" {
+		filePath = modelSimilarityMatrixGet(datasetID).Path
 	}
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -67,6 +71,12 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 	return nil
 }
 
+// /tasks/
 func controllerTasksList(w http.ResponseWriter, r *http.Request) Model {
 	return TEngine.Tasks
+}
+
+// /sm/<id>/visual
+func controllerSMVisual(w http.ResponseWriter, r *http.Request) Model {
+	return nil
 }

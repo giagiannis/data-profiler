@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -34,6 +35,7 @@ type Task struct {
 	Started     time.Time
 	Duration    float64
 	Description string
+	Dataset     *ModelDataset
 	fnc         func() error
 }
 
@@ -52,22 +54,26 @@ func (t *Task) Run() {
 func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 	task := new(Task)
 	dts := modelDatasetGetInfo(datasetID)
+	task.Dataset = dts
 	task.Description = fmt.Sprintf("SM Computation for %s, type %s\n",
-		dts.Name, conf["type"])
+		dts.Name, conf["estimatorType"])
 	task.fnc = func() error {
 		datasets := core.DiscoverDatasets(dts.Path)
-		estType := *core.NewDatasetSimilarityEstimatorType(conf["type"])
+		estType := *core.NewDatasetSimilarityEstimatorType(conf["estimatorType"])
 		est := core.NewDatasetSimilarityEstimator(estType, datasets)
+		//TODO: take into consideration the population policy
 		est.Configure(conf)
 		err := est.Compute()
 		if err != nil {
 			return err
 		}
-		modelEstimatorWrite(datasetID, est.Serialize())
 		sm := est.SimilarityMatrix()
+		var smID string
 		if sm != nil {
-			modelSimilarityMatrixWrite(datasetID, sm.Serialize())
+			smID = modelSimilarityMatrixInsert(datasetID, sm.Serialize(), conf)
 		}
+		log.Println(smID)
+		modelEstimatorInsert(datasetID, smID, est.Serialize(), conf)
 		return nil
 	}
 	return task

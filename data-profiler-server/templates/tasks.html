@@ -8,16 +8,18 @@ Tasks
 <table class='tablelist'>
 <tr>
 		<th>Description</th>
+		<th>Dataset</th>
 		<th>Status</th>
 		<th>Started</th>
-		<th>Duration</th>
+		<th>Duration (sec)</th>
 </tr>
 {{ range $i, $task := . }}
 <tr>
 		<td>{{ $task.Description }} </td>
+		<td><a href="/datasets/{{ $task.Dataset.ID}}">{{ $task.Dataset.Name}}</a></td>
 		<td>{{ $task.Status }} </td>
 		<td>{{ $task.Started }} </td>
-		<td>{{ $task.Duration }} </td>
+		<td>{{ printf "%.2f" $task.Duration }} </td>
 </tr>
 {{ end }}
 </table>

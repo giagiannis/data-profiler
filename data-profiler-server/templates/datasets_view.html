@@ -33,10 +33,38 @@ No files found
 
 <div>
 <h2>Similarity Matrices
-<button style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick='createSM({{ $.ID}});'>
+<button title="Estimate a new Similarity Matrix" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" 
+		onclick="createPopup('/datasets/{{ $.ID}}/newsm', 'Estimate new Similarity Matrix');">
 <span class="ui-icon ui-icon-plusthick" ></span>
+</button>
 </h2>
-TBD
+{{ if $.Matrices }}
+<table class='tablelist'>
+		<tr><th>Filename</th><th>Configuration</th></tr>
+{{ range $i, $m := $.Matrices }}
+<tr>
+		<td><a href='/download/?type=sm&id={{ $m.ID }}&name={{ $m.Filename }}'>{{$m.Filename}}</a></td>
+		<td>
+				<ul>
+				{{ range $k, $v := $m.Configuration}}
+				{{ if $v }}
+				<li> {{ $k  }}  : {{ $v }}</li>
+				{{ end }}
+				{{ end}}
+				</ul>
+		</td>
+		<td>
+				<button title="Visualize Similarity Matrix" class="ui-button ui-widget ui-corner-all" 
+						onclick="createPopup('/sm/{{ $m.ID }}/visual/', 'Similarity Matrix visualization')">
+					<img src='/static/visualize.png' width=30/></a>
+				</button>
+		</td>
+</tr>
+{{ end }}
+</table>
+{{ else }}
+No similarity matrices found
+{{ end }}
 </div>
 
 
