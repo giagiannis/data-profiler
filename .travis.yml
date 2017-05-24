@@ -15,5 +15,5 @@ branches:
                 - master
 after_success:
         - chmod +x .coverage.sh
-        - ./coverage.sh
+        - ./.coverage.sh
         - bash <(curl -s https://codecov.io/bash)
