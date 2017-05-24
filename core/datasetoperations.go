@@ -129,9 +129,11 @@ func DiscoverDatasets(inputDir string) []*Dataset {
 		datasets[0] = NewDataset(inputDir)
 		return datasets
 	}
-	datasets := make([]*Dataset, len(files))
-	for i, f := range files {
-		datasets[i] = NewDataset(inputDir + "/" + f.Name())
+	var datasets []*Dataset
+	for _, f := range files {
+		if !f.IsDir() {
+			datasets = append(datasets, NewDataset(inputDir+"/"+f.Name()))
+		}
 	}
 	return datasets
 
