@@ -10,7 +10,6 @@ before_install:
         - mkdir $R_LIBS
         - echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla
         - echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla
-        - go get code.google.com/p/go.tools/cmd/cover
         - go get github.com/mattn/goveralls
 
 
