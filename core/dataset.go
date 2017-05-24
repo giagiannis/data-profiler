@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -98,7 +99,10 @@ type DatasetTuple struct {
 // Deserialize is used to construct a tuple from a string representation
 func (t *DatasetTuple) Deserialize(data string) {
 	for _, s := range strings.Split(data, datasetSeparator) {
-		v, _ := strconv.ParseFloat(s, 64)
+		v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+		if err != nil {
+			log.Println(err)
+		}
 		t.Data = append(t.Data, v)
 	}
 }

@@ -296,3 +296,11 @@ func estimatorsCheck(a, b AbstractDatasetSimilarityEstimator, t *testing.T) {
 		}
 	}
 }
+func smPrint(sm *DatasetSimilarityMatrix, t *testing.T) {
+	for i := 0; i < sm.Capacity(); i++ {
+		for j := 0; j < sm.Capacity(); j++ {
+			t.Logf("%.10f\t", sm.Get(i, j))
+		}
+		t.Logf("\n")
+	}
+}

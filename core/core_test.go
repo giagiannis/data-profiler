@@ -133,3 +133,32 @@ func cleanDatasets(datasets []*Dataset) {
 		os.Remove(f.Path())
 	}
 }
+
+func createLinearDatasets(datasets, datasetSize, attributes int, noise float64) []*Dataset {
+	var result []*Dataset
+	for i := 0; i < datasets; i++ {
+		coeff := make([]float64, attributes-1)
+		for i := range coeff {
+			coeff[i] = rand.Float64()
+		}
+		builder := new(bytes.Buffer)
+		for i := range coeff {
+			builder.WriteString(fmt.Sprintf("x%d, ", i))
+		}
+		builder.WriteString("y\n")
+		//		for i := 0; i < datasetSize; i++ {
+		for step := 0.0; step < 1.0; step += 1.0 / float64(datasetSize) {
+			sum := 0.0
+			for _, c := range coeff {
+				sum += c*step + rand.Float64()*noise
+				builder.WriteString(fmt.Sprintf("%.5f, ", step))
+			}
+			builder.WriteString(fmt.Sprintf("%.5f\n", sum))
+		}
+		f, _ := ioutil.TempFile("/tmp", "lineardataset")
+		f.Write(builder.Bytes())
+		f.Close()
+		result = append(result, NewDataset(f.Name()))
+	}
+	return result
+}

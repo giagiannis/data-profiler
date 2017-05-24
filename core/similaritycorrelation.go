@@ -31,6 +31,18 @@ const (
 	CorrelationSimilarityTypeKendall = iota + 2
 )
 
+// String returns a string representation of the CorrelationEstimatorType
+func (s CorrelationEstimatorType) String() string {
+	if s == CorrelationSimilarityTypePearson {
+		return "pearson"
+	} else if s == CorrelationSimilarityTypeSpearman {
+		return "spearman"
+	} else if s == CorrelationSimilarityTypeKendall {
+		return "kendall"
+	}
+	return ""
+}
+
 // CorrelationEstimatorNormalizationType represents the type of the normalization
 // action. Since all correlation metrics can take any valuein [-1,1], this
 // type reflects the policy with which [-1,1] will be mapped to a similarity
@@ -46,6 +58,18 @@ const (
 	CorrelationSimilarityNormalizationPos = iota + 2
 )
 
+// String returns a nstring representation of the CorrelationEstimatorNormalizationType
+func (s CorrelationEstimatorNormalizationType) String() string {
+	if s == CorrelationSimilarityNormalizationAbs {
+		return "abs"
+	} else if s == CorrelationSimilarityNormalizationScale {
+		return "scale"
+	} else if s == CorrelationSimilarityNormalizationPos {
+		return "pos"
+	}
+	return ""
+}
+
 // Configure provides a set of configuration options to the CorrelationEstimator
 // struct.
 func (e *CorrelationEstimator) Configure(conf map[string]string) {
@@ -53,15 +77,19 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 		conv, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
 			log.Println(err)
+		} else {
+			e.concurrency = int(conv)
+			log.Println("Set concurrency to", e.concurrency)
 		}
-		e.concurrency = int(conv)
 	}
 	if val, ok := conf["column"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
 			log.Println(err)
+		} else {
+			e.column = int(conv)
+			log.Println("Set column to", e.column)
 		}
-		e.column = int(conv)
 	}
 	if val, ok := conf["type"]; ok {
 		if strings.ToLower(val) == "pearson" {
@@ -71,6 +99,7 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 		} else if strings.ToLower(val) == "kendall" {
 			e.estType = CorrelationSimilarityTypeKendall
 		}
+		log.Println("Set correlation type to", e.estType)
 	}
 	if val, ok := conf["normalization"]; ok {
 		if strings.ToLower(val) == "abs" {
@@ -80,6 +109,7 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 		} else if strings.ToLower(val) == "pos" {
 			e.normType = CorrelationSimilarityNormalizationPos
 		}
+		log.Println("Set normalization to", e.normType)
 	}
 }
 
@@ -147,7 +177,7 @@ func (e *CorrelationEstimator) transformDataset(d *Dataset) []float64 {
 	var result []float64
 	for _, t := range d.Data() {
 		if e.column < len(t.Data) {
-			result = append(result, t.Data[0])
+			result = append(result, t.Data[e.column])
 		} else {
 			log.Printf("Given column number (%d) exceeds data columns (%d)\n", e.column, len(t.Data))
 		}
@@ -175,17 +205,19 @@ func (e *CorrelationEstimator) scaleCorrelationValue(val float64) float64 {
 func Pearson(a, b []float64) float64 {
 	aMean, bMean := Mean(a), Mean(b)
 	if len(a) != len(b) {
+		log.Println("Dataset sizes are different")
 		return 0.0
 	}
-	nom, denomA, denomB := .0, .0, .0
+	nom, denomA, denomB := 0.0, 0.0, 0.0
 	for i := range a {
 		nom += (a[i] - aMean) * (b[i] - bMean)
 		denomA += (a[i] - aMean) * (a[i] - aMean)
 		denomB += (b[i] - bMean) * (b[i] - bMean)
 	}
 	if (denomA * denomB) != 0 {
-		return nom / (denomA * denomB)
+		return nom / (math.Sqrt(denomA) * math.Sqrt(denomB))
 	}
+	log.Println("Denominator is zero")
 	return .0
 }
 
@@ -194,6 +226,7 @@ func Pearson(a, b []float64) float64 {
 func Spearman(a, b []float64) float64 {
 	aRanks, bRanks := Rank(a), Rank(b)
 	if len(a) != len(b) {
+		log.Println("Dataset sizes are different")
 		return 0.0
 	}
 	// stupid casting is required to use Pearson
@@ -211,12 +244,13 @@ func Spearman(a, b []float64) float64 {
 func Kendall(a, b []float64) float64 {
 	aRanks, bRanks := Rank(a), Rank(b)
 	if len(a) != len(b) {
+		log.Println("Dataset sizes are different")
 		return 0.0
 	}
 	concordant, discordant := 0, 0
 	size := len(aRanks)
 	for i := 0; i < size; i++ {
-		for j := 0; j < size; j++ {
+		for j := i; j < size; j++ {
 			if (aRanks[i]-aRanks[j])*(bRanks[i]-bRanks[j]) > 0 {
 				concordant++
 			} else if (aRanks[i]-aRanks[j])*(bRanks[i]-bRanks[j]) < 0 {

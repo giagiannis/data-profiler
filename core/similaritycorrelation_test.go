@@ -7,14 +7,16 @@ import (
 )
 
 func TestCorrelationEstimatorCompute(t *testing.T) {
-	datasets := createPoolBasedDatasetsStrict(1000, 500, 20, 4)
+	//datasets := createPoolBasedDatasetsStrict(1000, 500, 20, 4)
+	datasets := createLinearDatasets(30, 1000, 3, rand.Float64())
 	est := new(CorrelationEstimator)
 	est.datasets = datasets
-	types := []string{"Pearson", "kendall", "spearman"}
-	typeSelected := types[rand.Int()%3]
+
 	conf := map[string]string{
-		"concurrency": "10",
-		"type":        typeSelected,
+		"concurrency":   "10",
+		"type":          []string{"Pearson", "kendall", "spearman"}[rand.Int()%3],
+		"column":        "2",
+		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
 	}
 	est.Configure(conf)
 	err := est.Compute()
@@ -25,7 +27,6 @@ func TestCorrelationEstimatorCompute(t *testing.T) {
 	s := est.SimilarityMatrix()
 	smSanityCheck(s, t)
 	cleanDatasets(datasets)
-
 }
 
 func TestCorrelationComputeAppxCnt(t *testing.T) {
@@ -102,17 +103,24 @@ func TestCorrelationEvaluation(t *testing.T) {
 		}
 		var array []float64
 		for _, tup := range d.Data() {
-			array = append(array, tup.Data[0])
+			array = append(array, tup.Data[1])
 		}
 		return array
 	}
-	datasets := createPoolBasedDatasets(10000, 2, 1)
+	datasets := createLinearDatasets(2, 50, 2, rand.Float64())
 	a, b := getArray(datasets[0]), getArray(datasets[1])
-	if math.Abs(Mean(a)-0.5) > 0.2 {
+	meanA, meanB := 0.0, 0.0
+	for i := range a {
+		meanA += a[i]
+		meanB += b[i]
+	}
+	meanA = meanA / float64(len(a))
+	meanB = meanB / float64(len(b))
+	if math.Abs(Mean(a)-meanA) > 0.02 {
 		t.Logf("mean A does not seem correct (%.5f)\n", Mean(a))
 		t.Fail()
 	}
-	if math.Abs(Mean(b)-0.5) > 0.2 {
+	if math.Abs(Mean(b)-meanB) > 0.02 {
 		t.Logf("mean B does not seem correct (%.5f)\n", Mean(b))
 		t.Fail()
 	}
