@@ -12,12 +12,10 @@ before_install:
         - echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla
         - go get github.com/mattn/goveralls
 
+script:
+        - PATH="$HOME/gopath/bin:$PATH"
+        - chmod +x .coverage && ./.coverage --coveralls
 
 branches:
         only:
                 - master
-after_success:
-        - PATH="$HOME/gopath/bin:$PATH"
-        - chmod +x .coverage && ./.coverage --coveralls
-        - chmod +x .coverage.sh && ./.coverage.sh
-        - bash <(curl -s https://codecov.io/bash)
