@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -12,8 +13,9 @@ import (
 // consist of a single column and consist of the same number of tuples.
 type CorrelationEstimator struct {
 	AbstractDatasetSimilarityEstimator
-	estType CorrelationEstimatorType
-	column  int
+	estType  CorrelationEstimatorType
+	normType CorrelationEstimatorNormalizationType
+	column   int
 }
 
 // CorrelationEstimatorType represents the type of correlation to be used
@@ -27,6 +29,21 @@ const (
 	CorrelationSimilarityTypeSpearman = iota + 1
 	// CorrelationSimilarityTypeKendall represents the Kendall cor. coeff
 	CorrelationSimilarityTypeKendall = iota + 2
+)
+
+// CorrelationEstimatorNormalizationType represents the type of the normalization
+// action. Since all correlation metrics can take any valuein [-1,1], this
+// type reflects the policy with which [-1,1] will be mapped to a similarity
+// metric in [0,1]
+type CorrelationEstimatorNormalizationType uint8
+
+const (
+	// CorrelationSimilarityNormalizationAbs returns |r|, r being the cor. metric
+	CorrelationSimilarityNormalizationAbs = iota
+	// CorrelationSimilarityNormalizationScale returns r/2 + 0.5, r being the cor. metric
+	CorrelationSimilarityNormalizationScale = iota + 1
+	// CorrelationSimilarityNormalizationPos returns r, if r>=0 else 0
+	CorrelationSimilarityNormalizationPos = iota + 2
 )
 
 // Configure provides a set of configuration options to the CorrelationEstimator
@@ -55,15 +72,25 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			e.estType = CorrelationSimilarityTypeKendall
 		}
 	}
+	if val, ok := conf["normalization"]; ok {
+		if strings.ToLower(val) == "abs" {
+			e.normType = CorrelationSimilarityNormalizationAbs
+		} else if strings.ToLower(val) == "scale" {
+			e.normType = CorrelationSimilarityNormalizationScale
+		} else if strings.ToLower(val) == "pos" {
+			e.normType = CorrelationSimilarityNormalizationPos
+		}
+	}
 }
 
 // Options returns a list of options used internally by the CorrelationEstimator
 // struct for its execution.
 func (e *CorrelationEstimator) Options() map[string]string {
 	return map[string]string{
-		"concurrency": "max number of threads to use",
-		"type":        "one of [Pearson], Spearman, Kendall",
-		"column":      "number of column of the datasets to consider - starting from 0 (default)",
+		"concurrency":   "max number of threads to use",
+		"type":          "one of [Pearson], Spearman, Kendall",
+		"column":        "number of column of the datasets to consider - starting from 0 (default)",
+		"normalization": "determines how to scale the correlation metric from [-1,1]-> [0,1]. one of: abs [scale] pos",
 	}
 }
 
@@ -105,14 +132,15 @@ func (e *CorrelationEstimator) Compute() error {
 // Pearson, Spearman and Kendall coefficients.
 func (e *CorrelationEstimator) Similarity(a, b *Dataset) float64 {
 	aTrans, bTrans := e.transformDataset(a), e.transformDataset(b)
+	var val float64
 	if e.estType == CorrelationSimilarityTypePearson {
-		return Pearson(aTrans, bTrans)/2.0 + 0.5
+		val = Pearson(aTrans, bTrans)
 	} else if e.estType == CorrelationSimilarityTypeSpearman {
-		return Spearman(aTrans, bTrans)/2.0 + 0.5
+		val = Spearman(aTrans, bTrans)
 	} else if e.estType == CorrelationSimilarityTypeKendall {
-		return Kendall(aTrans, bTrans)/2.0 + 0.5
+		val = Kendall(aTrans, bTrans)
 	}
-	return .0
+	return e.scaleCorrelationValue(val)
 }
 
 func (e *CorrelationEstimator) transformDataset(d *Dataset) []float64 {
@@ -125,6 +153,21 @@ func (e *CorrelationEstimator) transformDataset(d *Dataset) []float64 {
 		}
 	}
 	return result
+}
+
+func (e *CorrelationEstimator) scaleCorrelationValue(val float64) float64 {
+	if e.normType == CorrelationSimilarityNormalizationAbs {
+		return math.Abs(val)
+	} else if e.normType == CorrelationSimilarityNormalizationScale {
+		return (val / 2.0) + 0.5
+	} else if e.normType == CorrelationSimilarityNormalizationPos {
+		if val > 0 {
+			return val
+		}
+		return 0
+	}
+	log.Println("Unknown correlation scaling method")
+	return -1.0
 }
 
 // Pearson returns the pearson correlation coefficient between two variables.

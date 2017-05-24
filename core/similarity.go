@@ -380,6 +380,7 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		a.column = 0
+		a.normType = CorrelationSimilarityNormalizationScale
 		return a
 	} else if estType == SimilarityTypeComposite {
 		a := new(CompositeEstimator)
