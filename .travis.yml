@@ -10,10 +10,15 @@ before_install:
         - mkdir $R_LIBS
         - echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla
         - echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla
+        - go get code.google.com/p/go.tools/cmd/cover
+        - go get github.com/mattn/goveralls
+
+
 branches:
         only:
                 - master
 after_success:
-        - chmod +x .coverage.sh
-        - ./.coverage.sh
+        - PATH="$HOME/gopath/bin:$PATH"
+        - chmod +x .coverage && .coverage --coveralls
+        - chmod +x .coverage.sh && ./.coverage.sh
         - bash <(curl -s https://codecov.io/bash)
