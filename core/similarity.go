@@ -379,6 +379,7 @@ func NewDatasetSimilarityEstimator(
 		a.estType = CorrelationSimilarityTypePearson
 		a.datasets = datasets
 		a.concurrency = 1
+		a.column = 0
 		return a
 	} else if estType == SimilarityTypeComposite {
 		a := new(CompositeEstimator)

@@ -13,6 +13,7 @@ import (
 type CorrelationEstimator struct {
 	AbstractDatasetSimilarityEstimator
 	estType CorrelationEstimatorType
+	column  int
 }
 
 // CorrelationEstimatorType represents the type of correlation to be used
@@ -38,6 +39,13 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 		}
 		e.concurrency = int(conv)
 	}
+	if val, ok := conf["column"]; ok {
+		conv, err := strconv.ParseInt(val, 10, 32)
+		if err != nil {
+			log.Println(err)
+		}
+		e.column = int(conv)
+	}
 	if val, ok := conf["type"]; ok {
 		if strings.ToLower(val) == "pearson" {
 			e.estType = CorrelationSimilarityTypePearson
@@ -55,6 +63,7 @@ func (e *CorrelationEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max number of threads to use",
 		"type":        "one of [Pearson], Spearman, Kendall",
+		"column":      "number of column of the datasets to consider - starting from 0 (default)",
 	}
 }
 
@@ -109,7 +118,11 @@ func (e *CorrelationEstimator) Similarity(a, b *Dataset) float64 {
 func (e *CorrelationEstimator) transformDataset(d *Dataset) []float64 {
 	var result []float64
 	for _, t := range d.Data() {
-		result = append(result, t.Data[0])
+		if e.column < len(t.Data) {
+			result = append(result, t.Data[0])
+		} else {
+			log.Printf("Given column number (%d) exceeds data columns (%d)\n", e.column, len(t.Data))
+		}
 	}
 	return result
 }
