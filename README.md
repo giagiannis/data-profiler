@@ -1,4 +1,4 @@
-data-profiler ![travis-status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master) ![goreport](https://goreportcard.com/badge/github.com/giagiannis/data-profiler) [![Coverage Status](https://coveralls.io/repos/github/giagiannis/data-profiler/badge.svg?branch=master)](https://coveralls.io/github/giagiannis/data-profiler?branch=master)
+data-profiler [![travis-status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master)](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master) [![goreport](https://goreportcard.com/badge/github.com/giagiannis/data-profiler)](https://goreportcard.com/badge/github.com/giagiannis/data-profiler) [![Coverage Status](https://coveralls.io/repos/github/giagiannis/data-profiler/badge.svg?branch=master)](https://coveralls.io/github/giagiannis/data-profiler?branch=master)
 =============
 data-profiler is a project used to perform data profiling in an operator agnostic way.
 
