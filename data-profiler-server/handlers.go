@@ -33,6 +33,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"download/":      {controllerDownload, ""},
 	"tasks/":         {controllerTasksList, "tasks.html"},
 	"sm/visual":      {controllerSMVisual, "sm_heatmap.html"},
+	"sm/csv":         {controllerSMtoCSV, ""},
 
 	// TODO
 	"about/":  {nil, "about.html"},

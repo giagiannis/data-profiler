@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/giagiannis/data-profiler/core"
 )
 
 // /datasets/
@@ -78,5 +81,26 @@ func controllerTasksList(w http.ResponseWriter, r *http.Request) Model {
 
 // /sm/<id>/visual
 func controllerSMVisual(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	m := modelSimilarityMatrixGet(id)
+	return modelDatasetGetInfo(m.DatasetID)
+}
+
+func controllerSMtoCSV(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	m := modelSimilarityMatrixGet(id)
+	sm := new(core.DatasetSimilarityMatrix)
+	cnt, err := ioutil.ReadFile(m.Path)
+	if err != nil {
+		log.Println(err)
+	}
+	sm.Deserialize(cnt)
+	w.Write([]byte("x,y,value\n"))
+	files := modelDatasetGetFiles(m.DatasetID)
+	for i := 0; i < sm.Capacity(); i++ {
+		for j := 0; j < sm.Capacity(); j++ {
+			w.Write([]byte(fmt.Sprintf("%s,%s,%.5f\n", files[i], files[j], sm.Get(i, j))))
+		}
+	}
 	return nil
 }

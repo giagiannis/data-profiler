@@ -43,6 +43,7 @@ type ModelEstimator struct {
 	Path          string
 	Filename      string
 	Configuration map[string]string
+	DatasetID     string
 }
 
 // ModelSimilarityMatrix represents a similarity matrix
@@ -51,6 +52,7 @@ type ModelSimilarityMatrix struct {
 	Path          string
 	Filename      string
 	Configuration map[string]string
+	DatasetID     string
 }
 
 // FUNCTIONS
@@ -203,7 +205,7 @@ func modelSimilarityMatrixGet(id string) *ModelSimilarityMatrix {
 	db := dbConnect()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id,path,filename,configuration" +
+	rows, err := db.Query("SELECT id,path,filename,configuration,datasetid" +
 		" FROM matrices WHERE id == " + id)
 	if err != nil {
 		log.Println(err)
@@ -212,8 +214,15 @@ func modelSimilarityMatrixGet(id string) *ModelSimilarityMatrix {
 	defer rows.Close()
 	if rows.Next() {
 		obj := new(ModelSimilarityMatrix)
-		rows.Scan(&obj.ID, &obj.Path, &obj.Filename,
-			&obj.Configuration)
+		confString := ""
+		rows.Scan(
+			&obj.ID,
+			&obj.Path,
+			&obj.Filename,
+			&confString,
+			&obj.DatasetID)
+		obj.Configuration = make(map[string]string)
+		json.Unmarshal([]byte(confString), &obj.Configuration)
 		return obj
 	}
 	return nil
