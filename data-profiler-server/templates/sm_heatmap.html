@@ -8,7 +8,7 @@
 <script>
   var itemSize = 8,
       cellSize = itemSize,
-      margin = {top: 150, right: 10, bottom: 20, left: 150};
+      margin = {top: 80, right: 10, bottom: 20, left: 150};
       
   var width = 1000 - margin.right - margin.left,
       height = 1000 - margin.top - margin.bottom;
@@ -28,32 +28,25 @@
     var x_elements = d3.set(data.map(function( item ) { return item.x; } )).values(),
         y_elements = d3.set(data.map(function( item ) { return item.y; } )).values();
 	
-	if (orderBy != "" ) {
-	var idx = x_elements.indexOf(orderBy);
-	var tosort = []
+	var minElement = 1.0;
 	for(i=0;i<data.length;i++) {
-			if (data[i].x == orderBy) {
-					tosort.push({label:data[i].y, value:data[i].value})
+			if (data[i].value < minElement) {
+					minElement = data[i].value
 			}
 	}
-	tosort.sort(function(a,b) { return  - (a.value - b.value) });
-	x_elements = tosort.map(function (d) {return d.label});
-	y_elements = x_elements;
-	}
-//	var a = x_elements[idx];
-//	delete x_elements[idx]
-//			for (var i=idx;i>0;i--) {
-//					x_elements[i] = x_elements[i-1];
-//			}
-//	x_elements[0]=a;
-
-
-
-	
-	var vals=[]
-			for(i=0;i<x_elements.length;i++) {
-					vals.push(i)
+	console.log(minElement)
+	if (orderBy != "" ) {
+			var idx = x_elements.indexOf(orderBy);
+			var tosort = []
+			for(i=0;i<data.length;i++) {
+					if (data[i].x == orderBy) {
+							tosort.push({label:data[i].y, value:data[i].value})
+					}
 			}
+			tosort.sort(function(a,b) { return  - (a.value - b.value) });
+			x_elements = tosort.map(function (d) {return d.label});
+			y_elements = x_elements;
+	}
     var xScale = d3.scale.ordinal()
         .domain(x_elements)
         .rangeBands([0, x_elements.length * itemSize]);
@@ -78,10 +71,25 @@
         .orient("left");
 		
 		
+	domainValues =[]
+	step=0.1
+	if (minElement>0) {
+			step = minElement/7.0;
+	}
+	var x=parseFloat(minElement)
+	while(x<1.0){
+		domainValues.push(x)
+				x = x+step;
+	}
+	domainValues.push(1.01)
 
+	cols = ["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858", "#001432"].reverse()
     var colorScale = d3.scale.threshold()
-        .domain([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.01])
-        .range(["#000000","#111111","#222222","#333333","#444444","#555555","#66666", "#777777","#888888","#999999","#aaaaaa","#bbbbbb","#cccccc","#dddddd","#eeeeee","#ffffff"]);
+        //.domain([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.01])
+        //.domain([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.01])
+        .domain(domainValues)
+        //.range(["#000000","#111111","#222222","#333333","#444444","#555555","#66666", "#777777","#888888","#999999","#aaaaaa","#bbbbbb","#cccccc","#dddddd","#eeeeee","#ffffff"]);
+        .range(cols);
 
     var svg = d3.select('.heatmap')
         .append("svg")
