@@ -66,16 +66,16 @@ No files found
 					<img src='/static/transform.png' width=30/></a>
 				</button>
 				<br/>
-				<button title="Delete Similarity Matrix" class="ui-button ui-widget ui-corner-all" 
+			<button title="Show coordinates" class="ui-button ui-widget ui-corner-all" 
+						onclick="window.location.href='/coords/{{ $m.ID }}/'">
+					<img src='/static/coordinates.png' width=30/></a>
+				</button>
+
+				<br/>
+				<button title="Delete Similarity Matrix" class="ui-button ui-widget ui-corner-all" style='background:#990000;' 
 						onclick="window.location.href='/sm/{{ $m.ID }}/delete/?datasetID={{$.ID}}'">
 					<img src='/static/delete.png' width=30/></a>
 				</button>
-				<button title="Show coordinates" class="ui-button ui-widget ui-corner-all" 
-						onclick="window.location.href='/coords/{{ $m.ID }}/'">
-					<img src='/static/delete.png' width=30/></a>
-				</button>
-
-
 		</td>
 </tr>
 {{ end }}

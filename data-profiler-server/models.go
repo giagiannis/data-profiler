@@ -346,7 +346,7 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	return nil
 }
 
-func modelCoordinatesGetByMatrix(matrixId string) *ModelCoordinates {
+func modelCoordinatesGetByMatrix(matrixId string) []*ModelCoordinates {
 	db := dbConnect()
 	defer db.Close()
 
@@ -357,13 +357,14 @@ func modelCoordinatesGetByMatrix(matrixId string) *ModelCoordinates {
 		return nil
 	}
 	defer rows.Close()
-	if rows.Next() {
+	var result []*ModelCoordinates
+	for rows.Next() {
 		obj := new(ModelCoordinates)
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
 			&obj.GOF, &obj.matrixID)
-		return obj
+		result = append(result, obj)
 	}
-	return nil
+	return result
 }
 func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) {
 	dts := modelDatasetGetInfo(datasetID)

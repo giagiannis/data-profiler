@@ -21,6 +21,8 @@ var templateDependencies = map[string][]string{
 	"tasks.html":              {"base.html"},
 	"error.html":              {"base.html"},
 	"sm_heatmap.html":         {"base.html"},
+	"coords_view.html":        {"base.html"},
+	"coords_visual.html":      {"base.html"},
 	"forms/new_sm_form.html":  {},
 	"forms/new_mds_form.html": {},
 }
@@ -32,6 +34,8 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"datasets/view": {controllerDatasetView, "datasets_view.html"},
 	"tasks/":        {controllerTasksList, "tasks.html"},
 	"sm/visual":     {controllerSMVisual, "sm_heatmap.html"},
+	"coords/view":   {controllerCoordsView, "coords_view.html"},
+	"coords/visual": {controllerCoordsVisual, "coords_visual.html"},
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},

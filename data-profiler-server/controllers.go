@@ -140,3 +140,12 @@ func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 	return nil
 
 }
+
+func controllerCoordsView(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	return modelCoordinatesGetByMatrix(id)
+}
+
+func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
+	return nil
+}
