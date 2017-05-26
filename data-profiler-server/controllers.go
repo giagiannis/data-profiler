@@ -30,13 +30,15 @@ func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 // /download/
 func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 	fileType := r.URL.Query().Get("type")
-	datasetID := r.URL.Query().Get("id")
+	id := r.URL.Query().Get("id")
 	name := r.URL.Query().Get("name")
 	var filePath string
 	if fileType == "datafile" {
-		filePath = modelDatasetGetInfo(datasetID).Path + "/" + name
+		filePath = modelDatasetGetInfo(id).Path + "/" + name
 	} else if fileType == "sm" {
-		filePath = modelSimilarityMatrixGet(datasetID).Path
+		filePath = modelSimilarityMatrixGet(id).Path
+	} else if fileType == "coord" {
+		filePath = modelCoordinatesGet(id).Path
 	}
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -99,7 +101,6 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	action := r.URL.Query().Get("action")
 	if action != "submit" {
-		_, id, _ := parseURL(r.URL.Path)
 		return modelDatasetGetInfo(id)
 	}
 	err := r.ParseForm()
@@ -122,11 +123,20 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 // /mds/<id>/run
 func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 	datasetID := r.URL.Query().Get("datasetID")
+	action := r.URL.Query().Get("action")
 	_, id, _ := parseURL(r.URL.Path)
 	// FIXME:correct that!
-	conf := map[string]string{"k": "2"}
+	if action != "submit" { // the form has been submitted
+		return struct{ ID, DatasetID string }{id, datasetID}
+	}
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	conf := map[string]string{"k": r.PostFormValue("k")}
 	task := NewMDSComputationTask(id, datasetID, conf)
 	TEngine.Submit(task)
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
+
 }

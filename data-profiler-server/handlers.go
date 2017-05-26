@@ -15,29 +15,32 @@ type cntTmpltCouple struct {
 // templateDependencies lists the necessary templates that need to be rendered
 // for each template
 var templateDependencies = map[string][]string{
-	"about.html":             {"base.html"},
-	"datasets.html":          {"base.html"},
-	"datasets_view.html":     {"base.html"},
-	"tasks.html":             {"base.html"},
-	"error.html":             {"base.html"},
-	"sm_heatmap.html":        {"base.html"},
-	"forms/new_sm_form.html": {},
+	"about.html":              {"base.html"},
+	"datasets.html":           {"base.html"},
+	"datasets_view.html":      {"base.html"},
+	"tasks.html":              {"base.html"},
+	"error.html":              {"base.html"},
+	"sm_heatmap.html":         {"base.html"},
+	"forms/new_sm_form.html":  {},
+	"forms/new_mds_form.html": {},
 }
 
 // routingControllerTemplates hold the controller and the respective template
 // that need to be rendered for each possible path
 var routingControllerTemplates = map[string]cntTmpltCouple{
-	"datasets/":      {controllerDatasetList, "datasets.html"},
-	"datasets/view":  {controllerDatasetView, "datasets_view.html"},
+	"datasets/":     {controllerDatasetList, "datasets.html"},
+	"datasets/view": {controllerDatasetView, "datasets_view.html"},
+	"tasks/":        {controllerTasksList, "tasks.html"},
+	"sm/visual":     {controllerSMVisual, "sm_heatmap.html"},
+
+	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
-	"tasks/":         {controllerTasksList, "tasks.html"},
-	"sm/visual":      {controllerSMVisual, "sm_heatmap.html"},
+	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 
 	// No GUI urls
 	"download/": {controllerDownload, ""},
 	"sm/csv":    {controllerSMtoCSV, ""},
 	"sm/delete": {controllerSMDelete, ""},
-	"mds/run":   {controllerMDSRun, ""},
 	// TODO
 	"about/":  {nil, "about.html"},
 	"search/": {nil, ""}, // does nothing for now
