@@ -18,36 +18,13 @@ func controllerDatasetList(w http.ResponseWriter, r *http.Request) Model {
 func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	m := modelDatasetGetInfo(id)
-	files := modelDatasetGetFiles(m.ID)
-	m.Files = files
-	m.Matrices = modelDatasetGetMatrices(m.ID)
-	//	m.Estimators = modelDatasetGetEstimators(m.ID)
+	if m != nil {
+		files := modelDatasetGetFiles(m.ID)
+		m.Files = files
+		m.Matrices = modelDatasetGetMatrices(m.ID)
+		//	m.Estimators = modelDatasetGetEstimators(m.ID)
+	}
 	return m
-}
-
-// /datasets/<id>/newsm
-func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
-	_, id, _ := parseURL(r.URL.Path)
-	action := r.URL.Query().Get("action")
-	if action != "submit" {
-		_, id, _ := parseURL(r.URL.Path)
-		return modelDatasetGetInfo(id)
-	}
-	err := r.ParseForm()
-	if err != nil {
-		log.Println(err)
-	}
-	conf := make(map[string]string)
-	for k, v := range r.PostForm {
-		if len(v) > 0 {
-			conf[k] = v[0]
-		} else {
-			conf[k] = ""
-		}
-	}
-	TEngine.Submit(NewSMComputationTask(id, conf))
-	http.Redirect(w, r, "/tasks/", 301)
-	return nil
 }
 
 // /download/
@@ -86,6 +63,7 @@ func controllerSMVisual(w http.ResponseWriter, r *http.Request) Model {
 	return modelDatasetGetInfo(m.DatasetID)
 }
 
+// /sm/<id>/csv/
 func controllerSMtoCSV(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	m := modelSimilarityMatrixGet(id)
@@ -102,5 +80,53 @@ func controllerSMtoCSV(w http.ResponseWriter, r *http.Request) Model {
 			w.Write([]byte(fmt.Sprintf("%s,%s,%.5f\n", files[i], files[j], sm.Get(i, j))))
 		}
 	}
+	return nil
+}
+
+// /sm/<id>/delete
+func controllerSMDelete(w http.ResponseWriter, r *http.Request) Model {
+	datasetID := r.URL.Query().Get("datasetID")
+	_, id, _ := parseURL(r.URL.Path)
+	modelSimilarityMatrixDelete(id)
+	http.Redirect(w, r, "/datasets/"+datasetID, 307)
+	return nil
+}
+
+// TASK BASED urls
+
+// /datasets/<id>/newsm
+func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	action := r.URL.Query().Get("action")
+	if action != "submit" {
+		_, id, _ := parseURL(r.URL.Path)
+		return modelDatasetGetInfo(id)
+	}
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	conf := make(map[string]string)
+	for k, v := range r.PostForm {
+		if len(v) > 0 {
+			conf[k] = v[0]
+		} else {
+			conf[k] = ""
+		}
+	}
+	TEngine.Submit(NewSMComputationTask(id, conf))
+	http.Redirect(w, r, "/tasks/", 307)
+	return nil
+}
+
+// /mds/<id>/run
+func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
+	datasetID := r.URL.Query().Get("datasetID")
+	_, id, _ := parseURL(r.URL.Path)
+	// FIXME:correct that!
+	conf := map[string]string{"k": "2"}
+	task := NewMDSComputationTask(id, datasetID, conf)
+	TEngine.Submit(task)
+	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }

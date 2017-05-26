@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -8,8 +9,11 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/giagiannis/data-profiler/core"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -53,6 +57,16 @@ type ModelSimilarityMatrix struct {
 	Filename      string
 	Configuration map[string]string
 	DatasetID     string
+}
+
+// ModelCoordinates represents a set of coordinates
+type ModelCoordinates struct {
+	ID       string
+	Path     string
+	Filename string
+	matrixID string
+	K        string
+	GOF      string
 }
 
 // FUNCTIONS
@@ -228,6 +242,25 @@ func modelSimilarityMatrixGet(id string) *ModelSimilarityMatrix {
 	return nil
 }
 
+func modelSimilarityMatrixDelete(id string) *ModelSimilarityMatrix {
+	m := modelSimilarityMatrixGet(id)
+	if m != nil {
+		os.Remove(m.Path)
+	}
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM matrices WHERE id == ?")
+	if err != nil {
+		log.Println(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println(err)
+	}
+	return nil
+}
+
 func modelEstimatorInsert(datasetID, matrixID string, buffer []byte, conf map[string]string) {
 	dts := modelDatasetGetInfo(datasetID)
 	filePath := writeBufferToFile(dts, "estimators", buffer)
@@ -293,16 +326,81 @@ func modelEstimatorGetBySM(id string) *ModelEstimator {
 	}
 	return nil
 }
+func modelCoordinatesGet(id string) *ModelCoordinates {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT *" +
+		" FROM coordinates WHERE id == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	if rows.Next() {
+		obj := new(ModelCoordinates)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
+			&obj.GOF, &obj.matrixID)
+		return obj
+	}
+	return nil
+}
+
+func modelCoordinatesGetByMatrix(matrixId string) *ModelCoordinates {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT *" +
+		" FROM coordinates WHERE matrixid == " + matrixId)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	if rows.Next() {
+		obj := new(ModelCoordinates)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
+			&obj.GOF, &obj.matrixID)
+		return obj
+	}
+	return nil
+}
+func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) {
+	dts := modelDatasetGetInfo(datasetID)
+	var coords [][]float64
+	for _, c := range coordinates {
+		coords = append(coords, c)
+	}
+	buffer := serializeCSVFile(coords)
+	filePath := writeBufferToFile(dts, "coords", buffer)
+
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare(
+		"INSERT INTO coordinates(path,filename,k,gof,matrixid) " +
+			"VALUES(?,?,?,?,?)")
+	defer stmt.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = stmt.Exec(filePath,
+		path.Base(filePath),
+		K,
+		GOF,
+		matrixID)
+	if err != nil {
+		log.Println(err)
+	}
+}
 
 // utility functions
-
 func writeBufferToFile(dts *ModelDataset, prefix string, buffer []byte) string {
 	dstDir := dts.Path + "/" + prefix
 	err := os.Mkdir(dstDir, 0777)
 	if err != nil {
 		log.Println(err)
 	}
-	dstPath := dstDir + "/" + prefix + currentTimeSuffix() + ".mat"
+	dstPath := dstDir + "/" + prefix + currentTimeSuffix()
 	err = ioutil.WriteFile(dstPath, buffer, 0777)
 	if err != nil {
 		log.Println(err)
@@ -315,4 +413,39 @@ func currentTimeSuffix() string {
 	y, m, d := t.Year(), int(t.Month()), t.Day()
 	h, min, sec := t.Hour(), t.Minute(), t.Second()
 	return fmt.Sprintf("%d%d%d%d%d%d", y, m, d, h, min, sec)
+}
+
+func serializeCSVFile(coords [][]float64) []byte {
+	buffer := new(bytes.Buffer)
+	for i := range coords {
+		for j := range coords[i] {
+			buffer.WriteString(fmt.Sprintf("%.5f", coords[i][j]))
+			if j < len(coords[i])-1 {
+				buffer.WriteString(",")
+			}
+		}
+		if i < len(coords)-1 {
+			buffer.WriteString("\n")
+		}
+	}
+	return buffer.Bytes()
+}
+
+func readCSVFile(buffer []byte) [][]float64 {
+	fileCont := string(buffer)
+	lines := strings.Split(fileCont, "\n")
+	var result [][]float64
+	for _, line := range lines {
+		var tuple []float64
+		vals := strings.Split(line, ",")
+		for _, v := range vals {
+			floatVal, err := strconv.ParseFloat(v, 32)
+			if err != nil {
+				log.Println(err)
+			}
+			tuple = append(tuple, floatVal)
+		}
+		result = append(result, tuple)
+	}
+	return result
 }

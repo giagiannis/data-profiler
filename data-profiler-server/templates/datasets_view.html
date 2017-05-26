@@ -26,6 +26,8 @@ Dataset Not Found
 {{ end }}
 </ul>
 </code>
+
+
 {{ else }}
 No files found
 {{ end }}
@@ -40,7 +42,7 @@ No files found
 </h2>
 {{ if $.Matrices }}
 <table class='tablelist'>
-		<tr><th>Filename</th><th>Configuration</th></tr>
+		<tr><th>Filename</th><th>Configuration</th><th>Actions</th></tr>
 {{ range $i, $m := $.Matrices }}
 <tr>
 		<td><a href='/download/?type=sm&id={{ $m.ID }}&name={{ $m.Filename }}'>{{$m.Filename}}</a></td>
@@ -58,6 +60,18 @@ No files found
 						onclick="window.location.href='/sm/{{ $m.ID }}/visual/'">
 					<img src='/static/visualize.png' width=30/></a>
 				</button>
+				<br/>
+				<button title="Transform SM to an Euclidean space" class="ui-button ui-widget ui-corner-all" 
+						onclick="window.location.href='/mds/{{ $m.ID }}/run/?datasetID={{$.ID}}'">
+					<img src='/static/transform.png' width=30/></a>
+				</button>
+				<br/>
+				<button title="Delete Similarity Matrix" class="ui-button ui-widget ui-corner-all" 
+						onclick="window.location.href='/sm/{{ $m.ID }}/delete/?datasetID={{$.ID}}'">
+					<img src='/static/delete.png' width=30/></a>
+				</button>
+
+
 		</td>
 </tr>
 {{ end }}

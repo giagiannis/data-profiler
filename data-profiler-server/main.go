@@ -27,6 +27,9 @@ type Configuration struct {
 	}
 	Database string
 	Logfile  string
+	Scripts  struct {
+		MDS string
+	}
 }
 
 // LoadConfig loads the configuration file in memory

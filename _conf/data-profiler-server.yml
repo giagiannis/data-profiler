@@ -6,3 +6,5 @@ server:
             static: "data-profiler-server/static"
 database: "sqlite3.db"
 logfile: ""
+scripts:
+        mds: "_rscripts/mdscaling.R"

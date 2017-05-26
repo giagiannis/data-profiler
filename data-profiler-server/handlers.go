@@ -30,11 +30,14 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"datasets/":      {controllerDatasetList, "datasets.html"},
 	"datasets/view":  {controllerDatasetView, "datasets_view.html"},
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
-	"download/":      {controllerDownload, ""},
 	"tasks/":         {controllerTasksList, "tasks.html"},
 	"sm/visual":      {controllerSMVisual, "sm_heatmap.html"},
-	"sm/csv":         {controllerSMtoCSV, ""},
 
+	// No GUI urls
+	"download/": {controllerDownload, ""},
+	"sm/csv":    {controllerSMtoCSV, ""},
+	"sm/delete": {controllerSMDelete, ""},
+	"mds/run":   {controllerMDSRun, ""},
 	// TODO
 	"about/":  {nil, "about.html"},
 	"search/": {nil, ""}, // does nothing for now
@@ -61,7 +64,7 @@ func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Re
 	}
 	route := model + "/" + cmd
 
-	var tmplt string
+	tmplt := "error.html"
 	var cnt func(http.ResponseWriter, *http.Request) Model
 
 	if coup, ok := routingControllerTemplates[route]; ok {

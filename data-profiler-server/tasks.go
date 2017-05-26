@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -23,6 +25,9 @@ func NewTaskEngine() *TaskEngine {
 }
 
 func (e *TaskEngine) Submit(t *Task) {
+	if t == nil {
+		return
+	}
 	e.lock.Lock()
 	go t.Run()
 	e.Tasks = append(e.Tasks, t)
@@ -68,12 +73,49 @@ func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 			return err
 		}
 		sm := est.SimilarityMatrix()
-		var smID string
+		//		var smID string
 		if sm != nil {
-			smID = modelSimilarityMatrixInsert(datasetID, sm.Serialize(), conf)
+			//smID =
+			modelSimilarityMatrixInsert(datasetID, sm.Serialize(), conf)
 		}
-		log.Println(smID)
-		modelEstimatorInsert(datasetID, smID, est.Serialize(), conf)
+		//modelEstimatorInsert(datasetID, smID, est.Serialize(), conf)
+		return nil
+	}
+	return task
+}
+
+func NewMDSComputationTask(smID, datasetID string, conf map[string]string) *Task {
+	smModel := modelSimilarityMatrixGet(smID)
+	if smModel == nil {
+		log.Println("SM not found")
+		return nil
+	}
+
+	cnt, err := ioutil.ReadFile(smModel.Path)
+	if err != nil {
+		log.Println(err)
+	}
+	sm := new(core.DatasetSimilarityMatrix)
+	sm.Deserialize(cnt)
+	k, err := strconv.ParseInt(conf["k"], 10, 64)
+	if err != nil {
+		log.Println(err)
+	}
+
+	dat := modelDatasetGetInfo(datasetID)
+	task := new(Task)
+	task.Dataset = dat
+	task.Description = fmt.Sprintf("MDS Execution for %s with k=%d\n",
+		dat.Name, k)
+	task.fnc = func() error {
+		mds := core.NewMDScaling(sm, int(k), Conf.Scripts.MDS)
+		err = mds.Compute()
+		if err != nil {
+			return err
+		}
+		// TODO: write this to the database
+		gof := fmt.Sprintf("%.5f", mds.Gof())
+		modelCoordinatesInsert(mds.Coordinates(), dat.ID, conf["k"], gof, smID)
 		return nil
 	}
 	return task
