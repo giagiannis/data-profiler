@@ -15,16 +15,17 @@ type cntTmpltCouple struct {
 // templateDependencies lists the necessary templates that need to be rendered
 // for each template
 var templateDependencies = map[string][]string{
-	"about.html":              {"base.html"},
-	"datasets.html":           {"base.html"},
-	"datasets_view.html":      {"base.html"},
-	"tasks.html":              {"base.html"},
-	"error.html":              {"base.html"},
-	"sm_heatmap.html":         {"base.html"},
-	"coords_view.html":        {"base.html"},
-	"coords_visual.html":      {"base.html"},
+	"about.html":         {"base.html"},
+	"datasets.html":      {"base.html"},
+	"datasets_view.html": {"base.html"},
+	"tasks.html":         {"base.html"},
+	"error.html":         {"base.html"},
+	"sm_heatmap.html":    {"base.html"},
+	"coords_visual.html": {"base.html"},
+	// The rest are popups
 	"forms/new_sm_form.html":  {},
 	"forms/new_mds_form.html": {},
+	"coords_view.html":        {},
 }
 
 // routingControllerTemplates hold the controller and the respective template

@@ -34,21 +34,34 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 	name := r.URL.Query().Get("name")
 	var filePath string
 	if fileType == "datafile" {
-		filePath = modelDatasetGetInfo(id).Path + "/" + name
+		m := modelDatasetGetInfo(id)
+		if m != nil {
+			filePath = m.Path + "/" + name
+		}
 	} else if fileType == "sm" {
-		filePath = modelSimilarityMatrixGet(id).Path
+		m := modelSimilarityMatrixGet(id)
+		if m != nil {
+			filePath = m.Path
+		}
 	} else if fileType == "coord" {
-		filePath = modelCoordinatesGet(id).Path
+		m := modelCoordinatesGet(id)
+		if m != nil {
+			filePath = m.Path
+		}
 	}
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Println(err)
-	}
+	if filePath != "" {
+		content, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			log.Println(err)
+		}
 
-	w.Header().Set("Content-Disposition",
-		"attachment; filename="+name)
-	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-	w.Write(content)
+		w.Header().Set("Content-Disposition",
+			"attachment; filename="+name)
+		w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+		w.Write(content)
+	} else {
+		w.WriteHeader(404)
+	}
 
 	return nil
 }
@@ -126,7 +139,7 @@ func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")
 	_, id, _ := parseURL(r.URL.Path)
 	// FIXME:correct that!
-	if action != "submit" { // the form has been submitted
+	if action != "submit" { // render the form
 		return struct{ ID, DatasetID string }{id, datasetID}
 	}
 	err := r.ParseForm()
@@ -147,5 +160,30 @@ func controllerCoordsView(w http.ResponseWriter, r *http.Request) Model {
 }
 
 func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
-	return nil
+	_, id, _ := parseURL(r.URL.Path)
+	m := modelCoordinatesGet(id)
+	if m == nil {
+		log.Println("Coordinates file not found")
+		return nil
+	}
+	cnt, err := ioutil.ReadFile(m.Path)
+	if err != nil {
+		log.Println(err)
+	}
+
+	sm := modelSimilarityMatrixGet(m.matrixID)
+	if sm == nil {
+		log.Println("SM not found")
+		return nil
+	}
+	datasetID := sm.DatasetID
+	fileNames := ""
+	files := modelDatasetGetFiles(datasetID)
+	for i, n := range files {
+		fileNames += n
+		if i < len(files)-1 {
+			fileNames += "\n"
+		}
+	}
+	return struct{ Coordinates, Labels string }{Coordinates: string(cnt), Labels: fileNames}
 }

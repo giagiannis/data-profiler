@@ -119,6 +119,10 @@ func modelDatasetGetInfo(id string) *ModelDataset {
 
 func modelDatasetGetFiles(id string) []string {
 	var results []string
+	m := modelDatasetGetInfo(id)
+	if m == nil {
+		return nil
+	}
 	path := modelDatasetGetInfo(id).Path
 	fs, err := ioutil.ReadDir(path)
 	if err != nil {

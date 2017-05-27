@@ -67,7 +67,7 @@ No files found
 				</button>
 				<br/>
 			<button title="Show coordinates" class="ui-button ui-widget ui-corner-all" 
-						onclick="window.location.href='/coords/{{ $m.ID }}/'">
+						onclick="createPopup('/coords/{{ $m.ID }}/', 'Dataset coordinates')">
 					<img src='/static/coordinates.png' width=30/></a>
 				</button>
 
@@ -91,11 +91,6 @@ No similarity matrices found
 TBD
 </div>
 
-
-<div>
-<h2>Coordinates</h2>
-TBD
-</div>
 
 {{else}}
 <h1>Dataset Not Found</h1>
