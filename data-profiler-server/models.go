@@ -39,6 +39,9 @@ type ModelOperator struct {
 	ID          string
 	Path        string
 	Description string
+	Name        string
+	Filename    string
+	DatasetID   string
 }
 
 // ModelEstimator represents an estimator object
@@ -136,7 +139,7 @@ func modelDatasetGetFiles(id string) []string {
 	return results
 }
 
-func modelDatasetGetMatrices(id string) []*ModelSimilarityMatrix {
+func modelSimilarityMatrixGetByDataset(id string) []*ModelSimilarityMatrix {
 	db := dbConnect()
 	defer db.Close()
 	var results []*ModelSimilarityMatrix
@@ -162,7 +165,7 @@ func modelDatasetGetMatrices(id string) []*ModelSimilarityMatrix {
 	return results
 }
 
-func modelDatasetGetEstimators(id string) []*ModelEstimator {
+func modelEstimatorGetByDataset(id string) []*ModelEstimator {
 	db := dbConnect()
 	defer db.Close()
 	var results []*ModelEstimator
@@ -370,6 +373,7 @@ func modelCoordinatesGetByMatrix(matrixId string) []*ModelCoordinates {
 	}
 	return result
 }
+
 func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) {
 	dts := modelDatasetGetInfo(datasetID)
 	var coords [][]float64
@@ -396,6 +400,68 @@ func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K,
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func modelOperatorInsert(datasetID, name, description, filename string, content []byte) {
+	dts := modelDatasetGetInfo(datasetID)
+	filePath := writeBufferToFile(dts, "operators", content)
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare(
+		"INSERT INTO operators(name,description,path,filename,datasetid) " +
+			"VALUES(?,?,?,?,?)")
+	defer stmt.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = stmt.Exec(name,
+		description,
+		filePath,
+		filename,
+		datasetID)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func modelOperatorGet(id string) *ModelOperator {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT *" +
+		" FROM operators WHERE id == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	if rows.Next() {
+		obj := new(ModelOperator)
+		rows.Scan(&obj.ID, &obj.Name, &obj.Description,
+			&obj.Path, &obj.Filename, &obj.DatasetID)
+		return obj
+	}
+	return nil
+}
+
+func modelOperatorGetByDataset(id string) []*ModelOperator {
+	db := dbConnect()
+	defer db.Close()
+	var results []*ModelOperator
+	rows, err := db.Query("SELECT *" +
+		" FROM operators WHERE datasetid == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		obj := new(ModelOperator)
+		rows.Scan(&obj.ID, &obj.Name, &obj.Description,
+			&obj.Path, &obj.Filename, &obj.DatasetID)
+		results = append(results, obj)
+	}
+	return results
 }
 
 // utility functions

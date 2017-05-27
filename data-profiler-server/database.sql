@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `estimators` (
 		FOREIGN KEY(datasetid) REFERENCES datasets(id),
 		FOREIGN KEY(matrixid) REFERENCES matrices(id)
 );
+
 CREATE TABLE IF NOT EXISTS `coordinates` (
 		`id` INTEGER PRIMARY KEY AUTOINCREMENT,
 		`path` VARCHAR(500),
@@ -33,5 +34,15 @@ CREATE TABLE IF NOT EXISTS `coordinates` (
 		`gof` VARCHAR(2000),
 		`matrixid` INTEGER,
 		FOREIGN KEY(matrixid) REFERENCES matrices(id)
+);
+
+CREATE TABLE IF NOT EXISTS `operators` (
+		`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+		`name` VARCHAR(500),
+		`description` VARCHAR(500),
+		`path` VARCHAR(500),
+		`filename` VARCHAR(500),
+		`datasetid` INTEGER,
+		FOREIGN KEY(datasetid) REFERENCES datasets(id)
 );
 

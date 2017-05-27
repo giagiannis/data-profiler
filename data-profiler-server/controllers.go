@@ -21,8 +21,9 @@ func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	if m != nil {
 		files := modelDatasetGetFiles(m.ID)
 		m.Files = files
-		m.Matrices = modelDatasetGetMatrices(m.ID)
+		m.Matrices = modelSimilarityMatrixGetByDataset(m.ID)
 		//	m.Estimators = modelDatasetGetEstimators(m.ID)
+		m.Operators = modelOperatorGetByDataset(m.ID)
 	}
 	return m
 }
@@ -154,11 +155,13 @@ func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 
 }
 
+// /coords/<matrixid>
 func controllerCoordsView(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	return modelCoordinatesGetByMatrix(id)
 }
 
+// /coords/<id>/visual
 func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	m := modelCoordinatesGet(id)
@@ -186,4 +189,34 @@ func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
 		}
 	}
 	return struct{ Coordinates, Labels string }{Coordinates: string(cnt), Labels: fileNames}
+}
+
+// /dataset/<id>/newop
+func controllerDatasetNewOP(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	action := r.URL.Query().Get("action")
+	if action != "submit" { // render stuff for the form
+		return modelDatasetGetInfo(id)
+	}
+	err := r.ParseMultipartForm(2 << 20)
+	if err != nil {
+		log.Println(err)
+	}
+	f, header, err := r.FormFile("file")
+	if err != nil {
+		log.Println(err)
+	}
+	operatorName, operatorDescription :=
+		r.PostForm["name"][0], r.PostForm["description"][0]
+	operatorCnt, err := ioutil.ReadAll(f)
+	if err != nil {
+		log.Println(err)
+	}
+	operatorFilename := header.Filename
+
+	//	log.Println(operatorName, operatorDescription, len(operatorCnt), operatorFilename)
+	modelOperatorInsert(id, operatorName, operatorDescription, operatorFilename, operatorCnt)
+
+	http.Redirect(w, r, "/datasets/"+id, 307)
+	return nil
 }

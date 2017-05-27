@@ -24,6 +24,7 @@ var templateDependencies = map[string][]string{
 	"coords_visual.html": {"base.html"},
 	// The rest are popups
 	"forms/new_sm_form.html":  {},
+	"forms/new_op_form.html":  {},
 	"forms/new_mds_form.html": {},
 	"coords_view.html":        {},
 }
@@ -40,6 +41,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
+	"datasets/newop": {controllerDatasetNewOP, "forms/new_op_form.html"},
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 
 	// No GUI urls

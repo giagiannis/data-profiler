@@ -35,10 +35,7 @@ No files found
 
 <div>
 <h2>Similarity Matrices
-<button title="Estimate a new Similarity Matrix" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" 
-		onclick="createPopup('/datasets/{{ $.ID}}/newsm', 'Estimate new Similarity Matrix');">
-<span class="ui-icon ui-icon-plusthick" ></span>
-</button>
+<button title="Estimate a new Similarity Matrix" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('/datasets/{{ $.ID}}/newsm', 'Estimate new Similarity Matrix');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
 {{ if $.Matrices }}
 <table class='tablelist'>
@@ -87,8 +84,18 @@ No similarity matrices found
 
 
 <div>
-<h2>Operators</h2>
-TBD
+<h2>Operators
+<button title="Insert a new operator for this dataset" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('/datasets/{{ $.ID}}/newop', 'Insert operator');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
+</h2>
+{{ if .Operators }}
+
+{{ range $k, $v := .Operators }}
+{{ $v }}
+{{ end }}
+
+{{ else }}
+No operators found
+{{ end }}
 </div>
 
 
