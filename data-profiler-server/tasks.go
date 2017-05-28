@@ -67,8 +67,22 @@ func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 		datasets := core.DiscoverDatasets(dts.Path)
 		estType := *core.NewDatasetSimilarityEstimatorType(conf["estimatorType"])
 		est := core.NewDatasetSimilarityEstimator(estType, datasets)
-		//TODO: take into consideration the population policy
 		est.Configure(conf)
+		if conf["popPolicy"] == "aprx" {
+			pop := new(core.DatasetSimilarityPopulationPolicy)
+			pop.PolicyType = core.PopulationPolicyAprx
+			val, err := strconv.ParseFloat(conf["popParameterValue"], 64)
+			if err != nil {
+				log.Println(err)
+			}
+			if conf["popParameter"] == "popCount" {
+				pop.Parameters = map[string]float64{"count": val}
+			}
+			if conf["popParameter"] == "popThreshold" {
+				pop.Parameters = map[string]float64{"threshold": val}
+			}
+			est.SetPopulationPolicy(*pop)
+		}
 		err := est.Compute()
 		if err != nil {
 			return err

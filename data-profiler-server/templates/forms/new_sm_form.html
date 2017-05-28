@@ -27,6 +27,7 @@
 <li> <a href='#composite'>Composite Estimator</a></li>
 <li> <a href='#script'>Script Estimator</a></li>
 </ul>
+
 <div id='jaccard'>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Jaccard Estimator Parameters<h3>
@@ -94,14 +95,18 @@
 </div>
 
 <div id='composite'>
-<h3>Composite Estimator Parameters<h3>
-TODO
-<!--
+<h3>Composite Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
-<table>
-<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
-<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
-<input type='hidden' name='type' value='composite'/>
+<table class='tablelist'>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><th>Expression</th><td><input type='text' name='expression' value='0.5*x1+0.5*x2' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
+<tr><th>x1</th><td><input type='text' name='x1' value='type:bhattacharyya|tree.scale:0.8' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
+<tr>
+		<th>x2</th>
+		<td><input type='text' name='x2' value='type:correlation|correlation:pearson|column:2|normalization:pos' class='ui-widget ui-widget-content ui-corner-all'/>
+		</td>
+</tr>
+<input type='hidden' name='estimatorType' value='composite'/>
 </table>
 {{ template "appx" . }}
 <br/>
@@ -109,17 +114,35 @@ TODO
 <input type='submit' class="ui-button ui-widget ui-corner-all"/>
 </span>
 </form>
--->
 </div>
+
 <div id='script'>
-<h3>Script Estimator Parameters<h3>
-TODO
-<!--
+<h3>Script Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
-<table>
-<tr><td>Concurrency</td><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
-<tr><td>Tree Scale</td><td><input type='text' name='tree.scale' value='0.5' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
-<input type='hidden' name='type' value='script'/>
+<table class='tablelist'>
+<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr>
+		<th>Script</th>
+<td>
+<select name="script">
+		{{ range $k, $v:= $.Scripts }}
+		<option value="{{$k}}">{{$v}}</option>
+		{{ end }}
+</select>
+</td>
+
+</tr>
+<input type='hidden' name='estimatorType' value='script'/>
+<tr>
+		<th>Type</th>
+<td>
+<select name="type">
+<option value="cosine">Cosine similarity</option>
+<option value="manhattan">Manhattan distance</option>
+<option value="euclidean">Euclidean distance</option>
+</select>
+</td>
+</tr>
 </table>
 {{ template "appx" . }}
 <br/>
@@ -127,7 +150,6 @@ TODO
 <input type='submit' class="ui-button ui-widget ui-corner-all"/>
 </span>
 </form>
--->
 </div>
 </div>
 

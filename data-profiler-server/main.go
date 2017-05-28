@@ -28,7 +28,8 @@ type Configuration struct {
 	Database string
 	Logfile  string
 	Scripts  struct {
-		MDS string
+		MDS      string
+		Analysis []string
 	}
 }
 

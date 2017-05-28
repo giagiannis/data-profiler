@@ -8,3 +8,5 @@ database: "sqlite3.db"
 logfile: ""
 scripts:
         mds: "_rscripts/mdscaling.R"
+        analysis:
+                - _rscripts/pca.R

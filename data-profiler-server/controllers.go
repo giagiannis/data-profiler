@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/giagiannis/data-profiler/core"
 )
@@ -138,7 +139,15 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	action := r.URL.Query().Get("action")
 	if action != "submit" {
-		return modelDatasetGetInfo(id)
+		m := modelDatasetGetInfo(id)
+		scripts := make(map[string]string)
+		for _, f := range Conf.Scripts.Analysis {
+			scripts[f] = path.Base(f)
+		}
+		return struct {
+			ID      string
+			Scripts map[string]string
+		}{ID: m.ID, Scripts: scripts}
 	}
 	err := r.ParseForm()
 	if err != nil {
@@ -152,6 +161,7 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 			conf[k] = ""
 		}
 	}
+	log.Println(conf)
 	TEngine.Submit(NewSMComputationTask(id, conf))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
