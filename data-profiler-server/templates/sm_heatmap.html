@@ -1,19 +1,20 @@
 {{ define "title" }} {{ $.Name }} SM Heatmap{{ end }}
 {{ define "body" }}
 <h1>Similarity Matrix Heatmap</h1>
-<div id='container'>
+<label for='select'>Order by dataset:</label>
+<select onchange='changeOrdering(this)'>
+<option></option>
+{{ range $i,$f := $.Files }}
+<option value='{{$f}}'>{{$f}}</option>
+{{end}}
+</select>
+<div id='container' style='width:800px; height:800px;'>
 <div class='heatmap'>
 </div>
 </div>
 <script>
-var itemSize = 8,
-    cellSize = itemSize,
-	margin = {top: 80, right: 10, bottom: 20, left: 150};
-      
-var width = 1000 - margin.right - margin.left,
-	height = 1000 - margin.top - margin.bottom;
 var smID = "/sm/"+window.location.pathname.split("/")[2]+"/csv/";
-createHeatMap(smID, "");
+createHeatmap(smID);
 </script>
 {{ end }}
 

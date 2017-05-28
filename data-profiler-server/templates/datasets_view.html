@@ -99,20 +99,22 @@ No similarity matrices found
 		<td><a href='/download/?type=operator&id={{$v.ID}}&name={{$v.Name}}'>{{$v.Name}}</a></td>
 		<td>{{$v.Description}}</td>
 		<td>
+		
+		{{ if .Scores }}
+		{{ range $i, $s := $v.Scores }}
+		<button title="Download the operator's scores" class="ui-button ui-widget ui-corner-all" 
+		onclick="window.location.href='/download/?type=scores&id={{$s.ID}}&name={{$s.Filename}}'">
+		<img src='/static/download.png' width=30/></a>
+		</button>
+		{{ end}}
+		<br/>
+		{{ else }}
 		<button title="Evaluate the operator's scores" class="ui-button ui-widget ui-corner-all" 
 		onclick="window.location.href='/operator/{{ $v.ID }}/run/'">
 		<img src='/static/play.png' width=30/></a>
 		</button>
 		<br/>
 
-		{{ if .Scores }}
-		{{ range $i, $s := $v.Scores }}
-		<button title="Evaluate the operator's scores" class="ui-button ui-widget ui-corner-all" 
-		onclick="window.location.href='/download/?type=scores&id={{$s.ID}}&name={{$s.Filename}}'">
-		<img src='/static/download.png' width=30/></a>
-		</button>
-		{{ end}}
-		<br/>
 		{{ end}}
 
 		<button title="Delete Operator" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 

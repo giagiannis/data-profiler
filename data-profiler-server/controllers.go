@@ -88,7 +88,9 @@ func controllerTasksList(w http.ResponseWriter, r *http.Request) Model {
 func controllerSMVisual(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
 	m := modelSimilarityMatrixGet(id)
-	return modelDatasetGetInfo(m.DatasetID)
+	ret := modelDatasetGetInfo(m.DatasetID)
+	ret.Files = modelDatasetGetFiles(m.DatasetID)
+	return ret
 }
 
 // /sm/<id>/csv/

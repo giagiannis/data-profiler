@@ -14,169 +14,6 @@ function toggleVisibility(objId) {
 		}
 }
 
-function createHeatMap(url, orderBy) {
-		function findMinElement(data) {
-				var minElement = 1.0;
-				for(i=0;i<data.length;i++) {
-						if (data[i].value < minElement) {
-								minElement = data[i].value
-						}
-				}
-				return minElement
-		}
-
-		function sortElements(x_elements, orderBy, data) {
-				if (orderBy != "" ) {
-						var idx = x_elements.indexOf(orderBy);
-						var tosort = []
-						for(i=0;i<data.length;i++) {
-								if (data[i].x == orderBy) {
-										tosort.push({label:data[i].y, value:data[i].value})
-								}
-						}
-						tosort.sort(function(a,b) { return  - (a.value - b.value) });
-						return tosort.map(function (d) {return d.label});
-						//			x_elements = tosort.map(function (d) {return d.label});
-						//			y_elements = x_elements;
-				}	
-				return x_elements
-		}
-
-
-		d3.csv(url, function ( response ) {
-				var data = response.map(function( item ) {
-						var newItem = {};
-						newItem.x= item.x;
-						newItem.y= item.y;
-						newItem.value = item.value;
-						return newItem;
-				})
-
-				var x_elements = d3.set(data.map(function( item ) { return item.x; } )).values(),
-						y_elements = d3.set(data.map(function( item ) { return item.y; } )).values();
-				minElement = findMinElement(data);
-
-				x_elements = sortElements(x_elements, orderBy, data)
-				y_elements = x_elements
-				var xScale = d3.scale.ordinal()
-						.domain(x_elements)
-						.rangeBands([0, x_elements.length * itemSize]);
-
-				var xAxis = d3.svg.axis()
-						.scale(xScale)
-				//        .tickFormat(function (d) {
-				//          return d;
-				//    })
-						.ticks(10)
-						.orient("top");
-
-				var yScale = d3.scale.ordinal()
-						.domain(y_elements)
-						.rangeBands([0, y_elements.length * itemSize]);
-
-				var yAxis = d3.svg.axis()
-						.scale(yScale)
-						.tickFormat(function (d) {
-								return d;
-						})
-						.orient("left");
-
-
-				domainValues =[]
-				step=0.1
-				if (minElement>0) {
-						step = minElement/7.0;
-				}
-				var x=parseFloat(minElement)
-				while(x<1.0){
-						domainValues.push(x)
-						x = x+step;
-				}
-				domainValues.push(1.01)
-
-				cols = ["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858", "#001432"].reverse()
-				var colorScale = d3.scale.threshold()
-						.domain(domainValues)
-						.range(cols);
-
-				var svg = d3.select('.heatmap')
-						.append("svg")
-				//		.attr("width", "auto")
-				//		.attr("height", "auto")
-						.attr("width", width + margin.left + margin.right)
-						.attr("height", height + margin.top + margin.bottom)
-						.append("g")
-						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-				var tooltip = d3.select("body").append("div")
-						.attr("class", "tooltip")			
-						.style("opacity", 0);
-
-				var cells = svg.selectAll('rect')
-						.data(data)
-						.enter().append('g').append('rect')
-						.attr('class', 'cell')
-						.attr('width', cellSize)
-						.attr('height', cellSize)
-						.attr('y', function(d) { return yScale(d.y); })
-						.attr('x', function(d) { return xScale(d.x); })
-						.attr('yor', function(d) { return d.y; })
-						.attr('xor', function(d) { return d.x; })
-						.attr('fill', function(d) { return colorScale(d.value); })
-						.attr('value', function(d) { return d.value; })
-						.on('mouseover', function() {
-								d3.select(this)
-										.style('fill', 'white');
-						})
-						.on('mouseout', function() {
-								d3.select(this)
-										.style('fill', '');
-						})
-						.on('click', function() {
-								var obj = d3.select(this);
-								tooltip.html(obj.attr("xor")+", "+obj.attr("yor")+":"+obj.attr("value"))
-										.style("left", (d3.event.pageX) + "px")
-										.style("top", (d3.event.pageY - 50) + "px");
-
-								if (tooltip.style("opacity") == "0") {
-										tooltip.style("opacity",1.0);
-								} else {
-										tooltip.style("opacity",0.0);
-								}
-						})
-						.style("stroke", '#555');
-
-				svg.append("g")
-						.attr("class", "y axis")
-						.call(yAxis)
-						.selectAll('text')
-						.attr('font-weight', 'normal')
-						.attr('font-size', '8px')
-						.on('click', function(d){
-								// TODO: I do a better transition here
-								//			sorted = sortElements(x_elements, d, data);
-								//			var t = svg.transition().duration(100);
-								//			t.selectAll(".cell").attr("y", function(d) {return sorted.indexOf(d.y- 1)*cellSize; })
-								$(".heatmap").remove();
-								$("#container").append("<div class='heatmap'></div>");
-								createHeatMap(smID, d);
-						});
-
-				svg.append("g")
-						.attr("class", "x axis")
-						.call(xAxis)
-						.selectAll('text')
-						.attr('font-weight', 'normal')
-						.attr('font-size', '8px')
-						.style("text-anchor", "start")
-						.attr("dx", ".8em")
-						.attr("dy", ".5em")
-						.attr("transform", function (d) {
-								return "rotate(-65)";
-						});
-		});
-}
-
 function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 		var lines= $( "#"+coordinatesID ).html().split("\n");
 		var labels= $( "#"+labelsID ).html().split("\n");
@@ -235,21 +72,21 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 
 		}
 		// set tuples color
-//		for(var i=0;i<data.length;i++) {
-//				var r="0", g="0", b="0";
-//				maxCol = 150;
-//				if (maxElem.x > 0 ) {
-//					r = parseInt(Math.floor((data[i].x - minElem.x)/(maxElem.x - minElem.x) * maxCol))
-//				}
-//				if (maxElem.y > 0 ) {
-//				g = parseInt(Math.floor((data[i].y - minElem.y)/(maxElem.y - minElem.y) * maxCol))
-//				}
-//				if (maxElem.z > 0 ) {
-//				b = parseInt(Math.floor((data[i].z - minElem.z)/(maxElem.z - minElem.z) * maxCol))
-//				}
-//				data[i].color = "rgb("+r+","+g+","+b+")";
-//				console.log(data[i].color)
-//		}
+		//		for(var i=0;i<data.length;i++) {
+		//				var r="0", g="0", b="0";
+		//				maxCol = 150;
+		//				if (maxElem.x > 0 ) {
+		//					r = parseInt(Math.floor((data[i].x - minElem.x)/(maxElem.x - minElem.x) * maxCol))
+		//				}
+		//				if (maxElem.y > 0 ) {
+		//				g = parseInt(Math.floor((data[i].y - minElem.y)/(maxElem.y - minElem.y) * maxCol))
+		//				}
+		//				if (maxElem.z > 0 ) {
+		//				b = parseInt(Math.floor((data[i].z - minElem.z)/(maxElem.z - minElem.z) * maxCol))
+		//				}
+		//				data[i].color = "rgb("+r+","+g+","+b+")";
+		//				console.log(data[i].color)
+		//		}
 		// Give the points a 3D feel by adding a radial gradient
 		Highcharts.getOptions().colors = $.map(Highcharts.getOptions().colors, function (color) {
 				return {
@@ -294,15 +131,15 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 				tooltip: {
 						//pointFormat: '<span style=color:{point.color}>\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
 						pointFormatter: function(){ 
-										var message = this.name+"<br/>(";
-										message +=parseFloat(this.x)+","
-										message +=parseFloat(this.y)+","
-										message +=parseFloat(this.z)+")"
-										if(scores!=undefined && scores[this.name]!=undefined) {
-														message+="<br/>Operator score:"+parseFloat(scores[this.name]);
-										}
-//										return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";
-										return message
+								var message = this.name+"<br/>(";
+								message +=parseFloat(this.x)+","
+								message +=parseFloat(this.y)+","
+								message +=parseFloat(this.z)+")"
+								if(scores!=undefined && scores[this.name]!=undefined) {
+										message+="<br/>Operator score:"+parseFloat(scores[this.name]);
+								}
+								//										return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";
+								return message
 						}
 				},
 				plotOptions: {
@@ -369,13 +206,13 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 						}
 				});
 		});
-//		setInterval(function() {
-//						console.log(data[0])
-//						data[0].color = (data[0].color=="black"?"white":"black");
-//						chart.series[0].update({
-//										data:data
-//						});
-//		}, 1000);
+		//		setInterval(function() {
+		//						console.log(data[0])
+		//						data[0].color = (data[0].color=="black"?"white":"black");
+		//						chart.series[0].update({
+		//										data:data
+		//						});
+		//		}, 1000);
 };
 
 function colorizePoints(obj) {
@@ -409,9 +246,120 @@ function colorizePoints(obj) {
 				for(i=0;i<data.length;i++) {
 						v = Math.round(((scores[data[i].name] - minElem)/(maxElem-minElem))*200)
 						data[i].color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" 
-//						data[i].update(color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" )
+						//						data[i].update(color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" )
 				}
 				chart.series[0].update({data:data});
 		});
+}
+
+function createHeatmap(smID) {
+		$.get(smID, function(d) {
+				lines = d.split("\n")
+				var data = []
+				idx={}
+				labels=[]
+				dict = {}
+				minVal=1.0;
+				for (i=1;i<lines.length;i++) {
+						arr = lines[i].split(",")
+						if (arr[0]!=undefined && idx[arr[0]] == undefined && arr[0]!="") {
+								key = arr[0], ix = Object.keys(idx).length
+								idx[key] = ix
+								labels[ix] = key
+						}
+						if ( arr[1]!=undefined && idx[arr[1]] == undefined && arr[1]!="") {
+								key = arr[1], ix = Object.keys(idx).length
+								idx[key] = ix
+								labels[ix] = key
+						}
+						v = parseFloat(arr[2]);
+						if (minVal>v) {
+								minVal = v;
+						}
+						if(idx[arr[0]]!=undefined && idx[arr[1]]!=undefined) {
+								if(dict[arr[0]] == undefined) {
+										dict[arr[0]] = {}
+								}
+								dict[arr[0]][arr[1]]=v
+								data.push([idx[arr[0]], idx[arr[1]], v])
+						}
+				}
+				chart = Highcharts.chart('container', {
+						chart: {
+								type: 'heatmap',
+								margin: [60, 10, 80, 50]
+						},
+
+						boost: {
+								useGPUTranslations: true
+						},
+
+						title: {
+								text: 'Similarity Matrix as a heatmap',
+								align: 'left',
+								x: 40
+						},
+
+						subtitle: {
+								text: 'Similarity Matrix',
+								align: 'left',
+								x: 40
+						},
+						tooltip: {
+								pointFormatter: function() {
+										return labels[this.x]+","+labels[this.y]+":"+this.value
+								}
+						},
+
+						xAxis: {
+								labels: {
+										formatter: function() {return labels[this.x]}
+								}
+						},
+
+						yAxis: {
+								labels: {
+										formatter: function() {return labels[this.y];}
+								},
+								tickLength: 20
+						},
+
+						colorAxis: {
+								stops: [
+										[0, '#3060cf'],
+										[0.5, '#fffbbc'],
+										[0.9, '#c4463a'],
+										[1, '#c4463a']
+								],
+								min: minVal,
+								max: 1.0,
+								startOnTick: true,
+								endOnTick: true
+						},
+
+						series: [{
+								data: data
+						}]
+
+				});
+		});
+};
+
+
+function changeOrdering(mainDataset) {
+		mainDataset=mainDataset.value
+		ordered = labels;
+		if (mainDataset == "" ) {
+			ordered.sort()
+		}else {
+		ordered.sort(function(a,b){return dict[mainDataset][a] - dict[mainDataset][b]}).reverse()
+		}
+		newData = []
+		for(i=0;i<labels.length;i++) {
+				for(j=0;j<labels.length;j++) {
+						newData.push([i,j,dict[ordered[i]][ordered[j]]])
+				}
+		}
+		chart.series[0].update({data:newData});
 }
 
