@@ -298,8 +298,8 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 										message +=parseFloat(this.x)+","
 										message +=parseFloat(this.y)+","
 										message +=parseFloat(this.z)+")"
-										if(!isNaN(this.scoreval)) {
-														message+="<br/>Operator value:"+parseFloat(this.scoreval);
+										if(scores!=undefined && scores[this.name]!=undefined) {
+														message+="<br/>Operator score:"+parseFloat(scores[this.name]);
 										}
 //										return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";
 										return message
@@ -382,6 +382,7 @@ function colorizePoints(obj) {
 		id = obj.value;
 		if (id == "none") {
 				// do nothing
+				scores={}
 				for(i=0;i<data.length;i++) {
 						data[i].color = "" 
 				}
@@ -390,13 +391,13 @@ function colorizePoints(obj) {
 				return;
 		}
 		$.get("/scores/"+id+"/text", function(d){
+				scores={};
 				lines = d.split("\n");
-				dict = {};
 				minElem = undefined, maxElem =undefined;
 				for(i=0;i<lines.length;i++) {
 						arr = lines[i].split(":")
 						var v =parseFloat(arr[1])
-						dict[arr[0]] = v
+						scores [arr[0]] = v
 						if (minElem == undefined || minElem > v) {
 								minElem = v
 						}
@@ -406,9 +407,8 @@ function colorizePoints(obj) {
 				}
 				data = chart.series[0].data;
 				for(i=0;i<data.length;i++) {
-						v = Math.round(((dict[data[i].name] - minElem)/(maxElem-minElem))*200)
+						v = Math.round(((scores[data[i].name] - minElem)/(maxElem-minElem))*200)
 						data[i].color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" 
-						data[i].scoreval = dict[data[i].name]
 //						data[i].update(color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" )
 				}
 				chart.series[0].update({data:data});
