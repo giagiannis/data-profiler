@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 // DatasetEvaluatorType represents the type of the dataset evaluator
@@ -79,7 +80,7 @@ func (e *OnlineDatasetEvaluator) Evaluate(dataset string) (float64, error) {
 		log.Println(err)
 		return -1, err
 	}
-	val, err := strconv.ParseFloat(string(out), 64)
+	val, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
 	if err != nil {
 		log.Println(err)
 		return -1, err
