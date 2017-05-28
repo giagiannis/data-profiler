@@ -180,7 +180,7 @@ function createHeatMap(url, orderBy) {
 function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 		var lines= $( "#"+coordinatesID ).html().split("\n");
 		var labels= $( "#"+labelsID ).html().split("\n");
-		var data = [];
+		data = [];
 		for(var i=0;i<lines.length;i++) {
 				str = lines[i].split(",");
 				var tuple = {};
@@ -207,6 +207,7 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 				}
 				if (defineTuple) {
 						tuple.name = labels[i];
+						tuple.scoreval= -1.0;
 						data.push(tuple);
 				}
 		}
@@ -234,22 +235,21 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 
 		}
 		// set tuples color
-		for(var i=0;i<data.length;i++) {
-				var r="0", g="0", b="0";
-				maxCol = 150;
-				if (maxElem.x > 0 ) {
-					r = parseInt(Math.floor((data[i].x - minElem.x)/(maxElem.x - minElem.x) * maxCol))
-				}
-				if (maxElem.y > 0 ) {
-				g = parseInt(Math.floor((data[i].y - minElem.y)/(maxElem.y - minElem.y) * maxCol))
-				}
-				if (maxElem.z > 0 ) {
-				b = parseInt(Math.floor((data[i].z - minElem.z)/(maxElem.z - minElem.z) * maxCol))
-				}
-				data[i].color = "rgb("+r+","+g+","+b+")";
-				console.log(data[i].color)
-				
-		}
+//		for(var i=0;i<data.length;i++) {
+//				var r="0", g="0", b="0";
+//				maxCol = 150;
+//				if (maxElem.x > 0 ) {
+//					r = parseInt(Math.floor((data[i].x - minElem.x)/(maxElem.x - minElem.x) * maxCol))
+//				}
+//				if (maxElem.y > 0 ) {
+//				g = parseInt(Math.floor((data[i].y - minElem.y)/(maxElem.y - minElem.y) * maxCol))
+//				}
+//				if (maxElem.z > 0 ) {
+//				b = parseInt(Math.floor((data[i].z - minElem.z)/(maxElem.z - minElem.z) * maxCol))
+//				}
+//				data[i].color = "rgb("+r+","+g+","+b+")";
+//				console.log(data[i].color)
+//		}
 		// Give the points a 3D feel by adding a radial gradient
 		Highcharts.getOptions().colors = $.map(Highcharts.getOptions().colors, function (color) {
 				return {
@@ -266,7 +266,7 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 		});
 
 		// Set up the chart
-		var chart = new Highcharts.Chart({
+		chart = new Highcharts.Chart({
 				chart: {
 						renderTo: targetDiv,
 						margin: 100,
@@ -293,7 +293,17 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 				},
 				tooltip: {
 						//pointFormat: '<span style=color:{point.color}>\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
-						pointFormatter: function(){ return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";}
+						pointFormatter: function(){ 
+										var message = this.name+"<br/>(";
+										message +=parseFloat(this.x)+","
+										message +=parseFloat(this.y)+","
+										message +=parseFloat(this.z)+")"
+										if(!isNaN(this.scoreval)) {
+														message+="<br/>Operator value:"+parseFloat(this.scoreval);
+										}
+//										return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";
+										return message
+						}
 				},
 				plotOptions: {
 						scatter: {
@@ -359,5 +369,49 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 						}
 				});
 		});
+//		setInterval(function() {
+//						console.log(data[0])
+//						data[0].color = (data[0].color=="black"?"white":"black");
+//						chart.series[0].update({
+//										data:data
+//						});
+//		}, 1000);
 };
+
+function colorizePoints(obj) {
+		id = obj.value;
+		if (id == "none") {
+				// do nothing
+				for(i=0;i<data.length;i++) {
+						data[i].color = "" 
+				}
+				chart.series[0].update({data:data});
+
+				return;
+		}
+		$.get("/scores/"+id+"/text", function(d){
+				lines = d.split("\n");
+				dict = {};
+				minElem = undefined, maxElem =undefined;
+				for(i=0;i<lines.length;i++) {
+						arr = lines[i].split(":")
+						var v =parseFloat(arr[1])
+						dict[arr[0]] = v
+						if (minElem == undefined || minElem > v) {
+								minElem = v
+						}
+						if (maxElem == undefined || maxElem < v) {
+								maxElem = v
+						}
+				}
+				data = chart.series[0].data;
+				for(i=0;i<data.length;i++) {
+						v = Math.round(((dict[data[i].name] - minElem)/(maxElem-minElem))*200)
+						data[i].color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" 
+						data[i].scoreval = dict[data[i].name]
+//						data[i].update(color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" )
+				}
+				chart.series[0].update({data:data});
+		});
+}
 

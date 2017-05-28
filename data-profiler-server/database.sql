@@ -41,8 +41,15 @@ CREATE TABLE IF NOT EXISTS `operators` (
 		`name` VARCHAR(500),
 		`description` VARCHAR(500),
 		`path` VARCHAR(500),
-		`filename` VARCHAR(500),
 		`datasetid` INTEGER,
 		FOREIGN KEY(datasetid) REFERENCES datasets(id)
+);
+
+CREATE TABLE IF NOT EXISTS `scores` (
+		`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+		`path` VARCHAR(500),
+		`filename` VARCHAR(500),
+		`operatorid` INTEGER,
+		FOREIGN KEY(operatorid) REFERENCES operators(id)
 );
 

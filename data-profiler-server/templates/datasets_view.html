@@ -69,7 +69,7 @@ No files found
 				</button>
 
 				<br/>
-				<button title="Delete Similarity Matrix" class="ui-button ui-widget ui-corner-all" style='background:#990000;' 
+				<button title="Delete Similarity Matrix" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
 						onclick="window.location.href='/sm/{{ $m.ID }}/delete/?datasetID={{$.ID}}'">
 					<img src='/static/delete.png' width=30/></a>
 				</button>
@@ -88,10 +88,41 @@ No similarity matrices found
 <button title="Insert a new operator for this dataset" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('/datasets/{{ $.ID}}/newop', 'Insert operator');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
 {{ if .Operators }}
-
+<table class='tablelist'>
+<tr>
+		<th>Name</th>
+		<th>Description</th>
+		<th>Actions</th>
+</tr>
 {{ range $k, $v := .Operators }}
-{{ $v }}
+<tr>
+		<td><a href='/download/?type=operator&id={{$v.ID}}&name={{$v.Name}}'>{{$v.Name}}</a></td>
+		<td>{{$v.Description}}</td>
+		<td>
+		<button title="Evaluate the operator's scores" class="ui-button ui-widget ui-corner-all" 
+		onclick="window.location.href='/operator/{{ $v.ID }}/run/'">
+		<img src='/static/play.png' width=30/></a>
+		</button>
+		<br/>
+
+		{{ if .Scores }}
+		{{ range $i, $s := $v.Scores }}
+		<button title="Evaluate the operator's scores" class="ui-button ui-widget ui-corner-all" 
+		onclick="window.location.href='/download/?type=scores&id={{$s.ID}}&name={{$s.Filename}}'">
+		<img src='/static/download.png' width=30/></a>
+		</button>
+		{{ end}}
+		<br/>
+		{{ end}}
+
+		<button title="Delete Operator" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
+		onclick="window.location.href='/operator/{{ $v.ID }}/delete/?datasetID={{$.ID}}'">
+		<img src='/static/delete.png' width=30/></a>
+		</button>
+		</td>
+</tr>
 {{ end }}
+</table>
 
 {{ else }}
 No operators found

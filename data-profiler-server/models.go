@@ -40,8 +40,16 @@ type ModelOperator struct {
 	Path        string
 	Description string
 	Name        string
-	Filename    string
 	DatasetID   string
+	Scores      []*ModelScores
+}
+
+// ModelScores represents a scores file for a given operator
+type ModelScores struct {
+	ID         string
+	Path       string
+	Filename   string
+	OperatorID string
 }
 
 // ModelEstimator represents an estimator object
@@ -353,12 +361,12 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	return nil
 }
 
-func modelCoordinatesGetByMatrix(matrixId string) []*ModelCoordinates {
+func modelCoordinatesGetByMatrix(matrixID string) []*ModelCoordinates {
 	db := dbConnect()
 	defer db.Close()
 
 	rows, err := db.Query("SELECT *" +
-		" FROM coordinates WHERE matrixid == " + matrixId)
+		" FROM coordinates WHERE matrixid == " + matrixID)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -402,22 +410,21 @@ func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K,
 	}
 }
 
-func modelOperatorInsert(datasetID, name, description, filename string, content []byte) {
+func modelOperatorInsert(datasetID, description, filename string, content []byte) {
 	dts := modelDatasetGetInfo(datasetID)
 	filePath := writeBufferToFile(dts, "operators", content)
 	db := dbConnect()
 	defer db.Close()
 	stmt, err := db.Prepare(
-		"INSERT INTO operators(name,description,path,filename,datasetid) " +
-			"VALUES(?,?,?,?,?)")
+		"INSERT INTO operators(name,description,path,datasetid) " +
+			"VALUES(?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {
 		log.Println(err)
 	}
-	_, err = stmt.Exec(name,
+	_, err = stmt.Exec(filename,
 		description,
 		filePath,
-		filename,
 		datasetID)
 	if err != nil {
 		log.Println(err)
@@ -438,7 +445,8 @@ func modelOperatorGet(id string) *ModelOperator {
 	if rows.Next() {
 		obj := new(ModelOperator)
 		rows.Scan(&obj.ID, &obj.Name, &obj.Description,
-			&obj.Path, &obj.Filename, &obj.DatasetID)
+			&obj.Path, &obj.DatasetID)
+		obj.Scores = modelScoresGetByOperator(id)
 		return obj
 	}
 	return nil
@@ -458,10 +466,92 @@ func modelOperatorGetByDataset(id string) []*ModelOperator {
 	for rows.Next() {
 		obj := new(ModelOperator)
 		rows.Scan(&obj.ID, &obj.Name, &obj.Description,
-			&obj.Path, &obj.Filename, &obj.DatasetID)
+			&obj.Path, &obj.DatasetID)
+		obj.Scores = modelScoresGetByOperator(obj.ID)
 		results = append(results, obj)
 	}
 	return results
+}
+
+func modelOperatorDelete(id string) *ModelOperator {
+	op := modelOperatorGet(id)
+	if op != nil {
+		os.Remove(op.Path)
+	}
+	for _, s := range op.Scores {
+		modelScoresDelete(s.ID)
+	}
+	deleteByID("operators", id)
+	return nil
+}
+
+func modelScoresInsert(operatorID string, content []byte) {
+	op := modelOperatorGet(operatorID)
+	dts := modelDatasetGetInfo(op.DatasetID)
+	filePath := writeBufferToFile(dts, "scores", content)
+
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare(
+		"INSERT INTO scores(path,filename,operatorid) " +
+			"VALUES(?,?,?)")
+	defer stmt.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = stmt.Exec(filePath,
+		path.Base(filePath),
+		operatorID)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func modelScoresGet(id string) *ModelScores {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT *" +
+		" FROM scores WHERE id == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	if rows.Next() {
+		obj := new(ModelScores)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.OperatorID)
+		return obj
+	}
+	return nil
+}
+
+func modelScoresGetByOperator(id string) []*ModelScores {
+	db := dbConnect()
+	defer db.Close()
+	var results []*ModelScores
+	rows, err := db.Query("SELECT *" +
+		" FROM scores WHERE operatorid == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		obj := new(ModelScores)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.OperatorID)
+		results = append(results, obj)
+	}
+	return results
+}
+
+func modelScoresDelete(id string) *ModelSimilarityMatrix {
+	op := modelScoresGet(id)
+	if op != nil {
+		os.Remove(op.Path)
+	}
+	deleteByID("scores", id)
+	return nil
 }
 
 // utility functions
@@ -502,7 +592,7 @@ func serializeCSVFile(coords [][]float64) []byte {
 	return buffer.Bytes()
 }
 
-func readCSVFile(buffer []byte) [][]float64 {
+func deserializeCSVFile(buffer []byte) [][]float64 {
 	fileCont := string(buffer)
 	lines := strings.Split(fileCont, "\n")
 	var result [][]float64
@@ -519,4 +609,18 @@ func readCSVFile(buffer []byte) [][]float64 {
 		result = append(result, tuple)
 	}
 	return result
+}
+
+func deleteByID(matrix, id string) {
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM " + matrix + " WHERE id == ?")
+	if err != nil {
+		log.Println(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println(err)
+	}
 }

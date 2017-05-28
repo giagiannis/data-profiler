@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -113,9 +114,45 @@ func NewMDSComputationTask(smID, datasetID string, conf map[string]string) *Task
 		if err != nil {
 			return err
 		}
-		// TODO: write this to the database
 		gof := fmt.Sprintf("%.5f", mds.Gof())
 		modelCoordinatesInsert(mds.Coordinates(), dat.ID, conf["k"], gof, smID)
+		return nil
+	}
+	return task
+}
+func NewOperatorRunTask(operatorID string) *Task {
+	m := modelOperatorGet(operatorID)
+	if m == nil {
+		log.Println("Operator was not found")
+		return nil
+	}
+	dat := modelDatasetGetInfo(m.DatasetID)
+	for _, f := range modelDatasetGetFiles(dat.ID) {
+		dat.Files = append(dat.Files, dat.Path+"/"+f)
+	}
+	task := new(Task)
+	task.Description = fmt.Sprintf("%s evaluation", m.Name)
+	task.Dataset = dat
+	task.fnc = func() error {
+		eval, err := core.NewDatasetEvaluator(core.OnlineEval,
+			map[string]string{
+				"script":  m.Path,
+				"testset": "",
+			})
+		if err != nil {
+			log.Println(err)
+		}
+		scores := core.NewDatasetScores()
+		for _, f := range dat.Files {
+			s, err := eval.Evaluate(f)
+			if err != nil {
+				log.Println(err)
+			} else {
+				scores.Scores[path.Base(f)] = s
+			}
+		}
+		cnt, _ := scores.Serialize()
+		modelScoresInsert(operatorID, cnt)
 		return nil
 	}
 	return task

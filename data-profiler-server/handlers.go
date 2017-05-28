@@ -45,9 +45,13 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 
 	// No GUI urls
-	"download/": {controllerDownload, ""},
-	"sm/csv":    {controllerSMtoCSV, ""},
-	"sm/delete": {controllerSMDelete, ""},
+	"download/":       {controllerDownload, ""},
+	"sm/csv":          {controllerSMtoCSV, ""},
+	"sm/delete":       {controllerSMDelete, ""},
+	"operator/run":    {controllerOperatorRun, ""},
+	"operator/delete": {controllerOperatorDelete, ""},
+	"scores/text":     {controllerScoresText, ""},
+
 	// TODO
 	"about/":  {nil, "about.html"},
 	"search/": {nil, ""}, // does nothing for now

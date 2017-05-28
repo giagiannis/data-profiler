@@ -86,3 +86,8 @@ div.center {
 		position: absolute;
 		background: white;
 }
+
+.delete-button {
+		background: #aa0000;
+}
+

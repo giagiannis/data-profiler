@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -49,7 +50,18 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 		if m != nil {
 			filePath = m.Path
 		}
+	} else if fileType == "operator" {
+		m := modelOperatorGet(id)
+		if m != nil {
+			filePath = m.Path
+		}
+	} else if fileType == "scores" {
+		m := modelScoresGet(id)
+		if m != nil {
+			filePath = m.Path
+		}
 	}
+
 	if filePath != "" {
 		content, err := ioutil.ReadFile(filePath)
 		if err != nil {
@@ -108,6 +120,15 @@ func controllerSMDelete(w http.ResponseWriter, r *http.Request) Model {
 	return nil
 }
 
+// /operator/<id>/delete
+func controllerOperatorDelete(w http.ResponseWriter, r *http.Request) Model {
+	datasetID := r.URL.Query().Get("datasetID")
+	_, id, _ := parseURL(r.URL.Path)
+	modelOperatorDelete(id)
+	http.Redirect(w, r, "/datasets/"+datasetID, 307)
+	return nil
+}
+
 // TASK BASED urls
 
 // /datasets/<id>/newsm
@@ -139,7 +160,6 @@ func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 	datasetID := r.URL.Query().Get("datasetID")
 	action := r.URL.Query().Get("action")
 	_, id, _ := parseURL(r.URL.Path)
-	// FIXME:correct that!
 	if action != "submit" { // render the form
 		return struct{ ID, DatasetID string }{id, datasetID}
 	}
@@ -153,6 +173,15 @@ func controllerMDSRun(w http.ResponseWriter, r *http.Request) Model {
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 
+}
+
+// /operator/<id>/run
+func controllerOperatorRun(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	task := NewOperatorRunTask(id)
+	TEngine.Submit(task)
+	http.Redirect(w, r, "/tasks/", 307)
+	return nil
 }
 
 // /coords/<matrixid>
@@ -188,7 +217,14 @@ func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
 			fileNames += "\n"
 		}
 	}
-	return struct{ Coordinates, Labels string }{Coordinates: string(cnt), Labels: fileNames}
+	operators := modelOperatorGetByDataset(datasetID)
+	return struct {
+		Coordinates, Labels string
+		Operators           []*ModelOperator
+	}{
+		Coordinates: string(cnt),
+		Labels:      fileNames,
+		Operators:   operators}
 }
 
 // /dataset/<id>/newop
@@ -206,8 +242,7 @@ func controllerDatasetNewOP(w http.ResponseWriter, r *http.Request) Model {
 	if err != nil {
 		log.Println(err)
 	}
-	operatorName, operatorDescription :=
-		r.PostForm["name"][0], r.PostForm["description"][0]
+	operatorDescription := r.PostForm["description"][0]
 	operatorCnt, err := ioutil.ReadAll(f)
 	if err != nil {
 		log.Println(err)
@@ -215,8 +250,29 @@ func controllerDatasetNewOP(w http.ResponseWriter, r *http.Request) Model {
 	operatorFilename := header.Filename
 
 	//	log.Println(operatorName, operatorDescription, len(operatorCnt), operatorFilename)
-	modelOperatorInsert(id, operatorName, operatorDescription, operatorFilename, operatorCnt)
+	modelOperatorInsert(id, operatorDescription, operatorFilename, operatorCnt)
 
 	http.Redirect(w, r, "/datasets/"+id, 307)
+	return nil
+}
+
+// /scores/<id>/text
+func controllerScoresText(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	m := modelScoresGet(id)
+	if m == nil {
+		return nil
+	}
+	cnt, err := ioutil.ReadFile(m.Path)
+	if err != nil {
+		log.Println(err)
+	}
+	s := core.NewDatasetScores()
+	s.Deserialize(cnt)
+	buffer := new(bytes.Buffer)
+	for k, v := range s.Scores {
+		buffer.WriteString(fmt.Sprintf("%s:%.5f\n", k, v))
+	}
+	w.Write(buffer.Bytes())
 	return nil
 }
