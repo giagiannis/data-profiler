@@ -107,7 +107,6 @@ func (e *CompositeEstimator) Deserialize(b []byte) {
 		est := DeserializeSimilarityEstimator(tempBuff)
 		e.estimators[key] = est
 	}
-	// TODO: implement the method
 }
 
 // Configure provides the configuration parameters needed by the Estimator
@@ -121,6 +120,7 @@ func (e *CompositeEstimator) Configure(conf map[string]string) {
 			}
 			e.concurrency = int(val)
 		} else if k == "expression" {
+			log.Println(v)
 			e.expression = v
 		} else {
 			estConf := DeserializeConfigurationOptions(v, "|")
@@ -148,9 +148,9 @@ func (e *CompositeEstimator) Options() map[string]string {
 			"e.g.: 0.2*x + 0.8*y " +
 			"(x and y must be later defined)",
 		"x": "the conf parameters for x, separated by | e.g." +
-			"type=bhattacharyya|concurrency=10",
+			"type:bhattacharyya|concurrency:10",
 		"y": "the conf parameters for y, separated by | e.g." +
-			"type=correlation|type=pearson",
+			"type:correlation|type:pearson",
 	}
 }
 
@@ -175,7 +175,7 @@ func DeserializeConfigurationOptions(serialized, sep string) map[string]string {
 	result := make(map[string]string)
 	arr := strings.Split(serialized, sep)
 	for i := range arr {
-		temp := strings.Split(arr[i], "=")
+		temp := strings.Split(arr[i], ":")
 		if len(temp) != 2 {
 			return nil
 		}

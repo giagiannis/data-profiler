@@ -91,7 +91,7 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			log.Println("Set column to", e.column)
 		}
 	}
-	if val, ok := conf["type"]; ok {
+	if val, ok := conf["correlation"]; ok {
 		if strings.ToLower(val) == "pearson" {
 			e.estType = CorrelationSimilarityTypePearson
 		} else if strings.ToLower(val) == "spearman" {
@@ -118,7 +118,7 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 func (e *CorrelationEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency":   "max number of threads to use",
-		"type":          "one of [Pearson], Spearman, Kendall",
+		"correlation":   "one of [Pearson], Spearman, Kendall",
 		"column":        "number of column of the datasets to consider - starting from 0 (default)",
 		"normalization": "determines how to scale the correlation metric from [-1,1]-> [0,1]. one of: abs [scale] pos",
 	}
