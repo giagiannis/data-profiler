@@ -120,7 +120,6 @@ func (e *CompositeEstimator) Configure(conf map[string]string) {
 			}
 			e.concurrency = int(val)
 		} else if k == "expression" {
-			log.Println(v)
 			e.expression = v
 		} else {
 			estConf := DeserializeConfigurationOptions(v, "|")
@@ -134,7 +133,7 @@ func (e *CompositeEstimator) Configure(conf map[string]string) {
 					log.Println("Provided operator does not exist!")
 				}
 			} else {
-				log.Println("Cannot initialize estiamator witout type")
+				// Other parameter
 			}
 		}
 	}
