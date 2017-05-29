@@ -14,7 +14,7 @@ func TestCorrelationEstimatorCompute(t *testing.T) {
 
 	conf := map[string]string{
 		"concurrency":   "10",
-		"type":          []string{"Pearson", "kendall", "spearman"}[rand.Int()%3],
+		"correlation":   []string{"Pearson", "kendall", "spearman"}[rand.Int()%3],
 		"column":        "2",
 		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
 	}

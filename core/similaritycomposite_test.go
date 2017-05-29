@@ -11,8 +11,8 @@ func TestCompositeCompute(t *testing.T) {
 	var configuration = map[string]string{
 		"concurrency": "10",
 		"expression":  "0.8*x + 0.2*y",
-		"x":           "type=bhattacharyya|tree.scale=0.5",
-		"y":           "type=jaccard|concurrency=10",
+		"x":           "type:bhattacharyya|tree.scale:0.5",
+		"y":           "type:jaccard|concurrency:10",
 	}
 	e := new(CompositeEstimator)
 	e.datasets = datasets
@@ -115,8 +115,8 @@ func createCompositeEstimator(datasets []*Dataset) *CompositeEstimator {
 	var configuration = map[string]string{
 		"concurrency": "10",
 		"expression":  "0.8*x + 0.2*y",
-		"x":           "type=bhattacharyya|tree.scale=0.5",
-		"y":           "type=jaccard|concurrency=10",
+		"x":           "type:bhattacharyya|tree.scale:0.5",
+		"y":           "type:jaccard|concurrency:10",
 	}
 	e := new(CompositeEstimator)
 	e.datasets = datasets

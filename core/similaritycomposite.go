@@ -160,7 +160,7 @@ func SerializeConfigurationOptions(conf map[string]string, sep string) string {
 	output := ""
 	i := 0
 	for k, v := range conf {
-		output += fmt.Sprintf("%s=%s", k, v)
+		output += fmt.Sprintf("%s:%s", k, v)
 		if i < len(conf)-1 {
 			output += sep
 		}
