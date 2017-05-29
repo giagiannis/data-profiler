@@ -19,12 +19,14 @@ type TaskEngine struct {
 	lock  sync.Mutex
 }
 
+// NewTaskEngine initializes a new TasEngine object. Called once per server deployment.
 func NewTaskEngine() *TaskEngine {
 	te := new(TaskEngine)
 	te.lock = *new(sync.Mutex)
 	return te
 }
 
+// Submit appends a new task to the task engine and initializes its execution.
 func (e *TaskEngine) Submit(t *Task) {
 	if t == nil {
 		return
@@ -45,6 +47,8 @@ type Task struct {
 	fnc         func() error
 }
 
+// Run is responsible to execute to task's method and update the task status
+// accordingly.
 func (t *Task) Run() {
 	t.Started = time.Now()
 	t.Status = "RUNNING"
@@ -57,6 +61,7 @@ func (t *Task) Run() {
 	}
 }
 
+// NewSMComputationTask initializes a new Similarity Matrix computation task.
 func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 	task := new(Task)
 	dts := modelDatasetGetInfo(datasetID)
@@ -99,6 +104,7 @@ func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 	return task
 }
 
+// NewMDSComputationTask initializes a new Multidimensional Scaling execution task.
 func NewMDSComputationTask(smID, datasetID string, conf map[string]string) *Task {
 	smModel := modelSimilarityMatrixGet(smID)
 	if smModel == nil {
@@ -134,6 +140,8 @@ func NewMDSComputationTask(smID, datasetID string, conf map[string]string) *Task
 	}
 	return task
 }
+
+// NewOperatorRunTask initializes a new operator execution task.
 func NewOperatorRunTask(operatorID string) *Task {
 	m := modelOperatorGet(operatorID)
 	if m == nil {

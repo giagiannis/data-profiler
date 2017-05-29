@@ -161,7 +161,6 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 			conf[k] = ""
 		}
 	}
-	log.Println(conf)
 	TEngine.Submit(NewSMComputationTask(id, conf))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil

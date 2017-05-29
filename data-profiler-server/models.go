@@ -557,9 +557,12 @@ func modelScoresDelete(id string) *ModelSimilarityMatrix {
 // utility functions
 func writeBufferToFile(dts *ModelDataset, prefix string, buffer []byte) string {
 	dstDir := dts.Path + "/" + prefix
-	err := os.Mkdir(dstDir, 0777)
-	if err != nil {
-		log.Println(err)
+	_, err := os.Stat(dstDir)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(dstDir, 0777)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 	dstPath := dstDir + "/" + prefix + currentTimeSuffix()
 	err = ioutil.WriteFile(dstPath, buffer, 0777)
