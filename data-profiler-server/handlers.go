@@ -23,10 +23,11 @@ var templateDependencies = map[string][]string{
 	"sm_heatmap.html":    {"base.html"},
 	"coords_visual.html": {"base.html"},
 	// The rest are popups
-	"forms/new_sm_form.html":  {},
-	"forms/new_op_form.html":  {},
-	"forms/new_mds_form.html": {},
-	"coords_view.html":        {},
+	"forms/new_sm_form.html":      {},
+	"forms/new_op_form.html":      {},
+	"forms/new_mds_form.html":     {},
+	"forms/new_dataset_form.html": {},
+	"coords_view.html":            {},
 }
 
 // routingControllerTemplates hold the controller and the respective template
@@ -41,6 +42,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
+	"datasets/new":   {controllerDatasetNew, "forms/new_dataset_form.html"},
 	"datasets/newop": {controllerDatasetNewOP, "forms/new_op_form.html"},
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 

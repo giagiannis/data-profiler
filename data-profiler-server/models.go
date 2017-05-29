@@ -110,6 +110,29 @@ func modelDatasetsList() []*ModelDataset {
 	return result
 }
 
+func modelDatasetInsert(name, description, path string) string {
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare(
+		"INSERT INTO datasets(name,path,description) " +
+			"VALUES(?,?,?)")
+	defer stmt.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	res, err := stmt.Exec(name,
+		path,
+		description)
+	if err != nil {
+		log.Println(err)
+	}
+	resultInt, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err)
+	}
+	return fmt.Sprintf("%d", resultInt)
+}
+
 func modelDatasetGetInfo(id string) *ModelDataset {
 	db := dbConnect()
 	defer db.Close()

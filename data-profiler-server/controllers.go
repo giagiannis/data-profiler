@@ -267,6 +267,24 @@ func controllerDatasetNewOP(w http.ResponseWriter, r *http.Request) Model {
 	return nil
 }
 
+// /datasets/new/new
+func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
+	action := r.URL.Query().Get("action")
+	if action != "submit" { // render stuff for the form
+		return nil
+	}
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	datasetName := r.PostForm["name"][0]
+	datasetDescription := r.PostForm["description"][0]
+	datasetPath := r.PostForm["path"][0]
+	id := modelDatasetInsert(datasetName, datasetDescription, datasetPath)
+	http.Redirect(w, r, "/datasets/"+id, 307)
+	return nil
+}
+
 // /scores/<id>/text
 func controllerScoresText(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
