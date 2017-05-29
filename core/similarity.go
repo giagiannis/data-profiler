@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -582,7 +583,7 @@ func (s *DatasetSimilarityMatrix) Deserialize(buff []byte) error {
 	}
 	defer re.Close()
 	buff, err = ioutil.ReadAll(re)
-	if err != nil {
+	if err != nil && err != io.ErrUnexpectedEOF {
 		log.Println(err, len(buff))
 	}
 
