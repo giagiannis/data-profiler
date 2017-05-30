@@ -1,10 +1,37 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"math"
+	"math/rand"
 	"testing"
 )
+
+func TestBhattacharyyaSampledDatasets(t *testing.T) {
+	datasets := createPoolBasedDatasets(2000, 20, 2)
+	defer cleanDatasets(datasets)
+	percentage := 0.2
+	est := new(BhattacharyyaEstimator)
+	est.datasets = datasets
+	conf := map[string]string{
+		"concurrency": "10",
+		"tree.sr":     fmt.Sprintf("%.2f", percentage),
+		"tree.scale":  "0.5",
+	}
+	est.Configure(conf)
+	totalNoTuples := 0.0
+	for _, d := range datasets {
+		totalNoTuples += float64(len(d.Data()))
+	}
+	s := est.sampledDataset()
+	merged := float64(len(s))
+	if math.Abs(merged-totalNoTuples*percentage)/merged > .01 {
+		t.Logf("Merged dataset is of weird size (%.0f != %.0f)\n", merged, totalNoTuples*percentage)
+		t.FailNow()
+	}
+
+}
 
 func TestBhattacharyyaCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(20000, 20, 4)
@@ -72,7 +99,8 @@ func TestKdPruning(t *testing.T) {
 }
 
 func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
-	datasets := createPoolBasedDatasets(200, 200, 4)
+	datasets := createPoolBasedDatasets(2000, 50, 4)
+	defer cleanDatasets(datasets)
 	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	conf := map[string]string{"concurrency": "10"}
 	est.Configure(conf)
@@ -91,13 +119,15 @@ func TestBhattacharyyaComputeAppxCnt(t *testing.T) {
 
 	s := est.SimilarityMatrix()
 	smSanityCheck(s, t)
-	cleanDatasets(datasets)
 }
 
 func TestBhattacharyyaComputeAppxThres(t *testing.T) {
-	datasets := createPoolBasedDatasets(200, 200, 4)
+	datasets := createPoolBasedDatasets(2000, 50, 4)
 	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
-	conf := map[string]string{"concurrency": "10"}
+	conf := map[string]string{
+		"concurrency": "10",
+		"tree.scale":  "0.5",
+	}
 	est.Configure(conf)
 	policy := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyAprx,
@@ -121,7 +151,8 @@ func TestKdtreeNodeSerialization(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 1, 2)
 	datasets[0].ReadFromFile()
 	tree := newKDTreePartition(datasets[0].Data())
-	tree.Prune(tree.MinHeight() * 4 / 5)
+	h := float64(tree.Height()) * (rand.NormFloat64()*0.2 + 0.5)
+	tree.Prune(int(math.Ceil(h)))
 	b := tree.Serialize()
 	newTree := new(kdTreeNode)
 	newTree.Deserialize(b)

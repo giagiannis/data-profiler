@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"math/rand"
 	"sort"
 	"strconv"
 )
@@ -18,6 +19,8 @@ type BhattacharyyaEstimator struct {
 	inverseIndex map[string]int
 	// determines the height of the kd tree to be used
 	kdTreeScaleFactor float64
+	// hold the portion of the data examined for contructing the tree
+	kdTreeSamplePerc float64
 	// kd tree, utilized for dataset partitioning
 	kdTree *kdTreeNode
 	// holds the number of points for each dataset region
@@ -78,6 +81,17 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 			log.Println(err)
 		}
 	}
+	if val, ok := conf["tree.sr"]; ok {
+		//conv, err := strconv.ParseInt(val, 10, 32)
+		conv, err := strconv.ParseFloat(val, 64)
+		e.kdTreeSamplePerc = conv
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		e.kdTreeSamplePerc = 0.1
+	}
+
 	// initialization step
 	e.inverseIndex = make(map[string]int)
 	for i, d := range e.datasets {
@@ -89,7 +103,8 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 	}
 
 	log.Println("Estimating a KD-tree partition")
-	e.kdTree = newKDTreePartition(e.datasets[0].Data())
+	//e.kdTree = newKDTreePartition(e.datasets[0].Data())
+	e.kdTree = newKDTreePartition(e.sampledDataset())
 	oldHeight := e.kdTree.Height()
 	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
 	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
@@ -108,6 +123,7 @@ func (e *BhattacharyyaEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
 		"tree.scale":  "determines the portion of the kd-tree to be used",
+		"tree.sr":     "determines the portion of datasets to sample for the kd tree construction",
 	}
 }
 
@@ -195,6 +211,25 @@ func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
 
 }
 
+// sampledDataset returns a custom dataset that consist of the tuples of the
+// previous
+func (e *BhattacharyyaEstimator) sampledDataset() []DatasetTuple {
+	log.Println("Generating a sampled and merged dataset with all tuples")
+	var result []DatasetTuple
+	for _, d := range e.datasets {
+		tuplesToChoose := int(math.Floor(float64(len(d.Data())) * e.kdTreeSamplePerc))
+		log.Printf("%d/%d tuples choosen for %s\n", tuplesToChoose, len(d.Data()), d.path)
+		tuplesIdx := make(map[int]bool)
+		for len(tuplesIdx) < tuplesToChoose {
+			tuplesIdx[rand.Int()%len(d.Data())] = true
+		}
+		for k := range tuplesIdx {
+			result = append(result, d.Data()[k])
+		}
+	}
+	return result
+}
+
 type kdTreeNode struct {
 	dim   int
 	value float64
@@ -203,7 +238,6 @@ type kdTreeNode struct {
 }
 
 func (r *kdTreeNode) Serialize() []byte {
-	// FIXME: Serialize and Deserialize do not work for partial trees
 	var countNodes func(*kdTreeNode) int
 	countNodes = func(node *kdTreeNode) int {
 		if node == nil {
@@ -215,13 +249,19 @@ func (r *kdTreeNode) Serialize() []byte {
 		return count + 1
 	}
 	dataSize := 8 + 4
-	nodes := countNodes(r)
+	//nodes := countNodes(r)
+	nodes := 2<<uint(r.Height()-1) - 1
 	buf := make([]byte, dataSize*nodes)
+	valid := make([]byte, nodes)
 	var serializeNode func(*kdTreeNode, int)
 	serializeNode = func(node *kdTreeNode, offset int) {
 		if node == nil {
+			if offset < len(valid) {
+				valid[offset] = '0'
+			}
 			return
 		}
+		valid[offset] = '1'
 		for i, b := range getBytesInt(node.dim) {
 			buf[offset*dataSize+i] = b
 		}
@@ -233,26 +273,42 @@ func (r *kdTreeNode) Serialize() []byte {
 		serializeNode(node.right, (2*offset + 2))
 	}
 	serializeNode(r, 0)
-	return buf
+	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(len(buf)))
+	buffer.Write(buf)
+	buffer.Write(getBytesInt(len(valid)))
+	buffer.Write(valid)
+	return buffer.Bytes()
 }
 
 func (r *kdTreeNode) Deserialize(b []byte) {
-	// FIXME: Serialize and Deserialize do not work for partial trees
+	buf := bytes.NewBuffer(b)
+	tempIntBuff := make([]byte, 4)
+	buf.Read(tempIntBuff)
+	count := getIntBytes(tempIntBuff)
+	treeBuf := make([]byte, count)
+	buf.Read(treeBuf)
+
+	buf.Read(tempIntBuff)
+	count = getIntBytes(tempIntBuff)
+	valid := make([]byte, count)
+	buf.Read(valid)
+
 	dataSize := 8 + 4
 	var deserialize func(int) *kdTreeNode
 	deserialize = func(offset int) *kdTreeNode {
-		if offset*dataSize >= len(b) {
+		if offset*dataSize >= len(treeBuf) || valid[offset] == '0' {
 			return nil
 		}
 		node := new(kdTreeNode)
 		tempInt := make([]byte, 4)
 		for i := range tempInt {
-			tempInt[i] = b[offset*dataSize+i]
+			tempInt[i] = treeBuf[offset*dataSize+i]
 		}
 		node.dim = getIntBytes(tempInt)
 		tempFloat := make([]byte, 8)
 		for i := range tempFloat {
-			tempFloat[i] = b[offset*dataSize+4+i]
+			tempFloat[i] = treeBuf[offset*dataSize+4+i]
 		}
 		node.value = getFloatBytes(tempFloat)
 		node.left = deserialize(2*offset + 1)

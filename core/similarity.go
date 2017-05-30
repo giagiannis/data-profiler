@@ -366,6 +366,7 @@ func NewDatasetSimilarityEstimator(
 		a.datasets = datasets
 		a.concurrency = 1
 		a.kdTreeScaleFactor = 0.5
+		a.kdTreeSamplePerc = 0.1
 		return a
 	} else if estType == SimilarityTypeScript {
 		a := new(ScriptSimilarityEstimator)
