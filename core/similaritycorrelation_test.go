@@ -14,7 +14,7 @@ func TestCorrelationEstimatorCompute(t *testing.T) {
 
 	conf := map[string]string{
 		"concurrency":   "10",
-		"correlation":   []string{"Pearson", "kendall", "spearman"}[rand.Int()%3],
+		"correlation":   []string{"pearson", "kendall", "spearman"}[rand.Int()%3],
 		"column":        "2",
 		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
 	}
@@ -39,6 +39,14 @@ func TestCorrelationComputeAppxCnt(t *testing.T) {
 		},
 	}
 	est.SetPopulationPolicy(pol)
+	conf := map[string]string{
+		"concurrency":   "10",
+		"correlation":   []string{"pearson", "kendall", "spearman"}[rand.Int()%3],
+		"column":        "2",
+		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
+	}
+	est.Configure(conf)
+
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -58,6 +66,13 @@ func TestCorrelationComputeAppxThres(t *testing.T) {
 			"threshold": 0.8,
 		},
 	}
+	conf := map[string]string{
+		"concurrency":   "10",
+		"correlation":   []string{"pearson", "kendall", "spearman"}[rand.Int()%3],
+		"column":        "2",
+		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
+	}
+	est.Configure(conf)
 	est.SetPopulationPolicy(pol)
 	err := est.Compute()
 	if err != nil {
@@ -74,13 +89,19 @@ func TestCorrelationEstimatorSerialization(t *testing.T) {
 	//	est := NewDatasetSimilarityEstimator(SIMILARITY_TYPE_JACCARD, datasets)
 	est := *new(CorrelationEstimator)
 	est.datasets = datasets
-	est.estType = CorrelationSimilarityTypePearson
-	est.concurrency = 10
+	conf := map[string]string{
+		"concurrency":   "10",
+		"correlation":   []string{"pearson", "kendall", "spearman"}[rand.Int()%3],
+		"column":        "2",
+		"normalization": []string{"pos", "abs", "scale"}[rand.Int()%3],
+	}
+
 	pol := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyFull,
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)
+	est.Configure(conf)
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
