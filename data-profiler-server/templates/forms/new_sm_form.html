@@ -32,7 +32,7 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Jaccard Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><th>No. threads</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <input type='hidden' name='estimatorType' value='jaccard'/>
 </table>
 {{ template "appx" . }}
@@ -48,8 +48,10 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Bhattacharyya Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
-<tr><th>Tree Scale</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='tree.scale' value='0.5'/></td></tr>
+<tr><th>No. threads</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>Max No. Partitions</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='partitions' value='32'/></td></tr>
+<tr><th>Dataset sampling</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='tree.sr' value='0.1'/></td></tr>
+<tr><th>Dataset Columns</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='columns' value='all'/></td></tr>
 <input type='hidden' name='estimatorType' value='bhattacharyya'/>
 </table>
 {{ template "appx" . }}
@@ -64,7 +66,7 @@
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <h3>Correlation Estimator Parameters<h3>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
+<tr><th>No. threads</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
 <tr><th>Column to examine</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='column' value='0'/></td></tr>
 <tr><th>Correlation Type</th>
 <td>
@@ -98,7 +100,7 @@
 <h3>Composite Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><th>No. threads</th><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <tr><th>Expression</th><td><input type='text' name='expression' value='0.5*x1+0.5*x2' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
 <tr><th>x1</th><td><input type='text' name='x1' value='type:bhattacharyya|tree.scale:0.8' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
 <tr>
@@ -120,7 +122,7 @@
 <h3>Script Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
 <table class='tablelist'>
-<tr><th>Concurrency</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr><th>No. threads</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <tr>
 		<th>Script</th>
 <td>

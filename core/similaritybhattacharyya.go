@@ -19,7 +19,7 @@ type BhattacharyyaEstimator struct {
 	// struct used to map dataset paths to indexes
 	inverseIndex map[string]int
 	// determines the height of the kd tree to be used
-	kdTreeScaleFactor float64
+	maxPartitions int
 	// hold the portion of the data examined for contructing the tree
 	kdTreeSamplePerc float64
 	// kd tree, utilized for dataset partitioning
@@ -78,15 +78,15 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 	} else {
 		e.concurrency = 1
 	}
-	if val, ok := conf["tree.scale"]; ok {
+	if val, ok := conf["partitions"]; ok {
 		//conv, err := strconv.ParseInt(val, 10, 32)
-		conv, err := strconv.ParseFloat(val, 64)
-		e.kdTreeScaleFactor = conv
+		conv, err := strconv.ParseInt(val, 10, 32)
+		e.maxPartitions = int(conv)
 		if err != nil {
 			log.Println(err)
 		}
 	} else {
-		e.kdTreeScaleFactor = 0.5
+		e.maxPartitions = 32
 	}
 
 	if val, ok := conf["tree.sr"]; ok {
@@ -100,7 +100,7 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		e.kdTreeSamplePerc = 0.1
 	}
 
-	if val, ok := conf["columns"]; ok {
+	if val, ok := conf["columns"]; ok && val != "all" {
 		arr := strings.Split(val, ",")
 		for _, d := range arr {
 			v, err := strconv.ParseInt(d, 10, 32)
@@ -134,10 +134,15 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		}
 	}
 	e.kdTree = newKDTreePartition(s, e.columns)
-	oldHeight := e.kdTree.Height()
-	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
-	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
-	e.kdTree.Prune(newHeight)
+	temp, height := e.maxPartitions, 0
+	for temp > 0 {
+		temp = temp >> 1
+		height++
+	}
+	e.kdTree.Prune(height)
+	log.Printf("Prunning the tree to height %d created %d partitions",
+		height,
+		len(e.kdTree.Leaves()))
 	e.pointsPerRegion = make([][]int, len(e.datasets))
 	e.datasetsSize = make([]int, len(e.datasets))
 	for i, d := range e.datasets {
@@ -151,8 +156,10 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 func (e *BhattacharyyaEstimator) Options() map[string]string {
 	return map[string]string{
 		"concurrency": "max num of threads used (int)",
-		"tree.scale":  "determines the portion of the kd-tree to be used",
+		"partitions":  "max number of partitions to be used for the estimation (default is 32)",
 		"tree.sr":     "determines the portion of datasets to sample for the kd tree construction",
+		"columns":     "comma separated values of column indices to consider (starting from 0)  or all (default)",
+		//"tree.scale":  "determines the portion of the kd-tree to be used",
 	}
 }
 
@@ -172,7 +179,7 @@ func (e *BhattacharyyaEstimator) Serialize() []byte {
 
 	bytes := datasetSimilarityEstimatorSerialize(e.AbstractDatasetSimilarityEstimator)
 	buffer.Write(bytes)
-	buffer.Write(getBytesFloat(e.kdTreeScaleFactor))
+	buffer.Write(getBytesInt(e.maxPartitions))
 
 	// write points per region
 	buffer.Write(getBytesInt(len(e.pointsPerRegion[0])))
@@ -206,8 +213,8 @@ func (e *BhattacharyyaEstimator) Deserialize(b []byte) {
 	e.AbstractDatasetSimilarityEstimator =
 		*datasetSimilarityEstimatorDeserialize(absEstBytes)
 
-	buffer.Read(tempFloat)
-	e.kdTreeScaleFactor = getFloatBytes(tempFloat)
+	buffer.Read(tempInt)
+	e.maxPartitions = getIntBytes(tempFloat)
 
 	e.inverseIndex = make(map[string]int)
 	for i := range e.datasets {
@@ -384,11 +391,6 @@ func (r *kdTreeNode) MinHeight() int {
 }
 
 func (r *kdTreeNode) Prune(level int) {
-	//minHeight := r.MinHeight()
-	//if level > minHeight {
-	//	log.Println("Cannot prune the tree with more levels than minHeight ", minHeight)
-	//	return
-	//}
 	target := level - 1
 	var dfs func(*kdTreeNode, int)
 	dfs = func(node *kdTreeNode, level int) {
@@ -437,6 +439,23 @@ func (r kdTreeNode) String() string {
 		return ""
 	}
 	return myString(&r, "")
+}
+
+func (r *kdTreeNode) Leaves() []*kdTreeNode {
+	var dfs func(*kdTreeNode)
+	var leaves []*kdTreeNode
+	dfs = func(n *kdTreeNode) {
+		if n != nil {
+			if n.left == nil && n.right == nil {
+				leaves = append(leaves, n)
+			} else {
+				dfs(n.left)
+				dfs(n.right)
+			}
+		}
+	}
+	dfs(r)
+	return leaves
 }
 
 // partitions the tuples and stores the tree structure in the kdTreeNode ptr
