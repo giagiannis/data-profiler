@@ -1,8 +1,20 @@
 function createPopup(url, dialogTitle) {
 		$.get( url, function(data) {
-				var d= $( "<div>").html(data).dialog({
+				var d= $( "<div id='popup'>").html(data).dialog({
 						width:"auto", 
-						height:"auto", title: dialogTitle});
+						height:"auto", 
+						title: dialogTitle,
+						position: {
+								my:"center top",
+							at:"center top-25%",
+							of:window
+						}
+				});
+				//$("#popup").position({
+			//			my:"center",
+		//				at:"center",
+	//					of:window
+		//		});
 		});
 }
 
