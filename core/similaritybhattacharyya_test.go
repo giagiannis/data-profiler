@@ -17,7 +17,7 @@ func TestBhattacharyyaSampledDatasets(t *testing.T) {
 	conf := map[string]string{
 		"concurrency": "10",
 		"tree.sr":     fmt.Sprintf("%.2f", percentage),
-		"tree.scale":  "0.5",
+		"partitions":  "16",
 	}
 	est.Configure(conf)
 	totalNoTuples := 0.0
@@ -126,13 +126,14 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 	est := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
 	conf := map[string]string{
 		"concurrency": "10",
-		"tree.scale":  "0.5",
+		"partitions":  "256",
+		"tree.sr":     "0.1",
 	}
 	est.Configure(conf)
 	policy := DatasetSimilarityPopulationPolicy{
 		PolicyType: PopulationPolicyAprx,
 		Parameters: map[string]float64{
-			"threshold": 0.995,
+			"threshold": 0.9999,
 		},
 	}
 	est.SetPopulationPolicy(policy)
@@ -183,7 +184,10 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 		Parameters: map[string]float64{},
 	}
 	est.SetPopulationPolicy(pol)
-	est.Configure(map[string]string{"concurrency": "10", "tree.scale": "0.75"})
+	est.Configure(map[string]string{
+		"concurrency": "10",
+		"partitions":  "10",
+	})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)

@@ -208,7 +208,7 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) error {
 			idx, val := e.SimilarityMatrix().LeastSimilar()
 			iterations := 0
 			for val < threshold && iterations < len(e.Datasets()) {
-				log.Printf("Computing the similarities for (%d, %.5f)\n", idx, val)
+				log.Println("Computing the similarities for ", idx, val)
 				for j := 0; j < len(e.Datasets()); j++ {
 					d1, d2 := e.Datasets()[idx], e.Datasets()[j]
 					e.SimilarityMatrix().Set(idx, j, e.Similarity(d1, d2))
