@@ -20,7 +20,7 @@ type BhattacharyyaEstimator struct {
 	inverseIndex map[string]int
 	// determines the height of the kd tree to be used
 	maxPartitions int
-	// hold the portion of the data examined for contructing the tree
+	// hold the portion of the data examined for constructing the tree
 	kdTreeSamplePerc float64
 	// kd tree, utilized for dataset partitioning
 	kdTree *kdTreeNode
@@ -114,16 +114,19 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		e.columns = nil
 	}
 
+	e.init()
+
+}
+
+func (e *BhattacharyyaEstimator) init() {
 	// initialization step
 	e.inverseIndex = make(map[string]int)
 	for i, d := range e.datasets {
 		e.inverseIndex[d.Path()] = i
 	}
-
 	for _, d := range e.datasets {
 		d.ReadFromFile()
 	}
-
 	log.Println("Estimating a KD-tree partition")
 	//e.kdTree = newKDTreePartition(e.datasets[0].Data())
 	s := e.sampledDataset()
@@ -149,7 +152,6 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		e.pointsPerRegion[i] = e.kdTree.GetLeafIndex(d.Data())
 		e.datasetsSize[i] = len(d.Data())
 	}
-
 }
 
 // Options returns a list of parameters that can be set by the user
@@ -254,7 +256,7 @@ func (e *BhattacharyyaEstimator) sampledDataset() []DatasetTuple {
 	var result []DatasetTuple
 	for _, d := range e.datasets {
 		tuplesToChoose := int(math.Floor(float64(len(d.Data())) * e.kdTreeSamplePerc))
-		log.Printf("%d/%d tuples choosen for %s\n", tuplesToChoose, len(d.Data()), d.path)
+		log.Printf("%d/%d tuples chosen for %s\n", tuplesToChoose, len(d.Data()), d.path)
 		tuplesIdx := make(map[int]bool)
 		for len(tuplesIdx) < tuplesToChoose {
 			tuplesIdx[rand.Int()%len(d.Data())] = true
