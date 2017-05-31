@@ -5,6 +5,7 @@ import "testing"
 func TestJaccardCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 20, 4)
 	est := NewDatasetSimilarityEstimator(SimilarityTypeJaccard, datasets)
+	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -25,6 +26,7 @@ func TestJaccardComputeAppxCnt(t *testing.T) {
 		},
 	}
 	est.SetPopulationPolicy(pol)
+	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -45,6 +47,7 @@ func TestJaccardComputeAppxThres(t *testing.T) {
 		},
 	}
 	est.SetPopulationPolicy(pol)
+	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)
@@ -67,6 +70,7 @@ func TestJaccardSerialization(t *testing.T) {
 		},
 	}
 	est.SetPopulationPolicy(pol)
+	est.Configure(map[string]string{"concurrency": "10"})
 	err := est.Compute()
 	if err != nil {
 		t.Log(err)

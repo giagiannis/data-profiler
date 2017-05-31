@@ -36,6 +36,8 @@ func (e *JaccardEstimator) Configure(conf map[string]string) {
 		} else {
 			e.concurrency = int(conv)
 		}
+	} else {
+		e.concurrency = 1
 	}
 }
 

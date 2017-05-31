@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // BhattacharyyaEstimator is the similarity estimator that quantifies the similarity
@@ -27,6 +28,8 @@ type BhattacharyyaEstimator struct {
 	pointsPerRegion [][]int
 	// holds the total number of points for each dataset
 	datasetsSize []int
+	// columns to investigate for partitioning
+	columns []int
 }
 
 // Compute method constructs the Similarity Matrix
@@ -72,6 +75,8 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		if err != nil {
 			log.Println(err)
 		}
+	} else {
+		e.concurrency = 1
 	}
 	if val, ok := conf["tree.scale"]; ok {
 		//conv, err := strconv.ParseInt(val, 10, 32)
@@ -80,7 +85,10 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		if err != nil {
 			log.Println(err)
 		}
+	} else {
+		e.kdTreeScaleFactor = 0.5
 	}
+
 	if val, ok := conf["tree.sr"]; ok {
 		//conv, err := strconv.ParseInt(val, 10, 32)
 		conv, err := strconv.ParseFloat(val, 64)
@@ -90,6 +98,20 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 		}
 	} else {
 		e.kdTreeSamplePerc = 0.1
+	}
+
+	if val, ok := conf["columns"]; ok {
+		arr := strings.Split(val, ",")
+		for _, d := range arr {
+			v, err := strconv.ParseInt(d, 10, 32)
+			if err != nil {
+				log.Println(err)
+			} else {
+				e.columns = append(e.columns, int(v))
+			}
+		}
+	} else {
+		e.columns = nil
 	}
 
 	// initialization step
@@ -104,7 +126,14 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 
 	log.Println("Estimating a KD-tree partition")
 	//e.kdTree = newKDTreePartition(e.datasets[0].Data())
-	e.kdTree = newKDTreePartition(e.sampledDataset())
+	s := e.sampledDataset()
+	if e.columns == nil {
+		log.Println("Setting all columns to examine for the kd-tree")
+		for i := 0; i < len(s[0].Data); i++ {
+			e.columns = append(e.columns, i)
+		}
+	}
+	e.kdTree = newKDTreePartition(s, e.columns)
 	oldHeight := e.kdTree.Height()
 	newHeight := int(float64(oldHeight) * e.kdTreeScaleFactor)
 	log.Printf("Pruning the tree from height %d to %d\n", oldHeight, newHeight)
@@ -411,7 +440,7 @@ func (r kdTreeNode) String() string {
 }
 
 // partitions the tuples and stores the tree structure in the kdTreeNode ptr
-func newKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
+func newKDTreePartition(tuples []DatasetTuple, cols []int) *kdTreeNode {
 	findMedian :=
 		func(tuples []DatasetTuple, dim int) (float64, []DatasetTuple, []DatasetTuple) {
 			values := make([]float64, 0)
@@ -432,9 +461,8 @@ func newKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 		}
 	var partition func([]DatasetTuple, int, *kdTreeNode)
 	partition = func(tuples []DatasetTuple, dim int, node *kdTreeNode) {
-		tupSize := len(tuples[0].Data)
-		median, left, right := findMedian(tuples, dim%tupSize)
-		node.dim = dim % tupSize
+		median, left, right := findMedian(tuples, cols[dim%len(cols)])
+		node.dim = cols[dim%len(cols)]
 		node.value = median
 		if len(left) > 0 && len(right) > 0 {
 			node.right = new(kdTreeNode)
@@ -444,6 +472,6 @@ func newKDTreePartition(tuples []DatasetTuple) *kdTreeNode {
 		}
 	}
 	node := new(kdTreeNode)
-	partition(tuples, 0, node)
+	partition(tuples, cols[0], node)
 	return node
 }

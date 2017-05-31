@@ -56,7 +56,7 @@ func TestKdTree(t *testing.T) {
 		log.Println(err)
 		t.FailNow()
 	}
-	kd := newKDTreePartition(dataset.Data())
+	kd := newKDTreePartition(dataset.Data(), []int{0, 1, 2, 3, 4})
 	kd.Prune(kd.Height() - 2)
 	ids := kd.GetLeafIndex(dataset.Data())
 	sum := 0
@@ -81,7 +81,7 @@ func TestKdPruning(t *testing.T) {
 	}
 	height := int(math.Log2(float64(len(dataset.Data())))) + 1
 	for i := 0; i < height; i++ {
-		kd := newKDTreePartition(dataset.Data())
+		kd := newKDTreePartition(dataset.Data(), []int{0, 1, 2, 3, 4})
 		if i < kd.Height() {
 			kd.Prune(kd.Height() - i)
 			ids := kd.GetLeafIndex(dataset.Data())
@@ -150,7 +150,7 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 func TestKdtreeNodeSerialization(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 1, 2)
 	datasets[0].ReadFromFile()
-	tree := newKDTreePartition(datasets[0].Data())
+	tree := newKDTreePartition(datasets[0].Data(), []int{0, 1})
 	h := float64(tree.Height()) * (rand.NormFloat64()*0.2 + 0.5)
 	tree.Prune(int(math.Ceil(h)))
 	b := tree.Serialize()

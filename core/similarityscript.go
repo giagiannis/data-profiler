@@ -76,9 +76,13 @@ func (e *ScriptSimilarityEstimator) Configure(conf map[string]string) {
 		} else {
 			e.concurrency = int(conv)
 		}
+	} else {
+		e.concurrency = 1
 	}
 	if val, ok := conf["script"]; ok {
 		e.analysisScript = val
+	} else {
+		log.Println("Analysis script not defined - exiting")
 	}
 	if val, ok := conf["type"]; ok {
 		if val == "cosine" {
@@ -90,14 +94,13 @@ func (e *ScriptSimilarityEstimator) Configure(conf map[string]string) {
 		} else {
 			log.Println("Similarity Type not known, valid values: [cosine manhattan euclidean]")
 		}
+	} else {
+		e.simType = scriptSimilarityTypeEuclidean
 	}
+
 	// execute analysis for each dataset
-	if e.analysisScript == "" {
-		log.Println("Analysis script not defined - exiting")
-	}
 	log.Println("Analyzing datasets")
 	e.datasetCoordinates = e.analyzeDatasets()
-
 	e.inverseIndex = make(map[string]int)
 	for i, d := range e.datasets {
 		e.inverseIndex[d.Path()] = i

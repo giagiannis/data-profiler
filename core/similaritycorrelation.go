@@ -81,6 +81,8 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			e.concurrency = int(conv)
 			log.Println("Set concurrency to", e.concurrency)
 		}
+	} else {
+		e.concurrency = 1
 	}
 	if val, ok := conf["column"]; ok {
 		conv, err := strconv.ParseInt(val, 10, 32)
@@ -90,6 +92,8 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			e.column = int(conv)
 			log.Println("Set column to", e.column)
 		}
+	} else {
+		e.column = 0
 	}
 	if val, ok := conf["correlation"]; ok {
 		if strings.ToLower(val) == "pearson" {
@@ -100,6 +104,8 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			e.estType = CorrelationSimilarityTypeKendall
 		}
 		log.Println("Set correlation type to", e.estType)
+	} else {
+		e.estType = CorrelationSimilarityTypePearson
 	}
 	if val, ok := conf["normalization"]; ok {
 		if strings.ToLower(val) == "abs" {
@@ -110,6 +116,8 @@ func (e *CorrelationEstimator) Configure(conf map[string]string) {
 			e.normType = CorrelationSimilarityNormalizationPos
 		}
 		log.Println("Set normalization to", e.normType)
+	} else {
+		e.normType = CorrelationSimilarityNormalizationPos
 	}
 }
 
@@ -120,7 +128,7 @@ func (e *CorrelationEstimator) Options() map[string]string {
 		"concurrency":   "max number of threads to use",
 		"correlation":   "one of [Pearson], Spearman, Kendall",
 		"column":        "number of column of the datasets to consider - starting from 0 (default)",
-		"normalization": "determines how to scale the correlation metric from [-1,1]-> [0,1]. one of: abs [scale] pos",
+		"normalization": "determines how to scale the correlation metric from [-1,1]-> [0,1]. one of: abs scale [pos]",
 	}
 }
 

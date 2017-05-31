@@ -112,6 +112,7 @@ func (e *CompositeEstimator) Deserialize(b []byte) {
 // Configure provides the configuration parameters needed by the Estimator
 func (e *CompositeEstimator) Configure(conf map[string]string) {
 	e.estimators = make(map[string]DatasetSimilarityEstimator)
+	e.concurrency = 1
 	for k, v := range conf {
 		if k == "concurrency" {
 			val, err := strconv.ParseInt(v, 10, 32)

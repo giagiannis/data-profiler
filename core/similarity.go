@@ -358,37 +358,26 @@ func NewDatasetSimilarityEstimator(
 		a := new(JaccardEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
-		a.concurrency = 1
 		return a
 	} else if estType == SimilarityTypeBhattacharyya {
 		a := new(BhattacharyyaEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
-		a.concurrency = 1
-		a.kdTreeScaleFactor = 0.5
-		a.kdTreeSamplePerc = 0.1
 		return a
 	} else if estType == SimilarityTypeScript {
 		a := new(ScriptSimilarityEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
-		a.concurrency = 1
-		a.simType = scriptSimilarityTypeEuclidean
 		return a
 	} else if estType == SimilarityTypeCorrelation {
 		a := new(CorrelationEstimator)
 		a.SetPopulationPolicy(policy)
-		a.estType = CorrelationSimilarityTypePearson
 		a.datasets = datasets
-		a.concurrency = 1
-		a.column = 0
-		a.normType = CorrelationSimilarityNormalizationScale
 		return a
 	} else if estType == SimilarityTypeComposite {
 		a := new(CompositeEstimator)
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
-		a.concurrency = 1
 		return a
 	}
 
