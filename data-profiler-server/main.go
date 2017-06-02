@@ -66,6 +66,7 @@ func main() {
 	fs := http.FileServer(http.Dir(Conf.Server.Dirs.Static))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", uiHandler)
+	http.HandleFunc("/api/", restHandler)
 	http.ListenAndServe(Conf.Server.Listen, nil)
 }
 

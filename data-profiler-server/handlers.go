@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -73,6 +74,26 @@ func uiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func restHandler(w http.ResponseWriter, r *http.Request) {
+	cnt, _ := selectControllerAndTemplate(r.URL.Path)
+	r.URL.Path = strings.Replace(r.URL.Path, "/api", "", 1)
+	var m Model
+	if cnt != nil {
+		m = cnt(w, r)
+	} else {
+		w.WriteHeader(http.StatusNotImplemented)
+	}
+	if m != nil {
+		res, err := json.Marshal(m)
+		if err != nil {
+			log.Println(err)
+		}
+		w.Write(res)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
 func selectControllerAndTemplate(url string) (func(http.ResponseWriter, *http.Request) Model, *template.Template) {
 	model, id, cmd := parseURL(url)
 	if id != "" && cmd == "" { // default action is view
@@ -117,6 +138,7 @@ func loadTemplate(templateName string) *template.Template {
 }
 
 func parseURL(url string) (string, string, string) {
+	url = strings.TrimPrefix(url, "/api")
 	if url == "/" {
 		url = "/datasets/"
 	}
