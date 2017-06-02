@@ -1,4 +1,5 @@
 #!/usr/bin/Rscript
+library(MASS)
 
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -24,8 +25,11 @@ EPSILON <- 1e-10
 #		cat("\n")
 #}
 #
-fit <- cmdscale(d, k=k, eig=TRUE)
-cat(fit$GOF[2])
+
+fit <-sammon(d, trace=FALSE, k=k)
+#fit <- cmdscale(d, k=k, eig=TRUE)
+#cat(fit$GOF[2])
+cat(fit$stress)
 cat("\n")
 for(i in 1:nrow(fit$points)) {
 		for(j in 1:ncol(fit$points)) {
