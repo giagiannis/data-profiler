@@ -275,13 +275,16 @@ function colorizePoints(obj) {
 								colorRegions[idx].max = s
 						}
 						colorRegions[idx].count  =colorRegions[idx].count+1
-						r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
-						rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
-						data[i].color = rgbString 
+						if (c!=undefined ){
+							r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
+							rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+							data[i].color = rgbString 
+						}
 				}
 				legendDiv = "<table class='tablelist' style='font-weight:bold;'>\n";
 				legendDiv = legendDiv+"<tr><th>#</th><th>min</th><th>max</th><th>#points</th></tr>"
 				for(var i=0;i<colScales.length;i++) {
+						if (c!=undefined ){
 						c = colScales[i]
 						r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
 						rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
@@ -302,6 +305,7 @@ function colorizePoints(obj) {
 								"<td style='text-align:right;'>"+colorRegions[i].max.toFixed(2)+"</td>"+
 								"<td style='text-align:right;'>"+colorRegions[i].count+"</td>"+
 								"</tr> ";
+						}
 						}
 				}
 				legendDiv = legendDiv + "</table>";
