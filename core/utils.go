@@ -5,16 +5,6 @@ import (
 	"math"
 )
 
-// DistanceToSimilarity returns the similarity based on the distance
-func DistanceToSimilarity(distance float64) float64 {
-	return 1.0 / (1.0 + distance)
-}
-
-// SimilarityToDistance returns the distance based on the similarity
-func SimilarityToDistance(similarity float64) float64 {
-	return 1.0/similarity - 1.0
-}
-
 func getBytesInt(val int) []byte {
 	temp := make([]byte, 4)
 	binary.BigEndian.PutUint32(temp, uint32(val))

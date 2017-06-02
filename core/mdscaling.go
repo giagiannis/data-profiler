@@ -48,21 +48,21 @@ func (md *MDScaling) Compute() error {
 	}
 	log.Println("Writing distances to file", writer.Name())
 	//defer os.Remove(writer.Name())
-	maxDistance := 0.0
-	for i := 0; i < md.matrix.Capacity(); i++ {
-		for j := i + 1; j < md.matrix.Capacity(); j++ {
-			dist := SimilarityToDistance(md.matrix.Get(i, j))
-			if !math.IsInf(dist, 0) && dist > maxDistance {
-				maxDistance = dist
-			}
-		}
-	}
+	//	maxDistance := 0.0
+	//	for i := 0; i < md.matrix.Capacity(); i++ {
+	//		for j := i + 1; j < md.matrix.Capacity(); j++ {
+	//			dist := SimilarityToDistance(md.matrix.Get(i, j))
+	//			if !math.IsInf(dist, 0) && dist > maxDistance {
+	//				maxDistance = dist
+	//			}
+	//		}
+	//	}
 	for i := 0; i < md.matrix.Capacity(); i++ {
 		for j := 0; j < md.matrix.Capacity(); j++ {
 			dist := SimilarityToDistance(md.matrix.Get(i, j))
-			if math.IsInf(dist, 0) {
-				dist = maxDistance
-			}
+			//			if math.IsInf(dist, 0) {
+			//				dist = maxDistance
+			//			}
 			writer.WriteString(fmt.Sprintf("%.5f", dist))
 			if j < md.matrix.Capacity()-1 {
 				writer.WriteString(",")
@@ -153,4 +153,16 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 		}
 	}
 	return coordinates, gof, nil
+}
+
+// DistanceToSimilarity returns the similarity based on the distance
+func DistanceToSimilarity(distance float64) float64 {
+	//	return 1.0 / (1.0 + distance)
+	return math.Sqrt(1 - distance)
+}
+
+// SimilarityToDistance returns the distance based on the similarity
+func SimilarityToDistance(similarity float64) float64 {
+	//	return 1.0/similarity - 1.0
+	return 1 - similarity*similarity
 }
