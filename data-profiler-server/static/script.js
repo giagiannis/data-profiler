@@ -6,15 +6,15 @@ function createPopup(url, dialogTitle) {
 						title: dialogTitle,
 						position: {
 								my:"center top",
-							at:"center top-25%",
-							of:window
+								at:"center top-25%",
+								of:window
 						}
 				});
 				//$("#popup").position({
-			//			my:"center",
-		//				at:"center",
-	//					of:window
-		//		});
+				//			my:"center",
+				//				at:"center",
+				//					of:window
+				//		});
 		});
 }
 
@@ -228,6 +228,8 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 };
 
 function colorizePoints(obj) {
+		colScales = [[2,0,0],[2,1,0],[2,2,0],[0,2,0],[0,2,2],[0,1,2],[0,0,2],[0,0,0]].reverse();
+		colorStep = 100;
 		id = obj.value;
 		if (id == "none") {
 				// do nothing
@@ -236,6 +238,8 @@ function colorizePoints(obj) {
 						data[i].color = "" 
 				}
 				chart.series[0].update({data:data});
+				console.log($("#legend").html())
+				$("#legend").remove();
 
 				return;
 		}
@@ -255,11 +259,62 @@ function colorizePoints(obj) {
 						}
 				}
 				data = chart.series[0].data;
+				colorRegions = [];
 				for(i=0;i<data.length;i++) {
-						v = Math.round(((scores[data[i].name] - minElem)/(maxElem-minElem))*200)
-						data[i].color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" 
-						//						data[i].update(color = "rgb("+parseInt(v)+","+parseInt(v)+","+parseInt(v)+")" )
+						s = scores[data[i].name]
+						v = (s - minElem)/(maxElem-minElem)
+						idx = Math.round(v*(colScales.length-1))
+						c = colScales[idx]
+						if (colorRegions[idx] == undefined) {
+								colorRegions[idx] = {min: s, max:s, count:0}
+						}
+						if (colorRegions[idx].min > s) {
+								colorRegions[idx].min = s
+						}
+						if (colorRegions[idx].max < s) {
+								colorRegions[idx].max = s
+						}
+						colorRegions[idx].count  =colorRegions[idx].count+1
+						r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
+						rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+						data[i].color = rgbString 
 				}
+				legendDiv = "<table class='tablelist' style='font-weight:bold;'>\n";
+				legendDiv = legendDiv+"<tr><th>#</th><th>min</th><th>max</th><th>#points</th></tr>"
+				for(var i=0;i<colScales.length;i++) {
+						c = colScales[i]
+						r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
+						rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+						if (colorRegions[i] == undefined) {
+								legendDiv = legendDiv +
+								"<tr style='color:"+rgbString+"'>"+
+								"<td>"+parseInt(i+1)+"</td>"+
+								"<td style='text-align:right;'>-</td>"+
+								"<td style='text-align:right;'>-</td>"+
+								"<td style='text-align:right;'>0</td>"+
+								"</tr> ";
+
+						} else {
+						legendDiv = legendDiv +
+								"<tr style='color:"+rgbString+"'>"+
+								"<td>"+parseInt(i+1)+"</td>"+
+								"<td style='text-align:right;'>"+colorRegions[i].min.toFixed(2)+"</td>"+
+								"<td style='text-align:right;'>"+colorRegions[i].max.toFixed(2)+"</td>"+
+								"<td style='text-align:right;'>"+colorRegions[i].count+"</td>"+
+								"</tr> ";
+						}
+				}
+				legendDiv = legendDiv + "</table>";
+				$("<div id='legend'></div>").dialog({
+						width:"auto", 
+						height:"auto", 
+						title:"Color Legend",
+						position: {
+								my:"right top",
+								at:"right-100px top-100px",
+								of:window
+						}
+				}).html(legendDiv).attr("id", "legend");
 				chart.series[0].update({data:data});
 		});
 }
@@ -362,9 +417,9 @@ function changeOrdering(mainDataset) {
 		mainDataset=mainDataset.value
 		ordered = labels;
 		if (mainDataset == "" ) {
-			ordered.sort()
+				ordered.sort()
 		}else {
-		ordered.sort(function(a,b){return dict[mainDataset][a] - dict[mainDataset][b]}).reverse()
+				ordered.sort(function(a,b){return dict[mainDataset][a] - dict[mainDataset][b]}).reverse()
 		}
 		newData = []
 		for(i=0;i<labels.length;i++) {
