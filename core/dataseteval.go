@@ -82,7 +82,7 @@ func (e *OnlineDatasetEvaluator) Evaluate(dataset string) (float64, error) {
 	}
 	val, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
 	if err != nil {
-		log.Println(err)
+		log.Println(err, "for dataset", dataset)
 		return -1, err
 	}
 	return val, nil
