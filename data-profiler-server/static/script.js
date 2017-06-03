@@ -5,16 +5,11 @@ function createPopup(url, dialogTitle) {
 						height:"auto", 
 						title: dialogTitle,
 						position: {
-								my:"center top",
-								at:"center top-25%",
+								my:"center bottom",
+								at:"center top+50%",
 								of:window
 						}
 				});
-				//$("#popup").position({
-				//			my:"center",
-				//				at:"center",
-				//					of:window
-				//		});
 		});
 }
 
@@ -83,22 +78,6 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 				}
 
 		}
-		// set tuples color
-		//		for(var i=0;i<data.length;i++) {
-		//				var r="0", g="0", b="0";
-		//				maxCol = 150;
-		//				if (maxElem.x > 0 ) {
-		//					r = parseInt(Math.floor((data[i].x - minElem.x)/(maxElem.x - minElem.x) * maxCol))
-		//				}
-		//				if (maxElem.y > 0 ) {
-		//				g = parseInt(Math.floor((data[i].y - minElem.y)/(maxElem.y - minElem.y) * maxCol))
-		//				}
-		//				if (maxElem.z > 0 ) {
-		//				b = parseInt(Math.floor((data[i].z - minElem.z)/(maxElem.z - minElem.z) * maxCol))
-		//				}
-		//				data[i].color = "rgb("+r+","+g+","+b+")";
-		//				console.log(data[i].color)
-		//		}
 		// Give the points a 3D feel by adding a radial gradient
 		Highcharts.getOptions().colors = $.map(Highcharts.getOptions().colors, function (color) {
 				return {
@@ -141,7 +120,6 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 						text: 'Click and drag the plot area to rotate in space'
 				},
 				tooltip: {
-						//pointFormat: '<span style=color:{point.color}>\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
 						pointFormatter: function(){ 
 								var message = this.name+"<br/>(";
 								message +=parseFloat(this.x)+","
@@ -150,7 +128,6 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 								if(scores!=undefined && scores[this.name]!=undefined) {
 										message+="<br/>Operator score:"+parseFloat(scores[this.name]);
 								}
-								//										return this.name+"<br/>("+parseFloat(this.x)+", "+parseFloat(this.y)+", "+parseFloat(this.z)+")";
 								return message
 						}
 				},
@@ -218,13 +195,6 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 						}
 				});
 		});
-		//		setInterval(function() {
-		//						console.log(data[0])
-		//						data[0].color = (data[0].color=="black"?"white":"black");
-		//						chart.series[0].update({
-		//										data:data
-		//						});
-		//		}, 1000);
 };
 
 function colorizePoints(obj) {
@@ -314,9 +284,9 @@ function colorizePoints(obj) {
 						height:"auto", 
 						title:"Color Legend",
 						position: {
-								my:"right top",
-								at:"right-100px top-100px",
-								of:window
+								my:"left top",
+								at:"right top",
+								of:$("#main"),
 						}
 				}).html(legendDiv).attr("id", "legend");
 				chart.series[0].update({data:data});
@@ -434,3 +404,21 @@ function changeOrdering(mainDataset) {
 		chart.series[0].update({data:newData});
 }
 
+function trackDataset(option) {
+		var obj;
+		var data = chart.series[0].data;
+		for(var i=0;i<data.length;i++) {
+				obj = data[i];
+				obj.marker = null;
+				if (data[i].name == option.value) {
+						obj.marker = {
+								enabled:true,
+								radius : 15,
+								fillColor: obj.color
+						};
+				}
+		}
+		if (obj!=undefined) {
+				chart.series[0].update({data:data});
+		}
+}
