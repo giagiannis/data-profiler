@@ -31,7 +31,6 @@ type ModelDataset struct {
 	Files       []string
 	Operators   []*ModelOperator
 	Matrices    []*ModelSimilarityMatrix
-	Estimators  []*ModelEstimator
 }
 
 // ModelOperator is the struct that represents an operator for a given dataset
@@ -52,15 +51,6 @@ type ModelScores struct {
 	OperatorID string
 }
 
-// ModelEstimator represents an estimator object
-type ModelEstimator struct {
-	ID            string
-	Path          string
-	Filename      string
-	Configuration map[string]string
-	DatasetID     string
-}
-
 // ModelSimilarityMatrix represents a similarity matrix
 type ModelSimilarityMatrix struct {
 	ID            string
@@ -68,6 +58,7 @@ type ModelSimilarityMatrix struct {
 	Filename      string
 	Configuration map[string]string
 	DatasetID     string
+	EstimatorPath string
 }
 
 // ModelCoordinates represents a set of coordinates
@@ -174,7 +165,7 @@ func modelSimilarityMatrixGetByDataset(id string) []*ModelSimilarityMatrix {
 	db := dbConnect()
 	defer db.Close()
 	var results []*ModelSimilarityMatrix
-	rows, err := db.Query("SELECT id, path, filename,configuration " +
+	rows, err := db.Query("SELECT id, path, filename,configuration,estimatorpath " +
 		" FROM matrices WHERE datasetid == " + id)
 	if err != nil {
 		log.Println(err)
@@ -184,33 +175,7 @@ func modelSimilarityMatrixGetByDataset(id string) []*ModelSimilarityMatrix {
 	for rows.Next() {
 		obj := new(ModelSimilarityMatrix)
 		confString := ""
-		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &confString)
-		conf := make(map[string]string)
-		err := json.Unmarshal([]byte(confString), &conf)
-		if err != nil {
-			log.Println(err)
-		}
-		obj.Configuration = conf
-		results = append(results, obj)
-	}
-	return results
-}
-
-func modelEstimatorGetByDataset(id string) []*ModelEstimator {
-	db := dbConnect()
-	defer db.Close()
-	var results []*ModelEstimator
-	rows, err := db.Query("SELECT id, path, filename,configuration " +
-		" FROM estimators WHERE datasetid == " + id)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	defer rows.Close()
-	for rows.Next() {
-		obj := new(ModelEstimator)
-		confString := ""
-		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &confString)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &confString, &obj.EstimatorPath)
 		conf := make(map[string]string)
 		err := json.Unmarshal([]byte(confString), &conf)
 		if err != nil {
@@ -223,14 +188,18 @@ func modelEstimatorGetByDataset(id string) []*ModelEstimator {
 }
 
 // modelSimilarityMatrixInsert inserts a new SM and returns the newly created Id
-func modelSimilarityMatrixInsert(datasetID string, buffer []byte, conf map[string]string) string {
+func modelSimilarityMatrixInsert(datasetID string, smBuffer, estBuffer []byte, conf map[string]string) string {
 	dts := modelDatasetGetInfo(datasetID)
-	filePath := writeBufferToFile(dts, "matrices", buffer)
+	smPath := writeBufferToFile(dts, "matrices", smBuffer)
+	var estPath string
+	if estBuffer != nil {
+		estPath = writeBufferToFile(dts, "estimators", estBuffer)
+	}
 	db := dbConnect()
 	defer db.Close()
 	stmt, err := db.Prepare(
-		"INSERT INTO matrices(path,filename,configuration,datasetid) " +
-			"VALUES(?,?,?,?)")
+		"INSERT INTO matrices(path,filename,configuration,datasetid,estimatorpath) " +
+			"VALUES(?,?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {
 		log.Println(err)
@@ -239,10 +208,10 @@ func modelSimilarityMatrixInsert(datasetID string, buffer []byte, conf map[strin
 	if err != nil {
 		log.Println(err)
 	}
-	res, err := stmt.Exec(filePath,
-		path.Base(filePath),
+	res, err := stmt.Exec(smPath,
+		path.Base(smPath),
 		confString,
-		dts.ID)
+		dts.ID, estPath)
 	if err != nil {
 		log.Println(err)
 	}
@@ -284,6 +253,7 @@ func modelSimilarityMatrixDelete(id string) *ModelSimilarityMatrix {
 	m := modelSimilarityMatrixGet(id)
 	if m != nil {
 		os.Remove(m.Path)
+		os.Remove(m.EstimatorPath)
 	}
 	db := dbConnect()
 	defer db.Close()
@@ -325,45 +295,6 @@ func modelEstimatorInsert(datasetID, matrixID string, buffer []byte, conf map[st
 	}
 }
 
-func modelEstimatorGet(id string) *ModelEstimator {
-	db := dbConnect()
-	defer db.Close()
-
-	rows, err := db.Query("SELECT id,path,filename,configuration" +
-		" FROM estimator WHERE id == " + id)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	defer rows.Close()
-	if rows.Next() {
-		obj := new(ModelEstimator)
-		rows.Scan(&obj.ID, &obj.Path, &obj.Filename,
-			&obj.Configuration)
-		return obj
-	}
-	return nil
-}
-
-func modelEstimatorGetBySM(id string) *ModelEstimator {
-	db := dbConnect()
-	defer db.Close()
-
-	rows, err := db.Query("SELECT id,path,filename,configuration" +
-		" FROM estimator WHERE matrixid == " + id)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	defer rows.Close()
-	if rows.Next() {
-		obj := new(ModelEstimator)
-		rows.Scan(&obj.ID, &obj.Path, &obj.Filename,
-			&obj.Configuration)
-		return obj
-	}
-	return nil
-}
 func modelCoordinatesGet(id string) *ModelCoordinates {
 	db := dbConnect()
 	defer db.Close()
@@ -568,13 +499,12 @@ func modelScoresGetByOperator(id string) []*ModelScores {
 	return results
 }
 
-func modelScoresDelete(id string) *ModelSimilarityMatrix {
+func modelScoresDelete(id string) {
 	op := modelScoresGet(id)
 	if op != nil {
 		os.Remove(op.Path)
 	}
 	deleteByID("scores", id)
-	return nil
 }
 
 // utility functions
@@ -599,7 +529,7 @@ func currentTimeSuffix() string {
 	t := time.Now()
 	y, m, d := t.Year(), int(t.Month()), t.Day()
 	h, min, sec := t.Hour(), t.Minute(), t.Second()
-	return fmt.Sprintf("%d%d%d%d%d%d", y, m, d, h, min, sec)
+	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d", y, m, d, h, min, sec)
 }
 
 func serializeCSVFile(coords [][]float64) []byte {

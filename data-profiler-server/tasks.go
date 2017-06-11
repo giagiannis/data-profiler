@@ -96,7 +96,7 @@ func NewSMComputationTask(datasetID string, conf map[string]string) *Task {
 		//		var smID string
 		if sm != nil {
 			//smID =
-			modelSimilarityMatrixInsert(datasetID, sm.Serialize(), conf)
+			modelSimilarityMatrixInsert(datasetID, sm.Serialize(), est.Serialize(), conf)
 		}
 		//modelEstimatorInsert(datasetID, smID, est.Serialize(), conf)
 		return nil

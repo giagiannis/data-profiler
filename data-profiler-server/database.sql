@@ -12,18 +12,8 @@ CREATE TABLE IF NOT EXISTS `matrices` (
 		`filename` VARCHAR(500),
 		`configuration` VARCHAR(2000),
 		`datasetid` INTEGER,
+		`estimatorpath` VARCHAR(500),
 		FOREIGN KEY(datasetid) REFERENCES datasets(id)
-);
-
-CREATE TABLE IF NOT EXISTS `estimators` (
-		`id` INTEGER PRIMARY KEY AUTOINCREMENT,
-		`path` VARCHAR(500),
-		`filename` VARCHAR(500),
-		`configuration` VARCHAR(2000),
-		`datasetid` INTEGER,
-		`matrixid` INTEGER,
-		FOREIGN KEY(datasetid) REFERENCES datasets(id),
-		FOREIGN KEY(matrixid) REFERENCES matrices(id)
 );
 
 CREATE TABLE IF NOT EXISTS `coordinates` (
