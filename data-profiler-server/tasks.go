@@ -174,7 +174,7 @@ func NewOperatorRunTask(operatorID string) *Task {
 			}
 		}
 		cnt, _ := scores.Serialize()
-		modelScoresInsert(operatorID, cnt)
+		modelOperatorScoresInsert(operatorID, cnt)
 		return nil
 	}
 	return task

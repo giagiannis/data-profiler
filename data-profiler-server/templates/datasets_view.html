@@ -100,22 +100,18 @@ No similarity matrices found
 		<td>{{$v.Description}}</td>
 		<td>
 		
-		{{ if .Scores }}
-		{{ range $i, $s := $v.Scores }}
+		{{ if .ScoresFile }}
 		<button title="Download the operator's scores" class="ui-button ui-widget ui-corner-all" 
-		onclick="window.location.href='/download/?type=scores&id={{$s.ID}}&name={{$s.Filename}}'">
+		onclick="window.location.href='/download/?type=scores&id={{$v.ID}}&name={{$v.ScoresFile}}'">
 		<img src='/static/download.png' width=30/></a>
 		</button>
-		{{ end}}
-		<br/>
 		{{ else }}
 		<button title="Evaluate the operator's scores" class="ui-button ui-widget ui-corner-all" 
 		onclick="window.location.href='/operator/{{ $v.ID }}/run/'">
 		<img src='/static/play.png' width=30/></a>
 		</button>
-		<br/>
-
 		{{ end}}
+		<br/>
 
 		<button title="Delete Operator" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
 		onclick="window.location.href='/operator/{{ $v.ID }}/delete/?datasetID={{$.ID}}'">
@@ -125,15 +121,18 @@ No similarity matrices found
 </tr>
 {{ end }}
 </table>
-
 {{ else }}
 No operators found
 {{ end }}
 </div>
 
-
+<div>
+<h2>Dataset Modeling
+<button title="Create a new operator model" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('#', 'Create model');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
+</h2>
+</div>
 {{else}}
-<h1>Dataset Not Found</h1>
+<h2>Dataset Not Found</h2>
 {{end}}
 {{ end }}
 {{ template "base.html" . }}

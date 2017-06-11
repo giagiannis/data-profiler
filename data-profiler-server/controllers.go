@@ -57,9 +57,9 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 			filePath = m.Path
 		}
 	} else if fileType == "scores" {
-		m := modelScoresGet(id)
+		m := modelOperatorGet(id)
 		if m != nil {
-			filePath = m.Path
+			filePath = m.ScoresFile
 		}
 	}
 
@@ -288,11 +288,11 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 // /scores/<id>/text
 func controllerScoresText(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
-	m := modelScoresGet(id)
+	m := modelOperatorGet(id)
 	if m == nil {
 		return nil
 	}
-	cnt, err := ioutil.ReadFile(m.Path)
+	cnt, err := ioutil.ReadFile(m.ScoresFile)
 	if err != nil {
 		log.Println(err)
 	}

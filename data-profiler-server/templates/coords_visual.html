@@ -13,9 +13,7 @@
 <select id='select' onchange='colorizePoints(this)'>
 <option value='none'>Default</option>
 {{ range $k, $v:= $.Operators }}
-{{ range $j, $s:= $v.Scores }}
-<option value='{{$s.ID}}'>{{$v.Name}} </option>
-{{ end }}
+<option value='{{$v.ID}}'>{{$v.Name}} </option>
 {{ end }}
 </select>
 
