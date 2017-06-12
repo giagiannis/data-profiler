@@ -179,3 +179,15 @@ func NewOperatorRunTask(operatorID string) *Task {
 	}
 	return task
 }
+
+func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string) *Task {
+	m := modelDatasetGetInfo(datasetID)
+	task := new(Task)
+	task.Description = "TODO"
+	task.Dataset = m
+	task.fnc = func() error {
+		// TODO: run the modeler
+		return nil
+	}
+	return task
+}

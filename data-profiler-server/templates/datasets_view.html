@@ -133,7 +133,7 @@ No operators found
 		<button title="Create a new operator model" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('#', 'Create model');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 -->
 <button title="Create a new operator model" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" 
-onclick="window.location.href='/modeling/'"> <span class="ui-icon ui-icon-plusthick" ></span></button>
+onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
 </div>
 {{else}}

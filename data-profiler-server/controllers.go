@@ -298,14 +298,32 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 // /modeling/new/new
 func controllerDatasetModelNew(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")
+	_, id, _ := parseURL(r.URL.Path)
 	if action != "submit" {
 		// just render form
-		return nil
+		operators := modelOperatorGetByDataset(id)
+		coordinates := modelCoordinatesGetByDataset(id)
+		return struct {
+			Operators   []*ModelOperator
+			Coordinates []*ModelCoordinates
+			MLScripts   map[string]string
+			DatasetID   string
+		}{
+			Operators:   operators,
+			Coordinates: coordinates,
+			MLScripts:   Conf.Scripts.ML,
+			DatasetID:   id,
+		}
 	}
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
 	}
+	dataset := r.Form["datasetid"][0]
+	coordinates := r.Form["coordinatesid"][0]
+	operator := r.Form["operatorid"][0]
+	mlScript := r.Form["script"][0]
+	TEngine.Submit(NewModelTrainTask(dataset, operator, coordinates, mlScript))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }

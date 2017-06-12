@@ -29,6 +29,7 @@ var templateDependencies = map[string][]string{
 	"forms/new_mds_form.html":     {},
 	"forms/new_dataset_form.html": {},
 	"coords_view.html":            {},
+	"forms/new_model_form.html":   {},
 }
 
 // routingControllerTemplates hold the controller and the respective template
@@ -47,7 +48,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"datasets/newop": {controllerDatasetNewOP, "forms/new_op_form.html"},
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 	"coords/view":    {controllerCoordsView, "coords_view.html"},
-	"modeling/new":   {nil, ""}, // FIXME
+	"modeling/new":   {controllerDatasetModelNew, "forms/new_model_form.html"},
 
 	// No GUI urls
 	"download/":       {controllerDownload, ""},

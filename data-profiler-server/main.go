@@ -30,6 +30,7 @@ type Configuration struct {
 	Scripts  struct {
 		MDS      string
 		Analysis []string
+		ML       map[string]string
 	}
 }
 

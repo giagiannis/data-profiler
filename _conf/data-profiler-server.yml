@@ -10,3 +10,5 @@ scripts:
         mds: "_rscripts/mdscaling.R"
         analysis:
                 - _rscripts/pca.R
+        ml:
+                "SVM" : "_rscripts/svm-appx.R"

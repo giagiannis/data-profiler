@@ -292,6 +292,27 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	return nil
 }
 
+func modelCoordinatesGetByDataset(datasetID string) []*ModelCoordinates {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT coordinates.*" +
+		" FROM coordinates,matrices WHERE matrices.id == coordinates.matrixid AND datasetid == " + datasetID)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	var result []*ModelCoordinates
+	for rows.Next() {
+		obj := new(ModelCoordinates)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
+			&obj.GOF, &obj.matrixID)
+		result = append(result, obj)
+	}
+	return result
+}
+
 func modelCoordinatesGetByMatrix(matrixID string) []*ModelCoordinates {
 	db := dbConnect()
 	defer db.Close()
