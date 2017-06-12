@@ -34,18 +34,20 @@ var templateDependencies = map[string][]string{
 // routingControllerTemplates hold the controller and the respective template
 // that need to be rendered for each possible path
 var routingControllerTemplates = map[string]cntTmpltCouple{
-	"datasets/":     {controllerDatasetList, "datasets.html"},
-	"datasets/view": {controllerDatasetView, "datasets_view.html"},
-	"tasks/":        {controllerTasksList, "tasks.html"},
-	"sm/visual":     {controllerSMVisual, "sm_heatmap.html"},
-	"coords/view":   {controllerCoordsView, "coords_view.html"},
-	"coords/visual": {controllerCoordsVisual, "coords_visual.html"},
+	"datasets/":       {controllerDatasetList, "datasets.html"},
+	"datasets/view":   {controllerDatasetView, "datasets_view.html"},
+	"tasks/":          {controllerTasksList, "tasks.html"},
+	"sm/visual":       {controllerSMVisual, "sm_heatmap.html"},
+	"coords/visual":   {controllerCoordsVisual, "coords_visual.html"},
+	"modeling/visual": {nil, ""}, // FIXME
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
 	"datasets/new":   {controllerDatasetNew, "forms/new_dataset_form.html"},
 	"datasets/newop": {controllerDatasetNewOP, "forms/new_op_form.html"},
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
+	"coords/view":    {controllerCoordsView, "coords_view.html"},
+	"modeling/new":   {nil, ""}, // FIXME
 
 	// No GUI urls
 	"download/":       {controllerDownload, ""},

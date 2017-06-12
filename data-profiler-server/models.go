@@ -63,6 +63,18 @@ type ModelCoordinates struct {
 	GOF      string
 }
 
+// ModelDatasetModel represents a model of an operator for a given stuff
+type ModelDatasetModel struct {
+	ID             string
+	CoordinatesID  string
+	OperatorID     string
+	DatasetID      string
+	SamplingRate   float64
+	Configuration  map[string]string
+	SamplesPath    string
+	AppxValuesPath string
+}
+
 // FUNCTIONS
 
 // dbConnect is responsible to establish the connection with the DB backend.
@@ -168,19 +180,14 @@ func modelSimilarityMatrixGetByDataset(id string) []*ModelSimilarityMatrix {
 		obj := new(ModelSimilarityMatrix)
 		confString := ""
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &confString, &obj.EstimatorPath)
-		conf := make(map[string]string)
-		err := json.Unmarshal([]byte(confString), &conf)
-		if err != nil {
-			log.Println(err)
-		}
-		obj.Configuration = conf
+		obj.Configuration = stringToJSON(confString)
 		results = append(results, obj)
 	}
 	return results
 }
 
 // modelSimilarityMatrixInsert inserts a new SM and returns the newly created Id
-func modelSimilarityMatrixInsert(datasetID string, smBuffer, estBuffer []byte, conf map[string]string) string {
+func modelSimilarityMatrixInsert(datasetID string, smBuffer, estBuffer []byte, conf map[string]string) *ModelSimilarityMatrix {
 	dts := modelDatasetGetInfo(datasetID)
 	smPath := writeBufferToFile(dts, "matrices", smBuffer)
 	var estPath string
@@ -196,13 +203,9 @@ func modelSimilarityMatrixInsert(datasetID string, smBuffer, estBuffer []byte, c
 	if err != nil {
 		log.Println(err)
 	}
-	confString, err := json.Marshal(conf)
-	if err != nil {
-		log.Println(err)
-	}
 	res, err := stmt.Exec(smPath,
 		path.Base(smPath),
-		confString,
+		jsonToString(conf),
 		dts.ID, estPath)
 	if err != nil {
 		log.Println(err)
@@ -211,7 +214,15 @@ func modelSimilarityMatrixInsert(datasetID string, smBuffer, estBuffer []byte, c
 	if err != nil {
 		log.Println(err)
 	}
-	return fmt.Sprintf("%d", resultInt)
+	id := fmt.Sprintf("%d", resultInt)
+	return &ModelSimilarityMatrix{
+		Configuration: conf,
+		DatasetID:     datasetID,
+		EstimatorPath: estPath,
+		Path:          smPath,
+		Filename:      path.Base(smPath),
+		ID:            id,
+	}
 }
 
 func modelSimilarityMatrixGet(id string) *ModelSimilarityMatrix {
@@ -302,7 +313,7 @@ func modelCoordinatesGetByMatrix(matrixID string) []*ModelCoordinates {
 	return result
 }
 
-func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) {
+func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) *ModelCoordinates {
 	dts := modelDatasetGetInfo(datasetID)
 	var coords [][]float64
 	for _, c := range coordinates {
@@ -328,9 +339,10 @@ func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K,
 	if err != nil {
 		log.Println(err)
 	}
+	return nil
 }
 
-func modelOperatorInsert(datasetID, description, filename string, content []byte) {
+func modelOperatorInsert(datasetID, description, filename string, content []byte) *ModelOperator {
 	dts := modelDatasetGetInfo(datasetID)
 	filePath := writeBufferToFile(dts, "operators", content)
 	db := dbConnect()
@@ -349,6 +361,7 @@ func modelOperatorInsert(datasetID, description, filename string, content []byte
 	if err != nil {
 		log.Println(err)
 	}
+	return nil
 }
 
 func modelOperatorGet(id string) *ModelOperator {
@@ -402,7 +415,7 @@ func modelOperatorDelete(id string) *ModelOperator {
 	return nil
 }
 
-func modelOperatorScoresInsert(operatorID string, content []byte) {
+func modelOperatorScoresInsert(operatorID string, content []byte) *ModelOperator {
 	op := modelOperatorGet(operatorID)
 	dts := modelDatasetGetInfo(op.DatasetID)
 	filePath := writeBufferToFile(dts, "scores", content)
@@ -420,6 +433,100 @@ func modelOperatorScoresInsert(operatorID string, content []byte) {
 	if err != nil {
 		log.Println(err)
 	}
+	return nil
+}
+
+func modelDatasetModelInsert(
+	coordinatesID, operatorID, datasetID string,
+	samples, appxValues []byte,
+	conf map[string]string,
+	samplingRate float64) *ModelDatasetModel {
+	dts := modelDatasetGetInfo(datasetID)
+	samplesPath := writeBufferToFile(dts, "samples", samples)
+	appxValuesPath := writeBufferToFile(dts, "appx", appxValues)
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare(
+		"INSERT INTO models(coordinatesid, operatorid, datasetid, samplingrate, " +
+			"configuration, samplespath, appxvaluespath) " +
+			"VALUES(?,?,?,?,?,?,?)")
+	defer stmt.Close()
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = stmt.Exec(
+		coordinatesID,
+		operatorID,
+		datasetID,
+		samplingRate,
+		jsonToString(conf),
+		samplesPath,
+		appxValuesPath,
+	)
+	if err != nil {
+		log.Println(err)
+	}
+	return nil
+}
+
+func modelDatasetModelGet(id string) *ModelDatasetModel {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query(
+		"SELECT id, coordinatesid, operatorid, datasetid, samplingrate, " +
+			"configuration, samplespath, appxvaluespath " +
+			"FROM models WHERE id == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	confString := ""
+	if rows.Next() {
+		obj := new(ModelDatasetModel)
+		rows.Scan(&obj.ID,
+			&obj.CoordinatesID,
+			&obj.OperatorID,
+			&obj.DatasetID,
+			&obj.SamplingRate,
+			&confString,
+			&obj.SamplesPath,
+			&obj.AppxValuesPath)
+		obj.Configuration = stringToJSON(confString)
+		return obj
+	}
+	return nil
+}
+
+func modelDatasetModelGetByDataset(datasetID string) []*ModelDatasetModel {
+	db := dbConnect()
+	defer db.Close()
+	var results []*ModelDatasetModel
+
+	rows, err := db.Query("SELECT id, coordinatesid, operatorid, datasetid, samplingrate, " +
+		"configuration, samplespath, appxvaluespath " +
+		"FROM models WHERE datasetid == " + datasetID)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	confString := ""
+	for rows.Next() {
+		obj := new(ModelDatasetModel)
+		rows.Scan(&obj.ID,
+			&obj.CoordinatesID,
+			&obj.OperatorID,
+			&obj.DatasetID,
+			&obj.SamplingRate,
+			&confString,
+			&obj.SamplesPath,
+			&obj.AppxValuesPath)
+		obj.Configuration = stringToJSON(confString)
+		results = append(results, obj)
+	}
+	return results
 }
 
 // utility functions
@@ -494,4 +601,21 @@ func deleteByID(matrix, id string) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func jsonToString(conf map[string]string) string {
+	confString, err := json.Marshal(conf)
+	if err != nil {
+		log.Println(err)
+	}
+	return string(confString)
+}
+func stringToJSON(confString string) map[string]string {
+	conf := make(map[string]string)
+	err := json.Unmarshal([]byte(confString), &conf)
+	if err != nil {
+		log.Println(err)
+	}
+	return conf
+
 }

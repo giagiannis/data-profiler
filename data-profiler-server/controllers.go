@@ -61,6 +61,16 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 		if m != nil {
 			filePath = m.ScoresFile
 		}
+	} else if fileType == "samples" {
+		m := modelDatasetModelGet(id)
+		if m != nil {
+			filePath = m.SamplesPath
+		}
+	} else if fileType == "appx" {
+		m := modelDatasetModelGet(id)
+		if m != nil {
+			filePath = m.AppxValuesPath
+		}
 	}
 
 	if filePath != "" {
@@ -282,6 +292,21 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 	datasetPath := r.PostForm["path"][0]
 	id := modelDatasetInsert(datasetName, datasetDescription, datasetPath)
 	http.Redirect(w, r, "/datasets/"+id, 307)
+	return nil
+}
+
+// /modeling/new/new
+func controllerDatasetModelNew(w http.ResponseWriter, r *http.Request) Model {
+	action := r.URL.Query().Get("action")
+	if action != "submit" {
+		// just render form
+		return nil
+	}
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }
 

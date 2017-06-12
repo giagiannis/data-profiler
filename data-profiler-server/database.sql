@@ -35,3 +35,17 @@ CREATE TABLE IF NOT EXISTS `operators` (
 		`scoresfile` VARCHAR(500),
 		FOREIGN KEY(datasetid) REFERENCES datasets(id)
 );
+
+CREATE TABLE IF NOT EXISTS `models` (
+		`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+		`coordinatesid` INTEGER,
+		`operatorid` INTEGER,
+		`datasetid` INTEGER,
+		`samplingrate` DECIMAL,
+		`configuration` VARCHAR(2000),
+		`samplespath` VARCHAR(500), 
+		`appxvaluespath` VARCHAR(500), 
+		FOREIGN KEY(datasetid) REFERENCES datasets(id),
+		FOREIGN KEY(coordinatesid) REFERENCES coordinates(id),
+		FOREIGN KEY(operatorid) REFERENCES operators(id)
+);
