@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strconv"
 
 	"github.com/giagiannis/data-profiler/core"
 )
@@ -323,7 +324,11 @@ func controllerDatasetModelNew(w http.ResponseWriter, r *http.Request) Model {
 	coordinates := r.Form["coordinatesid"][0]
 	operator := r.Form["operatorid"][0]
 	mlScript := r.Form["script"][0]
-	TEngine.Submit(NewModelTrainTask(dataset, operator, coordinates, mlScript))
+	sr, err := strconv.ParseFloat(r.Form["sr"][0], 64)
+	if err != nil {
+		log.Println(err)
+	}
+	TEngine.Submit(NewModelTrainTask(dataset, operator, coordinates, mlScript, sr))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }

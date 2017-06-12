@@ -180,13 +180,44 @@ func NewOperatorRunTask(operatorID string) *Task {
 	return task
 }
 
-func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string) *Task {
+func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr float64) *Task {
 	m := modelDatasetGetInfo(datasetID)
 	task := new(Task)
-	task.Description = "TODO"
+	task.Description = "Model training"
 	task.Dataset = m
 	task.fnc = func() error {
-		// TODO: run the modeler
+		datasets := core.DiscoverDatasets(m.Path)
+		c := modelCoordinatesGet(coordinatesID)
+		buf, err := ioutil.ReadFile(c.Path)
+		if err != nil {
+			return err
+		}
+		var coordinates []core.DatasetCoordinates
+		for _, l := range deserializeCSVFile(buf) {
+			coordinates = append(coordinates, l)
+		}
+		o := modelOperatorGet(operatorID)
+		var evaluator core.DatasetEvaluator
+		if o.ScoresFile != "" {
+			evaluator, err = core.NewDatasetEvaluator(core.FileBasedEval, map[string]string{"scores": o.ScoresFile})
+		} else {
+			evaluator, err = core.NewDatasetEvaluator(core.OnlineEval, map[string]string{"script": o.Path, "testset": ""})
+			log.Println(o.Path)
+		}
+		if err != nil {
+			return err
+		}
+
+		modeler := core.NewModeler(datasets, sr, coordinates, evaluator)
+		modeler.Configure(map[string]string{"script": mlScript})
+		err = modeler.Run()
+		if err != nil {
+			return err
+		}
+		log.Println(modeler.AppxValues())
+		log.Println(modeler.Samples())
+		log.Println(modeler.Datasets())
+		// TODO: write down results
 		return nil
 	}
 	return task
