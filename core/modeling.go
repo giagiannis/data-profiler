@@ -32,6 +32,20 @@ type Modeler interface {
 	AppxValues() []float64
 }
 
+// NewModeler is the factory method for the modeler object
+func NewModeler(
+	datasets []*Dataset,
+	sr float64,
+	coordinates []DatasetCoordinates,
+	evaluator DatasetEvaluator) Modeler {
+	modeler := new(ScriptBasedModeler)
+	modeler.datasets = datasets
+	modeler.samplingRate = sr
+	modeler.coordinates = coordinates
+	modeler.evaluator = evaluator
+	return modeler
+}
+
 // AbstractModeler implements the common methods of the Modeler structs
 type AbstractModeler struct {
 	datasets    []*Dataset           // the datasets the modeler refers to

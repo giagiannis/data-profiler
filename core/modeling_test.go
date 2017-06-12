@@ -36,11 +36,7 @@ func TestScriptBasedModelerRun(t *testing.T) {
 		t.FailNow()
 	}
 
-	m := new(ScriptBasedModeler)
-	m.datasets = datasets
-	m.samplingRate = 0.2
-	m.coordinates = coords
-	m.evaluator = eval
+	m := NewModeler(datasets, 0.2, coords, eval)
 
 	m.Configure(map[string]string{"script": mlScriptAppx})
 	err = m.Run()
