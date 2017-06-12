@@ -24,10 +24,7 @@ type Modeler interface {
 	// Datasets returns the datasets slice
 	Datasets() []*Dataset
 	// Samples returns the indices of the chosen datasets.
-	Samples() []struct {
-		idx int
-		val float64
-	}
+	Samples() map[int]float64
 	// AppxValues returns a slice of the approximated values
 	AppxValues() []float64
 }
@@ -54,10 +51,7 @@ type AbstractModeler struct {
 
 	samplingRate float64 // the portion of the datasets to examine
 	// the dataset indices chosen for samples
-	samples []struct {
-		idx int
-		val float64
-	}
+	samples    map[int]float64
 	appxValues []float64 // the appx values of ALL the datasets
 }
 
@@ -67,10 +61,7 @@ func (a *AbstractModeler) Datasets() []*Dataset {
 }
 
 // Samples return the indices of the chosen datasets
-func (a *AbstractModeler) Samples() []struct {
-	idx int
-	val float64
-} {
+func (a *AbstractModeler) Samples() map[int]float64 {
 	return a.samples
 }
 
@@ -104,7 +95,7 @@ func (m *ScriptBasedModeler) Run() error {
 	// sample the datasets
 	permutation := rand.Perm(len(m.datasets))
 	s := int(math.Floor(m.samplingRate * float64(len(m.datasets))))
-
+	m.samples = make(map[int]float64)
 	// deploy samples
 	var trainingSet, testSet [][]float64
 	for _, idx := range permutation[:s] {
@@ -112,10 +103,7 @@ func (m *ScriptBasedModeler) Run() error {
 		if err != nil {
 			return err
 		}
-		m.samples = append(m.samples, struct {
-			idx int
-			val float64
-		}{idx, val})
+		m.samples[idx] = val
 		trainingSet = append(trainingSet, append(m.coordinates[idx], val))
 	}
 	trainFile := createCSVFile(trainingSet, true)
