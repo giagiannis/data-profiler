@@ -25,7 +25,9 @@ Tasks
 </table>
 <script type='text/javascript'>
 setTimeout(function() {
-		location.reload(true)
+		if ($("table").html().includes("RUNNING")) {
+			location.reload(true);
+		}
 }, 1000);
 </script>
 {{ else }}
