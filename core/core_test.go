@@ -15,9 +15,11 @@ const (
 	testSet              = "../_testdata/datatest.csv"
 	analysisScript       = "../_rscripts/pca.R"
 	mlScript             = "../_rscripts/lm.R"
+	mlScriptAppx         = "../_rscripts/svm-appx.R"
 	mdsScript            = "../_rscripts/mdscaling.R"
 	tmpDir               = "/tmp/"
 	onlineIndexingScript = "../_rscripts/sa.R"
+	operatorScript       = "../_testdata/sum.py"
 )
 
 func init() {
