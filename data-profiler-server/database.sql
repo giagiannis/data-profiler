@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS `models` (
 		`datasetid` INTEGER,
 		`samplingrate` DECIMAL,
 		`configuration` VARCHAR(2000),
+		`errors` VARCHAR(2000),
 		`samplespath` VARCHAR(500), 
 		`appxvaluespath` VARCHAR(500), 
 		FOREIGN KEY(datasetid) REFERENCES datasets(id),

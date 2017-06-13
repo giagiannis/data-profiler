@@ -204,7 +204,6 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 			evaluator, err = core.NewDatasetEvaluator(core.FileBasedEval, map[string]string{"scores": o.ScoresFile})
 		} else {
 			evaluator, err = core.NewDatasetEvaluator(core.OnlineEval, map[string]string{"script": o.Path, "testset": ""})
-			log.Println(o.Path)
 		}
 		if err != nil {
 			log.Println(err)
@@ -223,7 +222,13 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 		cnt = append(cnt, modeler.AppxValues())
 		appxBuffer := serializeCSVFile(cnt)
 		samplesBuffer, _ := json.Marshal(modeler.Samples())
-		modelDatasetModelInsert(coordinatesID, operatorID, datasetID, samplesBuffer, appxBuffer, map[string]string{"script": mlScript}, sr)
+		errors := make(map[string]string)
+		for k, v := range modeler.ErrorMetrics() {
+			errors[k] = fmt.Sprintf("%.5f", v)
+		}
+		modelDatasetModelInsert(coordinatesID, operatorID, datasetID, samplesBuffer, appxBuffer,
+			map[string]string{"script": mlScript}, errors,
+			sr)
 		return nil
 	}
 	return task

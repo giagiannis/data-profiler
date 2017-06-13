@@ -259,9 +259,19 @@ function depictSamples() {
 <div>
 		<label for='appx'>Approximated values:<input type='checkbox' name='appx' id='appxCheckbox' onclick='depictAppxValues()' checked/></label>
 		<br/>
-		<label for='appx'>Samples:<input type='checkbox' name='samples' id='sampleCheckbox' onclick='depictSamples()' checked/></label>
+		<label for='samples'>Samples:<input type='checkbox' name='samples' id='sampleCheckbox' onclick='depictSamples()' checked/></label>
 		<br/>
-		<label for='appx'>Actual values:<input type='checkbox' name='actual' id='actualCheckbox' onclick='depictActualValues()'/></label>
+		<label for='actual'>Actual values:<input type='checkbox' name='actual' id='actualCheckbox' onclick='depictActualValues()'/></label>
+</div>
+<div>
+<h2>Error Metrics</h2>
+<table class='tablelist'>
+{{ range $k, $v := .Errors}}
+<tr><th>{{$k}}</th><td>{{$v}}</td></tr>
+{{end}}
+
+</table>
+
 </div>
 <script>
 if(scoresID=="") {

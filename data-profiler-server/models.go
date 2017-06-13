@@ -72,6 +72,7 @@ type ModelDatasetModel struct {
 	Dataset        *ModelDataset
 	SamplingRate   float64
 	Configuration  map[string]string
+	Errors         map[string]string
 	SamplesPath    string
 	AppxValuesPath string
 }
@@ -280,17 +281,7 @@ func modelSimilarityMatrixDelete(id string) *ModelSimilarityMatrix {
 		os.Remove(m.Path)
 		os.Remove(m.EstimatorPath)
 	}
-	db := dbConnect()
-	defer db.Close()
-	stmt, err := db.Prepare("DELETE FROM matrices WHERE id == ?")
-	if err != nil {
-		log.Println(err)
-	}
-	defer stmt.Close()
-	_, err = stmt.Exec(id)
-	if err != nil {
-		log.Println(err)
-	}
+	deleteByID("matrices", id)
 	return nil
 }
 
@@ -482,7 +473,7 @@ func modelOperatorScoresInsert(operatorID string, content []byte) *ModelOperator
 func modelDatasetModelInsert(
 	coordinatesID, operatorID, datasetID string,
 	samples, appxValues []byte,
-	conf map[string]string,
+	conf, errors map[string]string,
 	samplingRate float64) *ModelDatasetModel {
 	dts := modelDatasetGetInfo(datasetID)
 	samplesPath := writeBufferToFile(dts, "samples", samples)
@@ -491,8 +482,8 @@ func modelDatasetModelInsert(
 	defer db.Close()
 	stmt, err := db.Prepare(
 		"INSERT INTO models(coordinatesid, operatorid, datasetid, samplingrate, " +
-			"configuration, samplespath, appxvaluespath) " +
-			"VALUES(?,?,?,?,?,?,?)")
+			"configuration, samplespath, appxvaluespath, errors) " +
+			"VALUES(?,?,?,?,?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {
 		log.Println(err)
@@ -505,6 +496,7 @@ func modelDatasetModelInsert(
 		jsonToString(conf),
 		samplesPath,
 		appxValuesPath,
+		jsonToString(errors),
 	)
 	if err != nil {
 		log.Println(err)
@@ -518,17 +510,7 @@ func modelDatasetModelDelete(id string) *ModelDatasetModel {
 		os.Remove(m.SamplesPath)
 		os.Remove(m.AppxValuesPath)
 	}
-	db := dbConnect()
-	defer db.Close()
-	stmt, err := db.Prepare("DELETE FROM models WHERE id == ?")
-	if err != nil {
-		log.Println(err)
-	}
-	defer stmt.Close()
-	_, err = stmt.Exec(id)
-	if err != nil {
-		log.Println(err)
-	}
+	deleteByID("models", id)
 	return nil
 }
 
@@ -538,14 +520,14 @@ func modelDatasetModelGet(id string) *ModelDatasetModel {
 
 	rows, err := db.Query(
 		"SELECT id, coordinatesid, operatorid, datasetid, samplingrate, " +
-			"configuration, samplespath, appxvaluespath " +
+			"configuration, samplespath, appxvaluespath, errors " +
 			"FROM models WHERE id == " + id)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 	defer rows.Close()
-	confString := ""
+	confString, errorsString := "", ""
 	if rows.Next() {
 		obj := new(ModelDatasetModel)
 		coordinatesID, operatorID, datasetID := "", "", ""
@@ -556,7 +538,9 @@ func modelDatasetModelGet(id string) *ModelDatasetModel {
 			&obj.SamplingRate,
 			&confString,
 			&obj.SamplesPath,
-			&obj.AppxValuesPath)
+			&obj.AppxValuesPath,
+			&errorsString)
+		obj.Errors = stringToJSON(errorsString)
 		obj.Configuration = stringToJSON(confString)
 		obj.Coordinates = modelCoordinatesGet(coordinatesID)
 		obj.Operator = modelOperatorGet(operatorID)

@@ -50,7 +50,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"datasets/newop": {controllerDatasetNewOP, "forms/new_op_form.html"},
 	"mds/run":        {controllerMDSRun, "forms/new_mds_form.html"},
 	"coords/view":    {controllerCoordsView, "coords_view.html"},
-	"modeling/new":   {controllerDatasetModelNew, "forms/new_model_form.html"},
+	"modeling/new":   {controllerModelNew, "forms/new_model_form.html"},
 
 	// No GUI urls
 	"download/":       {controllerDownload, ""},

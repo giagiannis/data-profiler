@@ -291,7 +291,7 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 }
 
 // /modeling/new/new
-func controllerDatasetModelNew(w http.ResponseWriter, r *http.Request) Model {
+func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")
 	_, id, _ := parseURL(r.URL.Path)
 	if action != "submit" {
@@ -371,7 +371,8 @@ func controllerModelVisual(w http.ResponseWriter, r *http.Request) Model {
 		ApproximatedValues string
 		Coordinates        string
 		ScoresID           string
-	}{fileStr, string(samples), string(apprx), string(coordinates), scoresID}
+		Errors             map[string]string
+	}{fileStr, string(samples), string(apprx), string(coordinates), scoresID, m.Errors}
 }
 
 func controllerModelDelete(w http.ResponseWriter, r *http.Request) Model {
