@@ -12,3 +12,6 @@ scripts:
                 - _rscripts/pca.R
         ml:
                 "SVM" : "_rscripts/svm-appx.R"
+                "Simple Linear Regression" : "_rscripts/lm-appx.R"
+                "CART" : "_rscripts/cart-regression-appx.R"
+                "Artificial Neural Network" : "_rscripts/ann-regression-appx.R"

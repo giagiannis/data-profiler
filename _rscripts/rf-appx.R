@@ -20,6 +20,9 @@ test.data <- read.csv(testfile)
 fit <- svm(class ~ ., data=train.data)
 pred <- predict(fit, test.data)
 for (i in 1:length(pred)) {
+		#		cat(test.data$class[i])
+		#		cat("\t")
 		cat(pred[i])
 		cat("\n")
 }
+
