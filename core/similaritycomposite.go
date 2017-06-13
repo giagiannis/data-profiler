@@ -2,7 +2,7 @@ package core
 
 import (
 	"bytes"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
@@ -122,19 +122,13 @@ func (e *CompositeEstimator) Configure(conf map[string]string) {
 			e.concurrency = int(val)
 		} else if k == "expression" {
 			e.expression = v
-		} else {
-			estConf := DeserializeConfigurationOptions(v, "|")
-			if val, ok := estConf["type"]; ok {
-				estType := NewDatasetSimilarityEstimatorType(val)
-				if estType != nil {
-					est := NewDatasetSimilarityEstimator(*estType, e.datasets)
-					est.Configure(estConf)
-					e.estimators[k] = est
-				} else {
-					log.Println("Provided operator does not exist!")
-				}
+		} else { // one of x1,x2,... etc.
+			cnt, err := ioutil.ReadFile(v)
+			if err != nil {
+				log.Println(err)
 			} else {
-				// Other parameter
+				est := DeserializeSimilarityEstimator(cnt)
+				e.estimators[k] = est
 			}
 		}
 	}
@@ -147,39 +141,7 @@ func (e *CompositeEstimator) Options() map[string]string {
 		"expression": "the math expression that combines the estimators " +
 			"e.g.: 0.2*x + 0.8*y " +
 			"(x and y must be later defined)",
-		"x": "the conf parameters for x, separated by | e.g." +
-			"type:bhattacharyya|concurrency:10",
-		"y": "the conf parameters for y, separated by | e.g." +
-			"type:correlation|type:pearson",
+		"x": "the path of a a similarity estimator",
+		"y": "the path of another similarity estimator",
 	}
-}
-
-// SerializeConfigurationOptions is used to transform a map holding the conf
-// options into a map
-func SerializeConfigurationOptions(conf map[string]string, sep string) string {
-	output := ""
-	i := 0
-	for k, v := range conf {
-		output += fmt.Sprintf("%s:%s", k, v)
-		if i < len(conf)-1 {
-			output += sep
-		}
-		i++
-	}
-	return output
-}
-
-// DeserializeConfigurationOptions generates a map holding configuration options
-// based on the serialized form.
-func DeserializeConfigurationOptions(serialized, sep string) map[string]string {
-	result := make(map[string]string)
-	arr := strings.Split(serialized, sep)
-	for i := range arr {
-		temp := strings.Split(arr[i], ":")
-		if len(temp) != 2 {
-			return nil
-		}
-		result[temp[0]] = temp[1]
-	}
-	return result
 }

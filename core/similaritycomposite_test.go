@@ -1,18 +1,36 @@
 package core
 
 import (
-	"math/rand"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 )
 
 func TestCompositeCompute(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 10, 3)
+
+	x := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	x.Configure(nil)
+	x.Compute()
+	f1, _ := ioutil.TempFile("/tmp", "xest")
+	f1.Write(x.Serialize())
+	f1.Close()
+	defer os.Remove(f1.Name())
+
+	x = NewDatasetSimilarityEstimator(SimilarityTypeCorrelation, datasets)
+	x.Configure(nil)
+	x.Compute()
+	f2, _ := ioutil.TempFile("/tmp", "xest")
+	f2.Write(x.Serialize())
+	f2.Close()
+	defer os.Remove(f2.Name())
+
 	var configuration = map[string]string{
 		"concurrency": "10",
 		"expression":  "0.8*x + 0.2*y",
-		"x":           "type:bhattacharyya|tree.scale:0.5",
-		"y":           "type:jaccard|concurrency:10",
+		"x":           f1.Name(),
+		"y":           f2.Name(),
 	}
 	e := new(CompositeEstimator)
 	e.datasets = datasets
@@ -40,9 +58,9 @@ func TestCompositeConfiguration(t *testing.T) {
 			"*core.BhattacharyyaEstimator")
 		t.Fail()
 	}
-	if _, ok := (e.estimators["y"]).(*JaccardEstimator); !ok {
+	if _, ok := (e.estimators["y"]).(*CorrelationEstimator); !ok {
 		t.Logf("Expected type %s was not identified\n",
-			"*core.JaccardEstimator")
+			"*core.CorrelationEstimator")
 		t.Fail()
 	}
 
@@ -80,43 +98,28 @@ func TestCompositeSerialization(t *testing.T) {
 	cleanDatasets(datasets)
 }
 
-func TestConfigurationOptionsSerialization(t *testing.T) {
-	letters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
-		"l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
-	randomString := func(count int) string {
-		res := ""
-		for i := 0; i < count; i++ {
-			res += letters[rand.Int()%len(letters)]
-		}
-		return res
-	}
-	sep := "|"
-	conf := make(map[string]string)
-	numOfOptions := rand.Int() % 30
-	for i := 0; i < numOfOptions; i++ {
-		key, value := randomString(10), randomString(10)
-		conf[key] = value
-	}
-	output := SerializeConfigurationOptions(conf, sep)
-	newConf := DeserializeConfigurationOptions(output, sep)
-	if len(conf) != len(newConf) {
-		t.Logf("Expected conf of size %d, found %d\n", len(conf), len(newConf))
-		t.Fail()
-	}
-	for k, v := range conf {
-		if v != newConf[k] {
-			t.Logf("Expected value %s, found %s\n", v, newConf[k])
-			t.Fail()
-		}
-	}
-}
-
 func createCompositeEstimator(datasets []*Dataset) *CompositeEstimator {
+	x := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	x.Configure(nil)
+	x.Compute()
+	f1, _ := ioutil.TempFile("/tmp", "xest")
+	f1.Write(x.Serialize())
+	f1.Close()
+	defer os.Remove(f1.Name())
+
+	x = NewDatasetSimilarityEstimator(SimilarityTypeCorrelation, datasets)
+	x.Configure(nil)
+	x.Compute()
+	f2, _ := ioutil.TempFile("/tmp", "yest")
+	f2.Write(x.Serialize())
+	f2.Close()
+	defer os.Remove(f2.Name())
+
 	var configuration = map[string]string{
 		"concurrency": "10",
 		"expression":  "0.8*x + 0.2*y",
-		"x":           "type:bhattacharyya|tree.scale:0.5",
-		"y":           "type:jaccard|concurrency:10",
+		"x":           f1.Name(),
+		"y":           f2.Name(),
 	}
 	e := new(CompositeEstimator)
 	e.datasets = datasets
