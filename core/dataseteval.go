@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -96,6 +97,9 @@ type FileBasedEvaluator struct {
 // Evaluate returns the score for a given dataset
 func (e *FileBasedEvaluator) Evaluate(dataset string) (float64, error) {
 	val, ok := e.scores.Scores[dataset]
+	if !ok { // try without the path
+		val, ok = e.scores.Scores[path.Base(dataset)]
+	}
 	if !ok {
 		return -1, errors.New("Dataset not found")
 	}
