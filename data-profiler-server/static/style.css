@@ -90,3 +90,12 @@ div.center {
 		background: #aa0000;
 }
 
+#tabs .ui-tabs-active, #newsmform .ui-tabs-active{
+		background-color: #33AA22;
+		border: 1px solid #33AA22;
+		font-color: #FFFFFF;
+}
+
+ul {
+	list-style-type: none;
+}

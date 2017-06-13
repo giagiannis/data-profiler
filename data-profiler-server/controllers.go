@@ -124,7 +124,7 @@ func controllerSMDelete(w http.ResponseWriter, r *http.Request) Model {
 	datasetID := r.URL.Query().Get("datasetID")
 	_, id, _ := parseURL(r.URL.Path)
 	modelSimilarityMatrixDelete(id)
-	http.Redirect(w, r, "/datasets/"+datasetID, 307)
+	http.Redirect(w, r, "/datasets/"+datasetID+"#sm", 307)
 	return nil
 }
 
@@ -133,7 +133,7 @@ func controllerOperatorDelete(w http.ResponseWriter, r *http.Request) Model {
 	datasetID := r.URL.Query().Get("datasetID")
 	_, id, _ := parseURL(r.URL.Path)
 	modelOperatorDelete(id)
-	http.Redirect(w, r, "/datasets/"+datasetID, 307)
+	http.Redirect(w, r, "/datasets/"+datasetID+"#operators", 307)
 	return nil
 }
 
@@ -378,6 +378,6 @@ func controllerModelDelete(w http.ResponseWriter, r *http.Request) Model {
 	datasetID := r.URL.Query().Get("datasetID")
 	_, id, _ := parseURL(r.URL.Path)
 	modelDatasetModelDelete(id)
-	http.Redirect(w, r, "/datasets/"+datasetID, 307)
+	http.Redirect(w, r, "/datasets/"+datasetID+"#model", 307)
 	return nil
 }

@@ -9,14 +9,23 @@ Dataset Not Found
 {{ define "body" }}
 {{ if .  }}
 <h1>{{ .Name }}</h1>
-<div>
+<div id='tabs'>
+		<ul>
+				<li><a href='#details'>Details</a></li>
+				<li><a href='#files'>Files</a></li>
+				<li><a href='#sm'>Similarity Matrices</a></li>
+				<li><a href='#operators'>Operators</a></li>
+				<li><a href='#model'>Modeling</a></li>
+		</ul>
+<div id='details'>
 <h2>Details</h2>
 <table class='tablelist'>
 <tr><th>Path</th><td>{{.Path}}</td></tr>
 <tr><th>Description</th><td>{{.Description}}</td></tr>
 </table>
 </div>
-<div>
+
+<div id='files'>
 <h2>Files</h2>
 {{ if .Files }}
 <code style='width:800px;'>
@@ -33,7 +42,7 @@ No files found
 {{ end }}
 </div>
 
-<div>
+<div id='sm'>
 <h2>Similarity Matrices
 <button title="Estimate a new Similarity Matrix" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('/datasets/{{ $.ID}}/newsm', 'Estimate new Similarity Matrix');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
@@ -83,7 +92,7 @@ No similarity matrices found
 </div>
 
 
-<div>
+<div id='operators'>
 <h2>Operators
 <button title="Insert a new operator for this dataset" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('/datasets/{{ $.ID}}/newop', 'Insert operator');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
@@ -126,8 +135,8 @@ No operators found
 {{ end }}
 </div>
 
-<div>
-<h2>Dataset Modeling
+<div id='model'>
+<h2>Modeling
 <!--
 		FIXME: this button must create a popup form asking for modeling parameters!
 		<button title="Create a new operator model" style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="createPopup('#', 'Create model');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
@@ -180,6 +189,10 @@ onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span clas
 No models found
 {{end}}
 </div>
+</div>
+<script>
+$("#tabs").tabs();
+</script>
 {{else}}
 <h2>Dataset Not Found</h2>
 {{end}}
