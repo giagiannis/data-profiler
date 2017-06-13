@@ -27,6 +27,9 @@ type Modeler interface {
 	Samples() map[int]float64
 	// AppxValues returns a slice of the approximated values
 	AppxValues() []float64
+
+	// ErrorMetrics returns a list of error metrics for the specified modeler
+	ErrorMetrics() map[string]float64
 }
 
 // NewModeler is the factory method for the modeler object
@@ -68,6 +71,28 @@ func (a *AbstractModeler) Samples() map[int]float64 {
 // AppxValues returns the values of all the datasets
 func (a *AbstractModeler) AppxValues() []float64 {
 	return a.appxValues
+}
+
+// ErrorMetrics returns a list of error metrics for the specified model
+func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
+	if a.appxValues == nil || len(a.appxValues) == 0 {
+		return nil
+	}
+	// evaluation for entire dataset
+	var actual []float64
+	for _, d := range a.datasets {
+		val, err := a.evaluator.Evaluate(d.Path())
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+		actual = append(actual, val)
+	}
+	errors := make(map[string]float64)
+	errors["MSE-all"] = MeanSquaredError(actual, a.appxValues)
+	errors["MAPE-all"] = MeanAbsolutePercentageError(actual, a.appxValues)
+	errors["R^2-all"] = RSquared(actual, a.appxValues)
+	return errors
 }
 
 // ScriptBasedModeler utilizes a script to train an ML model and obtain is values
@@ -181,4 +206,50 @@ func createCSVFile(matrix [][]float64, output bool) string {
 	}
 	f.Close()
 	return f.Name()
+}
+
+// MeanSquaredError returns the MSE of the actual vs the predicted values
+func MeanSquaredError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	sum := 0.0
+	for i := range actual {
+		diff := actual[i] - predicted[i]
+		sum += diff * diff
+	}
+	return 1.0 / float64(len(actual)) * sum
+}
+
+// MeanPercentageError returns the MPE of the actual vs the predicted values
+func MeanAbsolutePercentageError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	sum := 0.0
+	count := 0.0
+	for i := range actual {
+		if actual[i] != 0.0 {
+			count += 1.0
+			sum += math.Abs((actual[i] - predicted[i]) / actual[i])
+		}
+	}
+	return (1.0 / count) * sum
+}
+
+// RSquared returns the coeff. of determination of the actual vs the predicted values
+func RSquared(actual, predicted []float64) float64 {
+	if len(predicted) != len(actual) || len(predicted) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	mean := Mean(actual)
+	ssRes, ssTot := 0.0, 0.0
+	for i := range actual {
+		ssTot += (actual[i] - mean) * (actual[i] - mean)
+		ssRes += (actual[i] - predicted[i]) * (actual[i] - predicted[i])
+	}
+	return 1.0 - (ssRes / ssTot)
 }
