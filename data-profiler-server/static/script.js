@@ -246,36 +246,36 @@ function colorizePoints(obj) {
 						}
 						colorRegions[idx].count  =colorRegions[idx].count+1
 						if (c!=undefined ){
-							r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
-							rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
-							data[i].color = rgbString 
+								r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
+								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+								data[i].color = rgbString 
 						}
 				}
 				legendDiv = "<table class='tablelist' style='font-weight:bold;'>\n";
 				legendDiv = legendDiv+"<tr><th>#</th><th>min</th><th>max</th><th>#points</th></tr>"
 				for(var i=0;i<colScales.length;i++) {
 						if (c!=undefined ){
-						c = colScales[i]
-						r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
-						rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
-						if (colorRegions[i] == undefined) {
-								legendDiv = legendDiv +
-								"<tr style='color:"+rgbString+"'>"+
-								"<td>"+parseInt(i+1)+"</td>"+
-								"<td style='text-align:right;'>-</td>"+
-								"<td style='text-align:right;'>-</td>"+
-								"<td style='text-align:right;'>0</td>"+
-								"</tr> ";
+								c = colScales[i]
+								r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
+								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+								if (colorRegions[i] == undefined) {
+										legendDiv = legendDiv +
+												"<tr style='color:"+rgbString+"'>"+
+												"<td>"+parseInt(i+1)+"</td>"+
+												"<td style='text-align:right;'>-</td>"+
+												"<td style='text-align:right;'>-</td>"+
+												"<td style='text-align:right;'>0</td>"+
+												"</tr> ";
 
-						} else {
-						legendDiv = legendDiv +
-								"<tr style='color:"+rgbString+"'>"+
-								"<td>"+parseInt(i+1)+"</td>"+
-								"<td style='text-align:right;'>"+colorRegions[i].min.toFixed(2)+"</td>"+
-								"<td style='text-align:right;'>"+colorRegions[i].max.toFixed(2)+"</td>"+
-								"<td style='text-align:right;'>"+colorRegions[i].count+"</td>"+
-								"</tr> ";
-						}
+								} else {
+										legendDiv = legendDiv +
+												"<tr style='color:"+rgbString+"'>"+
+												"<td>"+parseInt(i+1)+"</td>"+
+												"<td style='text-align:right;'>"+colorRegions[i].min.toFixed(2)+"</td>"+
+												"<td style='text-align:right;'>"+colorRegions[i].max.toFixed(2)+"</td>"+
+												"<td style='text-align:right;'>"+colorRegions[i].count+"</td>"+
+												"</tr> ";
+								}
 						}
 				}
 				legendDiv = legendDiv + "</table>";

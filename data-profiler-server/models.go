@@ -31,6 +31,7 @@ type ModelDataset struct {
 	Files       []string
 	Operators   []*ModelOperator
 	Matrices    []*ModelSimilarityMatrix
+	Models      []*ModelDatasetModel
 }
 
 // ModelOperator is the struct that represents an operator for a given dataset
@@ -66,9 +67,9 @@ type ModelCoordinates struct {
 // ModelDatasetModel represents a model of an operator for a given stuff
 type ModelDatasetModel struct {
 	ID             string
-	CoordinatesID  string
-	OperatorID     string
-	DatasetID      string
+	Coordinates    *ModelCoordinates
+	Operator       *ModelOperator
+	Dataset        *ModelDataset
 	SamplingRate   float64
 	Configuration  map[string]string
 	SamplesPath    string
@@ -146,13 +147,34 @@ func modelDatasetGetInfo(id string) *ModelDataset {
 	return nil
 }
 
+func modelDatasetGet(id string) *ModelDataset {
+	db := dbConnect()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT * FROM datasets WHERE id == " + id)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+	if rows.Next() {
+		obj := new(ModelDataset)
+		rows.Scan(&obj.ID, &obj.Path, &obj.Name, &obj.Description)
+		obj.Matrices = modelSimilarityMatrixGetByDataset(obj.ID)
+		obj.Models = modelDatasetModelGetByDataset(obj.ID)
+		obj.Operators = modelOperatorGetByDataset(obj.ID)
+		obj.Files = modelDatasetGetFiles(obj.ID)
+		return obj
+	}
+	return nil
+}
 func modelDatasetGetFiles(id string) []string {
 	var results []string
 	m := modelDatasetGetInfo(id)
 	if m == nil {
 		return nil
 	}
-	path := modelDatasetGetInfo(id).Path
+	path := m.Path
 	fs, err := ioutil.ReadDir(path)
 	if err != nil {
 		log.Println(err)
@@ -490,6 +512,26 @@ func modelDatasetModelInsert(
 	return nil
 }
 
+func modelDatasetModelDelete(id string) *ModelDatasetModel {
+	m := modelDatasetModelGet(id)
+	if m != nil {
+		os.Remove(m.SamplesPath)
+		os.Remove(m.AppxValuesPath)
+	}
+	db := dbConnect()
+	defer db.Close()
+	stmt, err := db.Prepare("DELETE FROM models WHERE id == ?")
+	if err != nil {
+		log.Println(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println(err)
+	}
+	return nil
+}
+
 func modelDatasetModelGet(id string) *ModelDatasetModel {
 	db := dbConnect()
 	defer db.Close()
@@ -506,15 +548,19 @@ func modelDatasetModelGet(id string) *ModelDatasetModel {
 	confString := ""
 	if rows.Next() {
 		obj := new(ModelDatasetModel)
+		coordinatesID, operatorID, datasetID := "", "", ""
 		rows.Scan(&obj.ID,
-			&obj.CoordinatesID,
-			&obj.OperatorID,
-			&obj.DatasetID,
+			&coordinatesID,
+			&operatorID,
+			&datasetID,
 			&obj.SamplingRate,
 			&confString,
 			&obj.SamplesPath,
 			&obj.AppxValuesPath)
 		obj.Configuration = stringToJSON(confString)
+		obj.Coordinates = modelCoordinatesGet(coordinatesID)
+		obj.Operator = modelOperatorGet(operatorID)
+		obj.Dataset = modelDatasetGetInfo(datasetID)
 		return obj
 	}
 	return nil
@@ -536,15 +582,19 @@ func modelDatasetModelGetByDataset(datasetID string) []*ModelDatasetModel {
 	confString := ""
 	for rows.Next() {
 		obj := new(ModelDatasetModel)
+		coordinatesID, operatorID, datasetID := "", "", ""
 		rows.Scan(&obj.ID,
-			&obj.CoordinatesID,
-			&obj.OperatorID,
-			&obj.DatasetID,
+			&coordinatesID,
+			&operatorID,
+			&datasetID,
 			&obj.SamplingRate,
 			&confString,
 			&obj.SamplesPath,
 			&obj.AppxValuesPath)
 		obj.Configuration = stringToJSON(confString)
+		obj.Coordinates = modelCoordinatesGet(coordinatesID)
+		obj.Operator = modelOperatorGet(operatorID)
+		obj.Dataset = modelDatasetGetInfo(datasetID)
 		results = append(results, obj)
 	}
 	return results
@@ -631,6 +681,7 @@ func jsonToString(conf map[string]string) string {
 	}
 	return string(confString)
 }
+
 func stringToJSON(confString string) map[string]string {
 	conf := make(map[string]string)
 	err := json.Unmarshal([]byte(confString), &conf)

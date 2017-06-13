@@ -20,14 +20,7 @@ func controllerDatasetList(w http.ResponseWriter, r *http.Request) Model {
 // /datasets/<id>/
 func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	_, id, _ := parseURL(r.URL.Path)
-	m := modelDatasetGetInfo(id)
-	if m != nil {
-		files := modelDatasetGetFiles(m.ID)
-		m.Files = files
-		m.Matrices = modelSimilarityMatrixGetByDataset(m.ID)
-		//	m.Estimators = modelDatasetGetEstimators(m.ID)
-		m.Operators = modelOperatorGetByDataset(m.ID)
-	}
+	m := modelDatasetGet(id)
 	return m
 }
 
@@ -67,6 +60,7 @@ func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 		if m != nil {
 			filePath = m.SamplesPath
 		}
+		log.Println(m)
 	} else if fileType == "appx" {
 		m := modelDatasetModelGet(id)
 		if m != nil {
@@ -351,5 +345,39 @@ func controllerScoresText(w http.ResponseWriter, r *http.Request) Model {
 		buffer.WriteString(fmt.Sprintf("%s:%.5f\n", k, v))
 	}
 	w.Write(buffer.Bytes())
+	return nil
+}
+
+// /modeling/<id>/visual
+func controllerModelVisual(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	m := modelDatasetModelGet(id)
+	samples, _ := ioutil.ReadFile(m.SamplesPath)
+	apprx, _ := ioutil.ReadFile(m.AppxValuesPath)
+	coordinates, _ := ioutil.ReadFile(m.Coordinates.Path)
+	files := modelDatasetGetFiles(m.Dataset.ID)
+	fileStr := ""
+	for _, f := range files {
+		fileStr += f + "\n"
+	}
+	scoresID := ""
+	if m.Operator.ScoresFile != "" {
+		scoresID = m.Operator.ID
+	}
+
+	return struct {
+		Labels             string
+		Samples            string
+		ApproximatedValues string
+		Coordinates        string
+		ScoresID           string
+	}{fileStr, string(samples), string(apprx), string(coordinates), scoresID}
+}
+
+func controllerModelDelete(w http.ResponseWriter, r *http.Request) Model {
+	datasetID := r.URL.Query().Get("datasetID")
+	_, id, _ := parseURL(r.URL.Path)
+	modelDatasetModelDelete(id)
+	http.Redirect(w, r, "/datasets/"+datasetID, 307)
 	return nil
 }

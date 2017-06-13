@@ -23,6 +23,8 @@ var templateDependencies = map[string][]string{
 	"error.html":         {"base.html"},
 	"sm_heatmap.html":    {"base.html"},
 	"coords_visual.html": {"base.html"},
+	"model_visual.html":  {"base.html"},
+
 	// The rest are popups
 	"forms/new_sm_form.html":      {},
 	"forms/new_op_form.html":      {},
@@ -40,7 +42,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"tasks/":          {controllerTasksList, "tasks.html"},
 	"sm/visual":       {controllerSMVisual, "sm_heatmap.html"},
 	"coords/visual":   {controllerCoordsVisual, "coords_visual.html"},
-	"modeling/visual": {nil, ""}, // FIXME
+	"modeling/visual": {controllerModelVisual, "model_visual.html"},
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},
@@ -56,6 +58,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"sm/delete":       {controllerSMDelete, ""},
 	"operator/run":    {controllerOperatorRun, ""},
 	"operator/delete": {controllerOperatorDelete, ""},
+	"modeling/delete": {controllerModelDelete, ""},
 	"scores/text":     {controllerScoresText, ""},
 
 	// TODO: implement these URLs

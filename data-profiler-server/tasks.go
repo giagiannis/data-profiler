@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -190,6 +191,7 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 		c := modelCoordinatesGet(coordinatesID)
 		buf, err := ioutil.ReadFile(c.Path)
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 		var coordinates []core.DatasetCoordinates
@@ -205,6 +207,7 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 			log.Println(o.Path)
 		}
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 
@@ -212,12 +215,15 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 		modeler.Configure(map[string]string{"script": mlScript})
 		err = modeler.Run()
 		if err != nil {
+			log.Println(err)
 			return err
 		}
-		log.Println(modeler.AppxValues())
-		log.Println(modeler.Samples())
-		log.Println(modeler.Datasets())
-		// TODO: write down results
+		// serialze appxValues
+		var cnt [][]float64
+		cnt = append(cnt, modeler.AppxValues())
+		appxBuffer := serializeCSVFile(cnt)
+		samplesBuffer, _ := json.Marshal(modeler.Samples())
+		modelDatasetModelInsert(coordinatesID, operatorID, datasetID, samplesBuffer, appxBuffer, map[string]string{"script": mlScript}, sr)
 		return nil
 	}
 	return task
