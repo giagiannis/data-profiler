@@ -149,10 +149,17 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 		for _, f := range Conf.Scripts.Analysis {
 			scripts[f] = path.Base(f)
 		}
+		sms := modelSimilarityMatrixGetByDataset(id)
+		matrices := make(map[string]string)
+		for _, s := range sms {
+			matrices[s.EstimatorPath] = s.Filename
+		}
+
 		return struct {
-			ID      string
-			Scripts map[string]string
-		}{ID: m.ID, Scripts: scripts}
+			ID       string
+			Scripts  map[string]string
+			Matrices map[string]string
+		}{ID: m.ID, Scripts: scripts, Matrices: matrices}
 	}
 	err := r.ParseForm()
 	if err != nil {

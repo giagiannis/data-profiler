@@ -99,17 +99,16 @@
 <div id='composite'>
 <h3>Composite Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
-<table class='tablelist'>
+<table class='tablelist' id='compositetable'>
 <tr><th>No. threads</th><td><input type='text' name='concurrency' value='1'  class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
-<tr><th>Expression</th><td><input type='text' name='expression' value='0.5*x1+0.5*x2' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
-<tr><th>x1</th><td><input type='text' name='x1' value='type:bhattacharyya|tree.scale:0.8' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
-<tr>
-		<th>x2</th>
-		<td><input type='text' name='x2' value='type:correlation|correlation:pearson|column:2|normalization:pos' class='ui-widget ui-widget-content ui-corner-all'/>
-		</td>
-</tr>
+<tr><th>Expression</th><td><input type='text' name='expression' value='x1' class='ui-widget ui-widget-content ui-corner-all'  /></td></tr>
+
+<tr id='templaterow'><th>x1</th><td><select name='x1'><option></option>{{ range $k,$v:= $.Matrices }}<option value='{{$k}}'>{{$v}}</option>{{ end }}</select></td></tr>
 <input type='hidden' name='estimatorType' value='composite'/>
 </table>
+<div style='text-align:right'>
+<label onclick='addInput()'>Add parameter</label>
+</div>
 {{ template "appx" . }}
 <br/>
 <span style='float:right'>
@@ -117,6 +116,14 @@
 </span>
 </form>
 </div>
+<script>
+function addInput() {
+		a = "<tr>"+$("#templaterow").clone().html()+"</tr>";
+		rows = $("#compositetable tr").length;
+		b = a.split("x1").join("x"+(rows-1))
+		$("#compositetable tr:last").after(b);
+}
+</script>
 
 <div id='script'>
 <h3>Script Estimator Parameters</h3>
@@ -159,5 +166,4 @@
 
 <script type='text/javascript'>
 $( "div[name=tabs]" ).tabs();
-$( "select" ).selectmenu();
 </script>
