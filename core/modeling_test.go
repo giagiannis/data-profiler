@@ -54,4 +54,46 @@ func TestScriptBasedModelerRun(t *testing.T) {
 	}
 
 	cleanDatasets(datasets)
+
+}
+
+func TestErrorMetrics(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 50, 3)
+	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	e.Configure(map[string]string{"partitions": "256"})
+	e.Compute()
+	sm := e.SimilarityMatrix()
+
+	mds := NewMDScaling(sm, 3, mdsScript)
+	mds.Compute()
+	coords := mds.Coordinates()
+
+	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
+		"script":  operatorScript,
+		"testset": "",
+	})
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	m := NewModeler(datasets, 0.2, coords, eval)
+
+	m.Configure(map[string]string{"script": mlScriptAppx})
+	if m.ErrorMetrics() != nil {
+		t.Log("ErrorMetrics should have been nil")
+		t.Fail()
+	}
+	err = m.Run()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	metrics := m.ErrorMetrics()
+	if metrics["MSE-all"] < 0 || metrics["R^2-all"] > 1.0 || metrics["R^2-all"] < 0.0 {
+		t.Log("Wrong metric values")
+		t.Fail()
+	}
+	cleanDatasets(datasets)
 }
