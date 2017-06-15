@@ -1,17 +1,17 @@
 ---
 server: 
-    listen: "0.0.0.0:8080"
+    listen: 0.0.0.0:8080
     dirs:
-            templates: "data-profiler-server/templates"
-            static: "data-profiler-server/static"
-database: "sqlite3.db"
+            templates: data-profiler-server/templates
+            static: data-profiler-server/static
+database: sqlite3.db
 logfile: ""
 scripts:
-        mds: "_rscripts/mdscaling.R"
+        mds: _rscripts/mdscaling.R
         analysis:
                 - _rscripts/pca.R
         ml:
-                "SVM" : "_rscripts/svm-appx.R"
-                "Simple Linear Regression" : "_rscripts/lm-appx.R"
-                "CART" : "_rscripts/cart-regression-appx.R"
-                "Artificial Neural Network" : "_rscripts/ann-regression-appx.R"
+                SVM : _rscripts/svm-appx.R
+                Simple Linear Regression : _rscripts/lm-appx.R
+                CART : _rscripts/cart-regression-appx.R
+                Artificial Neural Network : _rscripts/ann-regression-appx.R
