@@ -1,0 +1,17 @@
+---
+server: 
+    listen: 0.0.0.0:8080
+    dirs:
+            templates: /opt/src/github.com/giagiannis/data-profiler/data-profiler-server/templates
+            static: /opt/src/github.com/giagiannis/data-profiler/data-profiler-server/static
+database: /opt/src/github.com/giagiannis/data-profiler/sqlite3.db
+logfile: ""
+scripts:
+        mds: /opt/src/github.com/giagiannis/data-profiler/_rscripts/mdscaling.R
+        analysis:
+                - /opt/src/github.com/giagiannis/data-profiler/_rscripts/pca.R
+        ml:
+                SVM : /opt/src/github.com/giagiannis/data-profiler/_rscripts/svm-appx.R
+                Simple Linear Regression : /opt/src/github.com/giagiannis/data-profiler/_rscripts/lm-appx.R
+                CART : /opt/src/github.com/giagiannis/data-profiler/_rscripts/cart-regression-appx.R
+                Artificial Neural Network : /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx.R
