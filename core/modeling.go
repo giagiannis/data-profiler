@@ -222,7 +222,7 @@ func MeanSquaredError(actual, predicted []float64) float64 {
 	return 1.0 / float64(len(actual)) * sum
 }
 
-// MeanPercentageError returns the MPE of the actual vs the predicted values
+// MeanAbsolutePercentageError returns the MAPE of the actual vs the predicted values
 func MeanAbsolutePercentageError(actual, predicted []float64) float64 {
 	if len(actual) != len(predicted) || len(actual) == 0 {
 		log.Println("actual and predicted values are of different size!!")

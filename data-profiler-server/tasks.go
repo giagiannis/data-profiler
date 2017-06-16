@@ -181,6 +181,8 @@ func NewOperatorRunTask(operatorID string) *Task {
 	return task
 }
 
+// NewModelTrainTask generates a new ML for a given (dataset,operator) combination,
+// according to the user-specified parameters.
 func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr float64) *Task {
 	m := modelDatasetGetInfo(datasetID)
 	task := new(Task)
