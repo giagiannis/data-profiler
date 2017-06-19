@@ -12,7 +12,7 @@ RUN apt-get update && \
 		r-base \
 		sqlite3 && \
 	echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla && \
-	echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla
+	echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla && \
 	curl -sL -o gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme && \
 	chmod +x ./gimme
 

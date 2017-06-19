@@ -1,35 +1,49 @@
 data-profiler [![Build Status](https://travis-ci.org/giagiannis/data-profiler.svg?branch=master)](https://travis-ci.org/giagiannis/data-profiler) [![goreport](https://goreportcard.com/badge/github.com/giagiannis/data-profiler)](https://goreportcard.com/report/github.com/giagiannis/data-profiler) [![Coverage Status](https://coveralls.io/repos/github/giagiannis/data-profiler/badge.svg?branch=master)](https://coveralls.io/github/giagiannis/data-profiler?branch=master) [![Docker Automated build](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)](https://hub.docker.com/r/ggian/data-profiler/)
 =============
-data-profiler is a project used to perform data profiling in an operator agnostic way.
+__data-profiler__ is a Go project used to transform a set of datasets, based on a set of characteristics (distribution similarity, correlation, etc.), in order to model the behavior of an operator, applied on top of them using Machine Learning techniques.
 
 Installation
 ------------
-You must install golang prior to the following installation:
+You have two ways of installing __data-profiler__:
+
+1. Through Go:
+
 ```bash
-# GOPATH must be created and set
-go get github.com/giagiannis/data-profiler
-cd $GOPATH/src/
-go install ./...
+# GOPATH must be set
+~> go get github.com/giagiannis/data-profiler
+```
+
+2. Using Docker:
+
+```bash
+~> docker pull ggian/data-profiler
 ```
 
 Usage
 -----
-Use the data-profiler-utils binary to use this project
+__data-profiler__ can be used both through a CLI and a Web interface.
 
-Example 1: estimating similarities using the Bhattacharyya coefficient
+1. CLI 
+
+You can access the CLI client through the __data-profiler-utils__ binary.
+
 ```bash
-$GOPATH/bin/data-profiler-utils similarities -i <INPUT DIR> -o <OUTPUT FILE> -l <LOG FILE> -opt tree.scale=0.5
+~> $GOPATH/bin/data-profiler-utils
 ```
 
-Example 2: estimating an approximate similarity matrix with 100 datasets using the Bhattacharyya coefficient
+This previous command will give an overview of the available actions.
+
+__Note:__ use this client only if you know how data-profiler works.
+
+2. Web UI
+
+First run the Docker container, providing a directory with the dataset files. 
+
 ```bash
-$GOPATH/bin/data-profiler-utils similarities -i <INPUT DIR> -o <OUTPUT FILE> -l <LOG FILE> -opt tree.scale=0.5 -p APRX,count=100
+~> docker run -v /src/datasets:/datasets -p 8080:8080 -d ggian/data-profiler
 ```
 
-Example 3: transforming a similarity matrix to a Dataset Space using 3 dimensions
-```bash
-$GOPATH/bin/data-profiler-utils mds -k 3 -o <OUTPUT> -sc $GOPATH/src/github.com/giagiannis/data-profiler/_rscripts/mdscaling.R -sim <SIMILARITY MATRIX>
-```
+This command mounts the host's _/src/datasets_ directory to the container and forwards the host's 8080 port to the container. After the successful start of the container, go to _http://dockerhost:8080_ and insert the first set of datasets for analysis.
 
 
 License
