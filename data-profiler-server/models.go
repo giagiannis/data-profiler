@@ -556,7 +556,7 @@ func modelDatasetModelGetByDataset(datasetID string) []*ModelDatasetModel {
 	var results []*ModelDatasetModel
 
 	rows, err := db.Query("SELECT id, coordinatesid, operatorid, datasetid, samplingrate, " +
-		"configuration, samplespath, appxvaluespath " +
+		"configuration, samplespath, appxvaluespath,errors " +
 		"FROM models WHERE datasetid == " + datasetID)
 	if err != nil {
 		log.Println(err)
@@ -566,7 +566,7 @@ func modelDatasetModelGetByDataset(datasetID string) []*ModelDatasetModel {
 	confString := ""
 	for rows.Next() {
 		obj := new(ModelDatasetModel)
-		coordinatesID, operatorID, datasetID := "", "", ""
+		coordinatesID, operatorID, datasetID, errorsString := "", "", "", ""
 		rows.Scan(&obj.ID,
 			&coordinatesID,
 			&operatorID,
@@ -574,11 +574,13 @@ func modelDatasetModelGetByDataset(datasetID string) []*ModelDatasetModel {
 			&obj.SamplingRate,
 			&confString,
 			&obj.SamplesPath,
-			&obj.AppxValuesPath)
+			&obj.AppxValuesPath,
+			&errorsString)
 		obj.Configuration = stringToJSON(confString)
 		obj.Coordinates = modelCoordinatesGet(coordinatesID)
 		obj.Operator = modelOperatorGet(operatorID)
 		obj.Dataset = modelDatasetGetInfo(datasetID)
+		obj.Errors = stringToJSON(errorsString)
 		results = append(results, obj)
 	}
 	return results
