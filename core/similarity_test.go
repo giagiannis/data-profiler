@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"math"
 	"math/rand"
 	"testing"
 )
@@ -158,9 +159,12 @@ func TestDeserializeSimilarityEstimator(t *testing.T) {
 		newEst := DeserializeSimilarityEstimator(buf)
 		idxA, idxB := rand.Intn(len(datasets)), rand.Intn(len(datasets))
 		a, b := datasets[idxA], datasets[idxB]
-		if newEst.Similarity(a, b) != est.Similarity(a, b) ||
-			newEst.Similarity(a, b) != est.SimilarityMatrix().Get(idxA, idxB) {
+		val1, val2 := newEst.Similarity(a, b), est.Similarity(a, b)
+		if val1 != val2 && !math.IsNaN(val1) && !math.IsNaN(val2) {
 			t.Log("Deserialization error")
+			t.Log(est.Similarity(a, b))
+			t.Log(newEst.SimilarityMatrix())
+			t.Log(est.SimilarityMatrix())
 			t.Fail()
 		}
 	}
