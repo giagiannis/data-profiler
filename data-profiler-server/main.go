@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -61,6 +63,7 @@ func main() {
 	if Conf == nil {
 		os.Exit(1)
 	}
+	rand.Seed(int64(time.Now().Nanosecond()))
 	setLogger(Conf.Logfile)
 	TEngine = NewTaskEngine()
 
@@ -68,7 +71,10 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", uiHandler)
 	http.HandleFunc("/api/", restHandler)
-	http.ListenAndServe(Conf.Server.Listen, nil)
+	err := http.ListenAndServe(Conf.Server.Listen, nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func setLogger(logfile string) {
