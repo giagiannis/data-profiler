@@ -84,9 +84,9 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 		val, err := a.evaluator.Evaluate(d.Path())
 		if err != nil {
 			log.Println(err)
-			return nil
+		} else {
+			actual = append(actual, val)
 		}
-		actual = append(actual, val)
 	}
 	errors := make(map[string]float64)
 	errors["MSE-all"] = MeanSquaredError(actual, a.appxValues)
