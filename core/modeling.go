@@ -121,16 +121,21 @@ func (m *ScriptBasedModeler) Run() error {
 	permutation := rand.Perm(len(m.datasets))
 	s := int(math.Floor(m.samplingRate * float64(len(m.datasets))))
 	m.samples = make(map[int]float64)
+
 	// deploy samples
 	var trainingSet, testSet [][]float64
-	for _, idx := range permutation[:s] {
+	for i := 0; i < len(permutation) && (len(m.samples) < s); i++ {
+		idx := permutation[i]
 		val, err := m.evaluator.Evaluate(m.datasets[idx].Path())
 		if err != nil {
-			return err
+			log.Printf("%s: %s\n", m.datasets[idx].Path(), err.Error())
+		} else {
+			m.samples[idx] = val
+			trainingSet = append(trainingSet, append(m.coordinates[idx], val))
 		}
-		m.samples[idx] = val
-		trainingSet = append(trainingSet, append(m.coordinates[idx], val))
+
 	}
+	log.Println("Picked", len(m.samples), "out of the requested", s, "samples")
 	trainFile := createCSVFile(trainingSet, true)
 	for _, v := range m.coordinates {
 		testSet = append(testSet, v)

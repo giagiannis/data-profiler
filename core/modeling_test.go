@@ -1,6 +1,10 @@
 package core
 
-import "testing"
+import (
+	"math/rand"
+	"os"
+	"testing"
+)
 
 func TestScriptBasedModelerConfiguration(t *testing.T) {
 	m := new(ScriptBasedModeler)
@@ -18,26 +22,11 @@ func TestScriptBasedModelerConfiguration(t *testing.T) {
 
 func TestScriptBasedModelerRun(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 3)
-	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
-	e.Configure(map[string]string{"partitions": "256"})
-	e.Compute()
-	sm := e.SimilarityMatrix()
-
-	mds := NewMDScaling(sm, 3, mdsScript)
-	mds.Compute()
-	coords := mds.Coordinates()
-
-	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
-		"script":  operatorScript,
-		"testset": "",
-	})
+	m, err := createModeler(datasets)
 	if err != nil {
 		t.Log(err)
-		t.FailNow()
+		t.Fail()
 	}
-
-	m := NewModeler(datasets, 0.2, coords, eval)
-
 	m.Configure(map[string]string{"script": mlScriptAppx})
 	err = m.Run()
 	if err != nil {
@@ -59,25 +48,11 @@ func TestScriptBasedModelerRun(t *testing.T) {
 
 func TestErrorMetrics(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 3)
-	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
-	e.Configure(map[string]string{"partitions": "256"})
-	e.Compute()
-	sm := e.SimilarityMatrix()
-
-	mds := NewMDScaling(sm, 3, mdsScript)
-	mds.Compute()
-	coords := mds.Coordinates()
-
-	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
-		"script":  operatorScript,
-		"testset": "",
-	})
+	m, err := createModeler(datasets)
 	if err != nil {
 		t.Log(err)
-		t.FailNow()
+		t.Fail()
 	}
-
-	m := NewModeler(datasets, 0.2, coords, eval)
 
 	m.Configure(map[string]string{"script": mlScriptAppx})
 	if m.ErrorMetrics() != nil {
@@ -96,4 +71,63 @@ func TestErrorMetrics(t *testing.T) {
 		t.Fail()
 	}
 	cleanDatasets(datasets)
+}
+
+func TestScriptBasedModelerMissingDatasets(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 50, 3)
+	noDeletedDatasets := 47
+	m, err := createModeler(datasets)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	permutation := rand.Perm(len(datasets))
+	for i := 0; i < noDeletedDatasets; i++ {
+		path := datasets[permutation[i]].Path()
+		os.Remove(path)
+		t.Log("Removing", path)
+	}
+
+	m.Configure(map[string]string{"script": mlScriptAppx})
+	err = m.Run()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	if m.Samples() == nil || len(m.Samples()) == 0 {
+		t.Log("Should have created samples")
+		t.Fail()
+	}
+	if len(m.AppxValues()) != len(m.Datasets()) {
+		t.Log("Wrong number of approximated values")
+		t.Fail()
+	}
+	if len(m.Samples()) != (50 - noDeletedDatasets) {
+		t.Log("Expected", noDeletedDatasets, "samples and got", len(m.Samples()))
+		t.Fail()
+	}
+
+	cleanDatasets(datasets)
+}
+
+func createModeler(datasets []*Dataset) (Modeler, error) {
+	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	e.Configure(map[string]string{"partitions": "256"})
+	e.Compute()
+	sm := e.SimilarityMatrix()
+
+	mds := NewMDScaling(sm, 3, mdsScript)
+	mds.Compute()
+	coords := mds.Coordinates()
+
+	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
+		"script":  operatorScript,
+		"testset": "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	m := NewModeler(datasets, 0.2, coords, eval)
+	return m, nil
 }
