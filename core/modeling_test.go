@@ -85,7 +85,6 @@ func TestScriptBasedModelerMissingDatasets(t *testing.T) {
 	for i := 0; i < noDeletedDatasets; i++ {
 		path := datasets[permutation[i]].Path()
 		os.Remove(path)
-		t.Log("Removing", path)
 	}
 
 	m.Configure(map[string]string{"script": mlScriptAppx})
