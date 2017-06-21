@@ -18,7 +18,7 @@ scripts:
                 Artificial Neural Network (2): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-2.R
                 Artificial Neural Network (3): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-3.R
                 Artificial Neural Network (4): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-4.R
-                Artificial Neural Network (5): _rscripts/ann-regression-appx-5.R
+                Artificial Neural Network (5): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-5.R
                 Artificial Neural Network (2,2): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-2-2.R
                 Artificial Neural Network (2,3): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-2-3.R
                 Artificial Neural Network (2,4): /opt/src/github.com/giagiannis/data-profiler/_rscripts/ann-regression-appx-2-4.R
