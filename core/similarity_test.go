@@ -238,7 +238,7 @@ func smSanityCheck(s *DatasetSimilarityMatrix, t *testing.T) {
 		t.Fail()
 	}
 	zeros, ones := smGetCountOfOnesAndZeros(s)
-	if zeros > s.Capacity()*s.Capacity()/2 {
+	if zeros > 3*s.Capacity()*s.Capacity()/4 {
 		t.Logf("Too many zero elements found (%d)\n", zeros)
 		t.Fail()
 	}

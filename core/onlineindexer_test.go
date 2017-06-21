@@ -12,10 +12,17 @@ func TestNewOnlineIndexer(t *testing.T) {
 	estim.Configure(map[string]string{
 		"concurrency": "10",
 	})
-	estim.Compute()
+	err := estim.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 	md := NewMDScaling(estim.SimilarityMatrix(), 2, mdsScript)
-	md.Compute()
-
+	err = md.Compute()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 	indexer := NewOnlineIndexer(estim, md.Coordinates(), onlineIndexingScript)
 	coords, _, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
 	if err != nil || coords == nil {
