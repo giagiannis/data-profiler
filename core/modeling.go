@@ -84,6 +84,7 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 		val, err := a.evaluator.Evaluate(d.Path())
 		if err != nil {
 			log.Println(err)
+			actual = append(actual, math.NaN())
 		} else {
 			actual = append(actual, val)
 		}
@@ -158,7 +159,7 @@ func (m *ScriptBasedModeler) executeMLScript(trainFile, testFile string) ([]floa
 	cmd := exec.Command(m.script, trainFile, testFile)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, err
+		return nil, errors.New(err.Error() + string(out))
 	}
 	outputString := string(out)
 	array := strings.Split(outputString, "\n")
@@ -220,11 +221,18 @@ func MeanSquaredError(actual, predicted []float64) float64 {
 		return math.NaN()
 	}
 	sum := 0.0
+	count := 0.0
 	for i := range actual {
-		diff := actual[i] - predicted[i]
-		sum += diff * diff
+		if !math.IsNaN(actual[i]) {
+			diff := actual[i] - predicted[i]
+			sum += diff * diff
+			count += 1
+		}
 	}
-	return 1.0 / float64(len(actual)) * sum
+	if count > 0 {
+		return sum / count
+	}
+	return math.NaN()
 }
 
 // MeanAbsolutePercentageError returns the MAPE of the actual vs the predicted values
@@ -236,12 +244,15 @@ func MeanAbsolutePercentageError(actual, predicted []float64) float64 {
 	sum := 0.0
 	count := 0.0
 	for i := range actual {
-		if actual[i] != 0.0 {
+		if actual[i] != 0.0 && !math.IsNaN(actual[i]) {
 			count += 1.0
 			sum += math.Abs((actual[i] - predicted[i]) / actual[i])
 		}
 	}
-	return (1.0 / count) * sum
+	if count > 0 {
+		return sum / count
+	}
+	return math.NaN()
 }
 
 // RSquared returns the coeff. of determination of the actual vs the predicted values
@@ -253,8 +264,13 @@ func RSquared(actual, predicted []float64) float64 {
 	mean := Mean(actual)
 	ssRes, ssTot := 0.0, 0.0
 	for i := range actual {
-		ssTot += (actual[i] - mean) * (actual[i] - mean)
-		ssRes += (actual[i] - predicted[i]) * (actual[i] - predicted[i])
+		if !math.IsNaN(actual[i]) {
+			ssTot += (actual[i] - mean) * (actual[i] - mean)
+			ssRes += (actual[i] - predicted[i]) * (actual[i] - predicted[i])
+		}
 	}
-	return 1.0 - (ssRes / ssTot)
+	if ssTot > 0 {
+		return 1.0 - (ssRes / ssTot)
+	}
+	return math.NaN()
 }
