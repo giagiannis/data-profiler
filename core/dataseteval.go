@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path"
@@ -101,7 +102,7 @@ func (e *FileBasedEvaluator) Evaluate(dataset string) (float64, error) {
 		val, ok = e.scores.Scores[path.Base(dataset)]
 	}
 	if !ok {
-		return -1, errors.New("Dataset not found")
+		return math.NaN(), errors.New("Dataset not found")
 	}
 	return val, nil
 }

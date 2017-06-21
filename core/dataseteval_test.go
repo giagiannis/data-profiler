@@ -3,6 +3,7 @@ package core
 import (
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"testing"
@@ -63,7 +64,7 @@ func TestDatasetEvaluatorFileBased(t *testing.T) {
 		}
 	}
 	sc, err := eval.Evaluate("Non existent dataset")
-	if err == nil {
+	if !math.IsNaN(sc) || err == nil {
 		t.Log("Should have returned an error, but it didn't!")
 		t.Fail()
 	}
