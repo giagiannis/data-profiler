@@ -186,7 +186,7 @@ func NewOperatorRunTask(operatorID string) *Task {
 func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr float64) *Task {
 	m := modelDatasetGetInfo(datasetID)
 	task := new(Task)
-	task.Description = fmt.Sprintf("Model training (%s for %s)", mlScript, m.Name)
+	task.Description = fmt.Sprintf("Model training (%s for %s)", path.Base(mlScript), m.Name)
 	task.Dataset = m
 	task.fnc = func() error {
 		datasets := core.DiscoverDatasets(m.Path)
