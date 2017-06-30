@@ -129,7 +129,7 @@ func mdsRun() {
 		}
 		defer outfile.Close()
 
-		fmt.Fprintf(outfile, "dimensions gof\n")
+		fmt.Fprintf(outfile, "dimensions gof stress\n")
 		for k := 1; k <= *params.k; k++ {
 			log.Println("Executing MDS for k =", k)
 			mds := core.NewMDScaling(params.similarities, k, *params.script)
@@ -138,7 +138,7 @@ func mdsRun() {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			fmt.Fprintf(outfile, "%d %.5f\n", k, mds.Gof())
+			fmt.Fprintf(outfile, "%d %.5f %5f\n", k, mds.Gof(), mds.Stress())
 		}
 
 	}
