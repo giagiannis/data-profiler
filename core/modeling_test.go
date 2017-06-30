@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"math/rand"
 	"os"
 	"testing"
@@ -129,4 +130,30 @@ func createModeler(datasets []*Dataset) (Modeler, error) {
 
 	m := NewModeler(datasets, 0.2, coords, eval)
 	return m, nil
+}
+
+func TestErrorMetricFunctions(t *testing.T) {
+	sizeA, sizeB := 100, 80
+	t.Log(sizeA, sizeB)
+	arrayA, arrayB := make([]float64, sizeA), make([]float64, sizeB)
+	for i := range arrayA {
+		arrayA[i] = rand.Float64()
+	}
+	for i := range arrayB {
+		arrayB[i] = rand.Float64()
+	}
+	mse, mape, rsq := MeanSquaredError(arrayA, arrayB),
+		MeanAbsolutePercentageError(arrayA, arrayB),
+		RSquared(arrayA, arrayB)
+	if !math.IsNaN(mse) || !math.IsNaN(mape) || !math.IsNaN(rsq) {
+		t.Log("MSE/MAPE/R^2 should have been NaN")
+		t.Fail()
+	}
+	mse, mape, rsq = MeanSquaredError(arrayA, arrayA),
+		MeanAbsolutePercentageError(arrayA, arrayA),
+		RSquared(arrayA, arrayA)
+	if mse != 0.0 || mape != 0.0 || rsq != 1.0 {
+		t.Log("MSE/MAPE/R^2 should have been 0/0/1")
+		t.Fail()
+	}
 }
