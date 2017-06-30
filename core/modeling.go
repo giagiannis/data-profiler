@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -78,7 +79,8 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 	if a.appxValues == nil || len(a.appxValues) == 0 {
 		return nil
 	}
-	// evaluation for entire dataset
+	errors := make(map[string]float64)
+	// evaluation for the entire dataset
 	var actual []float64
 	for _, d := range a.datasets {
 		val, err := a.evaluator.Evaluate(d.Path())
@@ -89,10 +91,11 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 			actual = append(actual, val)
 		}
 	}
-	errors := make(map[string]float64)
 	errors["MSE-all"] = MeanSquaredError(actual, a.appxValues)
 	errors["MAPE-all"] = MeanAbsolutePercentageError(actual, a.appxValues)
 	errors["R^2-all"] = RSquared(actual, a.appxValues)
+
+	// using 10 different test-sets
 	return errors
 }
 
@@ -273,4 +276,16 @@ func RSquared(actual, predicted []float64) float64 {
 		return 1.0 - (ssRes / ssTot)
 	}
 	return math.NaN()
+}
+
+// Percentile returns the i-th percentile of an array of values
+func Percentile(values []float64, percentile int) float64 {
+	valuesCopy := make([]float64, len(values))
+	copy(valuesCopy, values)
+	sort.Float64s(valuesCopy)
+	idx := int(math.Ceil((float64(percentile) / 100.0) * float64(len(valuesCopy))))
+	if idx < len(valuesCopy) {
+		return valuesCopy[idx]
+	}
+	return valuesCopy[len(valuesCopy)-1]
 }

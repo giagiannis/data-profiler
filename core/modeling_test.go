@@ -134,7 +134,6 @@ func createModeler(datasets []*Dataset) (Modeler, error) {
 
 func TestErrorMetricFunctions(t *testing.T) {
 	sizeA, sizeB := 100, 80
-	t.Log(sizeA, sizeB)
 	arrayA, arrayB := make([]float64, sizeA), make([]float64, sizeB)
 	for i := range arrayA {
 		arrayA[i] = rand.Float64()
@@ -154,6 +153,16 @@ func TestErrorMetricFunctions(t *testing.T) {
 		RSquared(arrayA, arrayA)
 	if mse != 0.0 || mape != 0.0 || rsq != 1.0 {
 		t.Log("MSE/MAPE/R^2 should have been 0/0/1")
+		t.Fail()
+	}
+	perc0, perc25, perc50,
+		perc75, perc100 := Percentile(arrayA, 0),
+		Percentile(arrayA, 25),
+		Percentile(arrayA, 50),
+		Percentile(arrayA, 75),
+		Percentile(arrayA, 100)
+	if perc0 > perc25 || perc25 > perc50 || perc50 > perc75 || perc75 > perc100 {
+		t.Log("Percentiles gone wrong")
 		t.Fail()
 	}
 }
