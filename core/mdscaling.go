@@ -122,8 +122,6 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 		return nil, math.NaN(), math.NaN(), err
 	}
 	lines := strings.Split(string(buf), "\n")
-	log.Println(len(lines))
-	log.Println(string(buf))
 
 	// parse gof float
 	gof, err := strconv.ParseFloat(lines[0], 64)
@@ -149,7 +147,7 @@ func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64
 		for j := 0; j < md.k; j++ {
 			coordinates[i-2][j], err = strconv.ParseFloat(splitLine[j], 64)
 			if err != nil {
-				log.Println("Shit")
+				log.Println(err)
 				return nil, math.NaN(), math.NaN(), err
 			}
 		}
