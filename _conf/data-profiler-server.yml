@@ -4,7 +4,7 @@ server:
     dirs:
             templates: data-profiler-server/templates
             static: data-profiler-server/static
-database: sqlite3.db
+database: /home/giannis/data-profiler-datasets/sqlite3.db
 logfile: ""
 scripts:
         mds: _rscripts/mdscaling.R

@@ -25,6 +25,7 @@ type MDScaling struct {
 
 	coordinates []DatasetCoordinates // the coordinates matrix
 	gof         float64              // the gof factor
+	stress      float64              // the stress factor
 }
 
 // NewMDScaling is the default MDScaling constructor; it initializes a new
@@ -47,22 +48,9 @@ func (md *MDScaling) Compute() error {
 		return err
 	}
 	log.Println("Writing distances to file", writer.Name())
-	//defer os.Remove(writer.Name())
-	//	maxDistance := 0.0
-	//	for i := 0; i < md.matrix.Capacity(); i++ {
-	//		for j := i + 1; j < md.matrix.Capacity(); j++ {
-	//			dist := SimilarityToDistance(md.matrix.Get(i, j))
-	//			if !math.IsInf(dist, 0) && dist > maxDistance {
-	//				maxDistance = dist
-	//			}
-	//		}
-	//	}
 	for i := 0; i < md.matrix.Capacity(); i++ {
 		for j := 0; j < md.matrix.Capacity(); j++ {
 			dist := SimilarityToDistance(md.matrix.Get(i, j))
-			//			if math.IsInf(dist, 0) {
-			//				dist = maxDistance
-			//			}
 			writer.WriteString(fmt.Sprintf("%.5f", dist))
 			if j < md.matrix.Capacity()-1 {
 				writer.WriteString(",")
@@ -76,7 +64,7 @@ func (md *MDScaling) Compute() error {
 		return errors.New("K factor must be between [1, n-1], n being the # of datasets")
 	}
 	// execute solution
-	md.coordinates, md.gof, err = md.executeScript(writer.Name())
+	md.coordinates, md.gof, md.stress, err = md.executeScript(writer.Name())
 	if err != nil {
 		return err
 	}
@@ -93,6 +81,11 @@ func (md *MDScaling) Coordinates() []DatasetCoordinates {
 // Gof getter returns the gof factor for the calculated solution
 func (md *MDScaling) Gof() float64 {
 	return md.gof
+}
+
+// Stress returns the stress after the execution of the Sammon mapping
+func (md *MDScaling) Stress() float64 {
+	return md.stress
 }
 
 // Variances function returns the variances of the principal coordinates
@@ -121,38 +114,47 @@ func (md *MDScaling) Variances() ([]float64, error) {
 // the coordinates slice, the gof factor and nil errors; If not successful,
 // returns nil results and an error object
 //
-func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64, error) {
+func (md *MDScaling) executeScript(smPath string) ([]DatasetCoordinates, float64, float64, error) {
 	command := exec.Command(md.script, smPath, strconv.Itoa(md.k))
 	buf, err := command.CombinedOutput()
 	if err != nil {
 		log.Println(string(buf))
-		return nil, 0.0, err
+		return nil, math.NaN(), math.NaN(), err
 	}
 	lines := strings.Split(string(buf), "\n")
+	log.Println(len(lines))
+	log.Println(string(buf))
+
 	// parse gof float
 	gof, err := strconv.ParseFloat(lines[0], 64)
 	if err != nil {
-		return nil, 0.0, err
+		return nil, math.NaN(), math.NaN(), err
+	}
+	// parse stress float
+	stress, err := strconv.ParseFloat(lines[1], 64)
+	if err != nil {
+		return nil, math.NaN(), math.NaN(), err
 	}
 	count := 0
-	for i := 1; i < len(lines) && len(lines[i]) > 0; i++ {
+	for i := 2; i < len(lines) && len(lines[i]) > 0; i++ {
 		if len(lines[i]) > 0 {
 			count++
 		}
 	}
 	// parse coordinates slices
 	coordinates := make([]DatasetCoordinates, count)
-	for i := 1; i < len(lines) && len(lines[i]) > 0; i++ {
+	for i := 2; i < len(lines) && len(lines[i]) > 0; i++ {
 		splitLine := strings.Split(lines[i], " ")
-		coordinates[i-1] = make([]float64, md.k)
+		coordinates[i-2] = make([]float64, md.k)
 		for j := 0; j < md.k; j++ {
-			coordinates[i-1][j], err = strconv.ParseFloat(splitLine[j], 64)
+			coordinates[i-2][j], err = strconv.ParseFloat(splitLine[j], 64)
 			if err != nil {
-				return nil, 0.0, err
+				log.Println("Shit")
+				return nil, math.NaN(), math.NaN(), err
 			}
 		}
 	}
-	return coordinates, gof, nil
+	return coordinates, gof, stress, nil
 }
 
 // DistanceToSimilarity returns the similarity based on the distance
