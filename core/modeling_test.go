@@ -48,7 +48,7 @@ func TestScriptBasedModelerRun(t *testing.T) {
 }
 
 func TestErrorMetrics(t *testing.T) {
-	datasets := createPoolBasedDatasets(1000, 50, 3)
+	datasets := createPoolBasedDatasets(10000, 50, 3)
 	m, err := createModeler(datasets)
 	if err != nil {
 		t.Log(err)

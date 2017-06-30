@@ -91,11 +91,44 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 			actual = append(actual, val)
 		}
 	}
+	residuals := make([]float64, len(actual))
+	for i := range actual {
+		residuals[i] = math.Abs(actual[i] - a.appxValues[i])
+	}
+	sort.Float64s(residuals) // avoid multiple re-sortings
 	errors["MSE-all"] = MeanSquaredError(actual, a.appxValues)
 	errors["MAPE-all"] = MeanAbsolutePercentageError(actual, a.appxValues)
 	errors["R^2-all"] = RSquared(actual, a.appxValues)
+	errors["Res-0-all"] = Percentile(residuals, 0)
+	errors["Res-25-all"] = Percentile(residuals, 25)
+	errors["Res-50-all"] = Percentile(residuals, 50)
+	errors["Res-75-all"] = Percentile(residuals, 75)
+	errors["Res-100-all"] = Percentile(residuals, 100)
 
-	// using 10 different test-sets
+	// using only unknown datasets
+	unknownCount := len(a.datasets) - len(a.samples)
+	actualUnknown, appxUnknown, residualsUnknown :=
+		make([]float64, unknownCount),
+		make([]float64, unknownCount),
+		make([]float64, unknownCount)
+	j := 0
+	for i := range actual {
+		if _, ok := a.samples[i]; !ok {
+			actualUnknown[j] = actual[i]
+			appxUnknown[j] = a.appxValues[i]
+			residualsUnknown[j] = math.Abs(actualUnknown[j] - appxUnknown[j])
+			j++
+		}
+	}
+	errors["MSE-unknown"] = MeanSquaredError(actualUnknown, appxUnknown)
+	errors["MAPE-unknown"] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["R^2-unknown"] = RSquared(actualUnknown, appxUnknown)
+	errors["Res-0-unknown"] = Percentile(residualsUnknown, 0)
+	errors["Res-25-unknown"] = Percentile(residualsUnknown, 25)
+	errors["Res-50-unknown"] = Percentile(residualsUnknown, 50)
+	errors["Res-75-unknown"] = Percentile(residualsUnknown, 75)
+	errors["Res-100-unknown"] = Percentile(residualsUnknown, 100)
+
 	return errors
 }
 
@@ -282,7 +315,9 @@ func RSquared(actual, predicted []float64) float64 {
 func Percentile(values []float64, percentile int) float64 {
 	valuesCopy := make([]float64, len(values))
 	copy(valuesCopy, values)
-	sort.Float64s(valuesCopy)
+	if !sort.Float64sAreSorted(valuesCopy) {
+		sort.Float64s(valuesCopy)
+	}
 	idx := int(math.Ceil((float64(percentile) / 100.0) * float64(len(valuesCopy))))
 	if idx < len(valuesCopy) {
 		return valuesCopy[idx]
