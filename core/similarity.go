@@ -249,6 +249,8 @@ const (
 	SimilarityTypeComposite DatasetSimilarityEstimatorType = iota + 4
 	// SimilarityTypeCorrelation estimates correlation metrics
 	SimilarityTypeCorrelation DatasetSimilarityEstimatorType = iota + 5
+	// SimilarityTypeSize estimates size metric
+	SimilarityTypeSize DatasetSimilarityEstimatorType = iota + 6
 )
 
 // DatasetSimilarityEstimatorAvailableTypes lists the available similarity types
@@ -258,6 +260,7 @@ var DatasetSimilarityEstimatorAvailableTypes = []DatasetSimilarityEstimatorType{
 	SimilarityTypeCorrelation,
 	SimilarityTypeComposite,
 	SimilarityTypeScript,
+	SimilarityTypeSize,
 }
 
 // NewDatasetSimilarityEstimatorType transforms the similarity type from a
@@ -270,6 +273,7 @@ func NewDatasetSimilarityEstimatorType(estimatorType string) *DatasetSimilarityE
 		"correlation":   SimilarityTypeCorrelation,
 		"composite":     SimilarityTypeComposite,
 		"script":        SimilarityTypeScript,
+		"size":          SimilarityTypeSize,
 	}
 	if val, ok := types[lower]; ok {
 		return &val
@@ -287,6 +291,8 @@ func (t DatasetSimilarityEstimatorType) String() string {
 		return "Composite"
 	} else if t == SimilarityTypeScript {
 		return "Script"
+	} else if t == SimilarityTypeSize {
+		return "Size"
 	}
 	return ""
 }
@@ -379,6 +385,11 @@ func NewDatasetSimilarityEstimator(
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		return a
+	} else if estType == SimilarityTypeSize {
+		a := new(SizeEstimator)
+		a.SetPopulationPolicy(policy)
+		a.datasets = datasets
+		return a
 	}
 
 	return nil
@@ -406,6 +417,10 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 		return a
 	} else if estimatorType == SimilarityTypeScript {
 		a := new(ScriptSimilarityEstimator)
+		a.Deserialize(b)
+		return a
+	} else if estimatorType == SimilarityTypeSize {
+		a := new(SizeEstimator)
 		a.Deserialize(b)
 		return a
 	}

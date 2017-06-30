@@ -26,6 +26,7 @@
 <li> <a href='#correlation'>Correlation Estimator</a></li>
 <li> <a href='#composite'>Composite Estimator</a></li>
 <li> <a href='#script'>Script Estimator</a></li>
+<li> <a href='#size'>Size Estimator</a></li>
 </ul>
 
 <div id='jaccard'>
@@ -125,6 +126,24 @@ function addInput() {
 }
 </script>
 
+
+<div id='size'>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<h3>Size Estimator Parameters<h3>
+<table class='tablelist'>
+<tr><th>No. threads</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<input type='hidden' name='estimatorType' value='size'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
+</div>
+
+
+
 <div id='script'>
 <h3>Script Estimator Parameters</h3>
 <form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
@@ -161,6 +180,7 @@ function addInput() {
 </form>
 </div>
 </div>
+
 
 
 
