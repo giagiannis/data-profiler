@@ -389,5 +389,8 @@ func Percentile(values []float64, percentile int) float64 {
 	if idx < len(valuesCopy) {
 		return valuesCopy[idx]
 	}
-	return valuesCopy[len(valuesCopy)-1]
+	if len(valuesCopy) > 0 {
+		return valuesCopy[len(valuesCopy)-1]
+	}
+	return math.NaN()
 }

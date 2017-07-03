@@ -14,12 +14,7 @@ if(!exists("titleComment")) {
 }
 
 set terminal postscript eps size 7,5.0 enhanced color font 'Arial,34'
-set output outputFile
 set xlabel "Sampling Rate"
-#set logscale x
-#set xrange[1000:]
-#set yrange [0:1]
-#set logscale x
 set grid
 set key top right
 
@@ -29,24 +24,19 @@ set style line 3 lt 1 pt 4 lc rgb "#777777" lw 4 ps 4
 set style line 4 lt 1 pt 10 lc rgb "#999999" lw 4 ps 4
 set style line 5 lt 1 pt 13 lc rgb "#aaaaaa" lw 4 ps 4
 
-set title "MSE vs Sampling Rate".titleComment
-set ylabel "MSE"
-set output outputFile
-#plot inputFile u 1:2 w lp t system("basename ".inputFile) ls 1
-plot for [i=1:words(inputFile)] word(inputFile,i) u 1:2 w lp t system("basename ".word(inputFile,i)) ls i
-system("epstopdf --outfile=".outputFile."-mse.pdf ".outputFile." && rm ".outputFile)
-
-
-set title "MAPE vs Sampling Rate".titleComment
-set ylabel "MAPE"
-set output outputFile
-#plot inputFile u 1:8 w lp t system("basename ".inputFile) ls 1
-plot for [i=1:words(inputFile)] word(inputFile,i) u 1:8 w lp t system("basename ".word(inputFile,i)) ls i
-system("epstopdf --outfile=".outputFile."-mape.pdf ".outputFile." && rm ".outputFile)
-
-set title "MAPE-log vs Sampling Rate".titleComment
-set ylabel "MAPE-log"
-set output outputFile
-#plot inputFile u 1:14 w lp t system("basename ".inputFile) ls 1
-plot for [i=1:words(inputFile)] word(inputFile,i) u 1:14 w lp t system("basename ".word(inputFile,i)) ls i
-system("epstopdf --outfile=".outputFile."-mape-log.pdf ".outputFile." && rm ".outputFile)
+colNames=system("head -n 1 ".word(inputFile,1))
+do for [t=2:67] {
+	colName=word(colNames,t)
+	set title colName." vs Sampling Rate".titleComment
+	set ylabel colName
+	set output outputFile
+	if (t%3 == 1) {
+		plot for [i=1:words(inputFile)] word(inputFile,i) u 1:t w lp t system("basename ".word(inputFile,i)) ls i
+	} 
+	if (t%3 == 2) {
+		plot for [i=1:words(inputFile)] word(inputFile,i) u 1:t:t+1 w e t system("basename ".word(inputFile,i)) ls i
+	}
+	if (t%3 > 0 ) {
+		system("epstopdf --outfile=".outputFile."-".colName.".pdf ".outputFile." && rm ".outputFile)
+	}
+}

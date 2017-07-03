@@ -10,27 +10,34 @@ echo $GOPATH
 [ "$MDSSCRIPT" == "" ] && export MDSSCRIPT="$GOPATH/src/github.com/giagiannis/data-profiler/_rscripts/mdscaling.R"
 [ "$SVMSCRIPT" == "" ] && export SVMSCRIPT="$GOPATH/src/github.com/giagiannis/data-profiler/_rscripts/svm-appx.R"
 
-THREADS=20
-REPETITIONS=20
-TREE_SCALE=0.9
+[ "$NO_PARTITIONS" == ""  ] && NO_PARTITIONS=32 && echo "Using default NO_PARTITIONS=$NO_PARTITIONS" 
+[ "$REPETITIONS" == ""  ] && REPETITIONS=10 && echo "Using default REPETITIONS=$REPETITIONS" 
+[ "$THREADS" == ""  ] && THREADS=10 && echo "Using default THREADS=$THREADS" 
+[ "$TREE_SR" == ""  ] && TREE_SR=0.10 && echo "Using default TREE_SR=$TREE_SR" 
+[ "$MDS_K" == ""  ] && MDS_K=5 && echo "Using default MDS_K=$MDS_K" 
+[ "$SR" == ""  ] && SR="$(seq -s, 0.05 0.05 1.0)" && echo "Using default SR=$SR"
+MDS_K_MAX=30
 
-b="$(basename $DATASET_PATH)/$TREE_SCALE"
-mkdir -p $b 2>/dev/null
+
+# initialization of en
+b="$(basename $DATASET_PATH)/$NO_PARTITIONS-$TREE_SR-$MDS_K"
+[ ! -d "$b" ] && mkdir -p $b && echo "Creating $b"
 BASE="$b/base"
-mkdir -p $BASE 2>/dev/null
+[ ! -d "$BASE" ]  && mkdir -p $BASE 2>/dev/null && echo "Creating $BASE"
 RESULTS_DIR="$b/experiments"
-mkdir -p $RESULTS_DIR 2>/dev/null
+[ ! -d "$RESULTS_DIR" ] && mkdir -p $RESULTS_DIR 2>/dev/null && echo "Creating $RESULTS_DIR"
 PLOTS_DIR="$b/plots"
-mkdir -p $PLOTS_DIR 2>/dev/null
+[ ! -d "$PLOTS_DIR" ] && mkdir -p $PLOTS_DIR 2>/dev/null && echo "Creating $PLOTS_DIR"
 
 function prepare_dataset() {
+		echo "Preparing the dataset"
 		LOGFILE="$BASE/log"
 		echo "Calculating similarities"
-		data-profiler-utils similarities -i $DATASET_PATH -o $BASE/matrix.sim -opt concurrency=$THREADS,tree.scale=$TREE_SCALE -l $LOGFILE
+		data-profiler-utils similarities -i $DATASET_PATH -o $BASE/matrix.sim -opt concurrency=$THREADS,partitions=$NO_PARTITIONS,tree.sr=$TREE_SR -l $LOGFILE
 		echo "Calculating MDS"
-		data-profiler-utils mds -k 5 -l $LOGFILE -m coords -o $BASE/mds -sc $MDSSCRIPT -sim $BASE/matrix.sim
+		data-profiler-utils mds -k $MDS_K -l $LOGFILE -m coords -o $BASE/mds -sc $MDSSCRIPT -sim $BASE/matrix.sim
 		echo "Calculating MDS (evaluating goodness of fit)"
-		data-profiler-utils mds -k 30 -l $LOGFILE -m gof -o $BASE/mds -sc $MDSSCRIPT -sim $BASE/matrix.sim
+		data-profiler-utils mds -k $MDS_K_MAX -l $LOGFILE -m gof -o $BASE/mds -sc $MDSSCRIPT -sim $BASE/matrix.sim
 
 		echo "Running operators"
 		for op in $OPERATORS; do 
@@ -38,36 +45,37 @@ function prepare_dataset() {
 			echo -e "\tOperator $op"
 			data-profiler-utils train -i $DATASET_PATH -l $LOGFILE -p $THREADS -o $BASE/$b-scores -s $op -t "nothing"
 		done
+		echo "##########################################"
 }
 
 function execute_experiments() {
-		SR="$(seq -s, 0.05 0.05 1.0)"
 		LOGFILE="$RESULTS_DIR/log"
 
 		echo "Executing accuracy and ordering experiments"
 		for op in $OPERATORS; do 
 				echo -e "\tOperator $op"
 				b="$(basename $op)"
-				data-profiler-utils exp-accuracy -c $BASE/mds-coords -i $BASE/matrix.sim.idx -l $LOGFILE -ml $SVMSCRIPT -o $RESULTS_DIR/$b-accuracy.csv -r $REPETITIONS -s $BASE/$b-scores -sr "$SR" -t $THREADS
-				data-profiler-utils exp-ordering -c $BASE/mds-coords -i $BASE/matrix.sim.idx -l $LOGFILE -ml $SVMSCRIPT -o $RESULTS_DIR/$b-ordering.csv -r $REPETITIONS -s $BASE/$b-scores -sr "$SR" -t $THREADS
+				CMD="data-profiler-utils exp-accuracy -c $BASE/mds-coords -i $DATASET_PATH -l $LOGFILE -ml $SVMSCRIPT -o $RESULTS_DIR/$b-accuracy.csv -r $REPETITIONS -s $BASE/$b-scores -sr $SR -t $THREADS"
+				$CMD 1>/dev/null
 		done
+		echo "##########################################"
 
 }
 
 function plot_experiments() {
-		GNUPLOT_ACCURACY="/home/giannis/data-profiler/_plots/exp-accuracy.gnu"
-		GNUPLOT_ORDERING="/home/giannis/data-profiler/_plots/exp-ordering.gnu"
+		GNUPLOT_ACCURACY="/home/giannis/Projects/data-profiler/_plots/exp-accuracy.gnu"
+		GNUPLOT_GOF="/home/giannis/Projects/data-profiler/_plots/mds-gof.gnu"
 
 		echo "Generating plots"
-
+		gnuplot -e "inputFile='$BASE/mds-gof';outputFile='$PLOTS_DIR/mds'" $GNUPLOT_GOF 
 		for op in $OPERATORS; do
 				echo -e "\tOperator $op"
 				b=$(basename $op)
-				gnuplot -e "inputFile='$RESULTS_DIR/$b-accuracy.csv';outputFile='$PLOTS_DIR/$b-accuracy'" $GNUPLOT_ACCURACY 
-				gnuplot -e "inputFile='$RESULTS_DIR/$b-ordering.csv';outputFile='$PLOTS_DIR/$b-ordering'" $GNUPLOT_ORDERING
+				gnuplot -e "inputFile='$RESULTS_DIR/$b-accuracy.csv';outputFile='$PLOTS_DIR/$b'" $GNUPLOT_ACCURACY 
 		done
+		echo "##########################################"
 }
 
-prepare_dataset
-execute_experiments
+#prepare_dataset
+#execute_experiments
 plot_experiments
