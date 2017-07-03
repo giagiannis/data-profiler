@@ -135,11 +135,11 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 	errors["MAPE-unknown"] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
 	errors["MAE-unknown"] = MeanAbsoluteError(actualUnknown, appxUnknown)
 	errors["R^2-unknown"] = RSquared(actualUnknown, appxUnknown)
-	errors["Res-0-unknown"] = Percentile(residualsUnknown, 0)
-	errors["Res-25-unknown"] = Percentile(residualsUnknown, 25)
-	errors["Res-50-unknown"] = Percentile(residualsUnknown, 50)
-	errors["Res-75-unknown"] = Percentile(residualsUnknown, 75)
-	errors["Res-100-unknown"] = Percentile(residualsUnknown, 100)
+	errors["Res000-unknown"] = Percentile(residualsUnknown, 0)
+	errors["Res025-unknown"] = Percentile(residualsUnknown, 25)
+	errors["Res050-unknown"] = Percentile(residualsUnknown, 50)
+	errors["Res075-unknown"] = Percentile(residualsUnknown, 75)
+	errors["Res100-unknown"] = Percentile(residualsUnknown, 100)
 
 	return errors
 }
