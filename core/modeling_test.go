@@ -141,18 +141,23 @@ func TestErrorMetricFunctions(t *testing.T) {
 	for i := range arrayB {
 		arrayB[i] = rand.Float64()
 	}
-	mse, mape, rsq := MeanSquaredError(arrayA, arrayB),
+	mse, rmsle, mape, mae, rsq := RootMeanSquaredError(arrayA, arrayB),
+		RootMeanSquaredLogError(arrayA, arrayB),
 		MeanAbsolutePercentageError(arrayA, arrayB),
+		MeanAbsoluteError(arrayA, arrayB),
 		RSquared(arrayA, arrayB)
-	if !math.IsNaN(mse) || !math.IsNaN(mape) || !math.IsNaN(rsq) {
-		t.Log("MSE/MAPE/R^2 should have been NaN")
+	if !math.IsNaN(mse) || !math.IsNaN(mape) || !math.IsNaN(rsq) || !math.IsNaN(rmsle) || !math.IsNaN(mae) {
+		t.Log("RMSE/RMSLE/MAE/MAPE/R^2 should have been NaN")
+		t.Log(mse, mape, rsq, rmsle, mae)
 		t.Fail()
 	}
-	mse, mape, rsq = MeanSquaredError(arrayA, arrayA),
+	mse, rmsle, mape, mae, rsq = RootMeanSquaredError(arrayA, arrayA),
+		RootMeanSquaredLogError(arrayA, arrayA),
 		MeanAbsolutePercentageError(arrayA, arrayA),
+		MeanAbsoluteError(arrayA, arrayA),
 		RSquared(arrayA, arrayA)
-	if mse != 0.0 || mape != 0.0 || rsq != 1.0 {
-		t.Log("MSE/MAPE/R^2 should have been 0/0/1")
+	if mse != 0.0 || mape != 0.0 || rsq != 1.0 || mae != 0.0 {
+		t.Log("RMSE/RMSLE/MAE/MAPE/R^2 should have been 0/0/0/1")
 		t.Fail()
 	}
 	perc0, perc25, perc50,

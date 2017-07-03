@@ -96,8 +96,10 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 		residuals[i] = math.Abs(actual[i] - a.appxValues[i])
 	}
 	sort.Float64s(residuals) // avoid multiple re-sortings
-	errors["MSE-all"] = MeanSquaredError(actual, a.appxValues)
+	errors["RMSE-all"] = RootMeanSquaredError(actual, a.appxValues)
+	errors["RMSLE-all"] = RootMeanSquaredLogError(actual, a.appxValues)
 	errors["MAPE-all"] = MeanAbsolutePercentageError(actual, a.appxValues)
+	errors["MAE-all"] = MeanAbsoluteError(actual, a.appxValues)
 	errors["R^2-all"] = RSquared(actual, a.appxValues)
 	errors["Res-0-all"] = Percentile(residuals, 0)
 	errors["Res-25-all"] = Percentile(residuals, 25)
@@ -120,8 +122,10 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 			j++
 		}
 	}
-	errors["MSE-unknown"] = MeanSquaredError(actualUnknown, appxUnknown)
+	errors["RMSE-unknown"] = RootMeanSquaredError(actualUnknown, appxUnknown)
+	errors["RMSLE-unknown"] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
 	errors["MAPE-unknown"] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["MAE-unknown"] = MeanAbsoluteError(actualUnknown, appxUnknown)
 	errors["R^2-unknown"] = RSquared(actualUnknown, appxUnknown)
 	errors["Res-0-unknown"] = Percentile(residualsUnknown, 0)
 	errors["Res-25-unknown"] = Percentile(residualsUnknown, 25)
@@ -250,8 +254,8 @@ func createCSVFile(matrix [][]float64, output bool) string {
 	return f.Name()
 }
 
-// MeanSquaredError returns the MSE of the actual vs the predicted values
-func MeanSquaredError(actual, predicted []float64) float64 {
+// RootMeanSquaredError returns the RMSE of the actual vs the predicted values
+func RootMeanSquaredError(actual, predicted []float64) float64 {
 	if len(actual) != len(predicted) || len(actual) == 0 {
 		log.Println("actual and predicted values are of different size!!")
 		return math.NaN()
@@ -263,6 +267,47 @@ func MeanSquaredError(actual, predicted []float64) float64 {
 			diff := actual[i] - predicted[i]
 			sum += diff * diff
 			count += 1
+		}
+	}
+	if count > 0 {
+		return math.Sqrt(sum / count)
+	}
+	return math.NaN()
+}
+
+// RootMeanSquaredLogError returns the RMSLE of the actual vs the predicted values
+func RootMeanSquaredLogError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	sum := 0.0
+	count := 0.0
+	for i := range actual {
+		if !math.IsNaN(actual[i]) && actual[i] > -1 && predicted[i] > -1 {
+			diff := math.Log(predicted[i]+1) - math.Log(actual[i]+1)
+			sum += diff * diff
+			count += 1
+		}
+	}
+	if count > 0 {
+		return math.Sqrt(sum / count)
+	}
+	return math.NaN()
+}
+
+// MeanAbsoluteError returns the MAE of the actual vs the predicted values
+func MeanAbsoluteError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	sum := 0.0
+	count := 0.0
+	for i := range actual {
+		if actual[i] != 0.0 && !math.IsNaN(actual[i]) {
+			count += 1.0
+			sum += math.Abs((actual[i] - predicted[i]))
 		}
 	}
 	if count > 0 {
