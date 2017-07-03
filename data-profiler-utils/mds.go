@@ -106,17 +106,19 @@ func mdsRun() {
 		if coords == nil {
 			return
 		}
+		buf := core.SerializeCoordinates(coords)
+		outfile.Write(buf)
 
-		for i := 0; i < len(coords[0]); i++ {
-			fmt.Fprintf(outfile, "x_%d ", i+1)
-		}
-		fmt.Fprintf(outfile, "\n")
-		for _, d := range coords {
-			for _, c := range d {
-				fmt.Fprintf(outfile, "%.5f ", c)
-			}
-			fmt.Fprintf(outfile, "\n")
-		}
+		//		for i := 0; i < len(coords[0]); i++ {
+		//			fmt.Fprintf(outfile, "x_%d ", i+1)
+		//		}
+		//		fmt.Fprintf(outfile, "\n")
+		//		for _, d := range coords {
+		//			for _, c := range d {
+		//				fmt.Fprintf(outfile, "%.5f ", c)
+		//			}
+		//			fmt.Fprintf(outfile, "\n")
+		//		}
 	}
 
 	if params.modules["gof"] {
