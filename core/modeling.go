@@ -279,7 +279,7 @@ func createCSVFile(matrix [][]float64, output bool) string {
 // RootMeanSquaredError returns the RMSE of the actual vs the predicted values
 func RootMeanSquaredError(actual, predicted []float64) float64 {
 	if len(actual) != len(predicted) || len(actual) == 0 {
-		log.Println("actual and predicted values are of different size!!")
+		log.Printf("actual (%d) and predicted (%d) are of different size", len(actual), len(predicted))
 		return math.NaN()
 	}
 	sum := 0.0
