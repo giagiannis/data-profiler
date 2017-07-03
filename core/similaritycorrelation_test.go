@@ -135,6 +135,11 @@ func TestCorrelationEvaluation(t *testing.T) {
 		meanA += a[i]
 		meanB += b[i]
 	}
+	stddevA, stddevB := StdDev(a), StdDev(b)
+	if stddevA < 0 || stddevB < 0 {
+		t.Log("negative stddev")
+		t.Fail()
+	}
 	meanA = meanA / float64(len(a))
 	meanB = meanB / float64(len(b))
 	if math.Abs(Mean(a)-meanA) > 0.02 {

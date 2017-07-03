@@ -293,3 +293,15 @@ func Rank(a []float64) []int {
 	}
 	return rank
 }
+
+//StdDev returns the standard deviation of a float slice
+func StdDev(a []float64) float64 {
+	if len(a) == 0 {
+		return math.NaN()
+	}
+	mean, sum := Mean(a), 0.0
+	for _, v := range a {
+		sum += (v - mean) * (v - mean)
+	}
+	return math.Sqrt(sum / float64(len(a)))
+}
