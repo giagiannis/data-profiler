@@ -118,8 +118,8 @@ func expAccuracyRun() {
 			results[v.sr] = make([]map[string]float64, 0)
 		}
 		results[v.sr] = append(results[v.sr], v.res)
-
 	}
+	log.Println(results)
 
 	keys := writeResults(output, results, params.samplingRates)
 	fmt.Println("Column names/indices:")
@@ -162,7 +162,7 @@ func writeResults(output *os.File, results map[float64][]map[string]float64, sam
 		for _, k := range keys {
 			values := getValue(k, rLine)
 			mean, stddev, median := core.Mean(values), core.StdDev(values), core.Percentile(values, 50)
-			fmt.Fprintf(output, "\t%.5f\t%.5f\t%.5f", mean, median, stddev)
+			fmt.Fprintf(output, "\t%.5f\t%.5f\t%.5f", mean, stddev, median)
 		}
 		fmt.Fprintf(output, "\n")
 	}
