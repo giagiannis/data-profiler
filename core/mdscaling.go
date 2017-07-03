@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +15,47 @@ import (
 
 // DatasetCoordinates is a struct for representing the dataset coordinates
 type DatasetCoordinates []float64
+
+// DeserializeCoordinates instantiated a new DatasetCoordinates slice, based
+// on a CSV serialization form
+func DeserializeCoordinates(buffer []byte) []DatasetCoordinates {
+	coords := make([]DatasetCoordinates, 0)
+	for i, line := range strings.Split(string(buffer), "\n") {
+		a := strings.Split(line, " ")
+		res := make(DatasetCoordinates, 0)
+		if i > 0 && len(a) > 0 {
+			for _, s := range a {
+				if s != "" {
+					v, err := strconv.ParseFloat(s, 64)
+					if err != nil {
+						log.Fatalln(err)
+					}
+					res = append(res, v)
+				}
+			}
+			if len(res) > 0 {
+				coords = append(coords, res)
+			}
+		}
+	}
+	return coords
+}
+
+// SerializeCoordinates returns a CSV serilization of a coordinates slice
+func SerializeCoordinates(coords []DatasetCoordinates) []byte {
+	buffer := new(bytes.Buffer)
+	for i := 0; i < len(coords[0]); i++ {
+		buffer.WriteString(fmt.Sprintf("x_%d ", i+1))
+	}
+	buffer.WriteString(fmt.Sprintf("\n"))
+	for _, d := range coords {
+		for _, c := range d {
+			buffer.WriteString(fmt.Sprintf("%.5f ", c))
+		}
+		buffer.WriteString(fmt.Sprintf("\n"))
+	}
+	return buffer.Bytes()
+}
 
 // MDScaling is responsible for the execution of a MultiDimensional Scaling
 // algorithm in order to provide coefficients for each dataset, based on a
