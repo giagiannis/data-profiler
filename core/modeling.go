@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Modeler is the interface for the objects that model the dataset space.
@@ -31,6 +32,11 @@ type Modeler interface {
 
 	// ErrorMetrics returns a list of error metrics for the specified modeler
 	ErrorMetrics() map[string]float64
+
+	// ExecTime returns the total execution time of the Modeler
+	ExecTime() float64
+	// EvalTime returns the evaluation time of the Modeler
+	EvalTime() float64
 }
 
 // NewModeler is the factory method for the modeler object
@@ -53,10 +59,12 @@ type AbstractModeler struct {
 	evaluator   DatasetEvaluator     // the evaluator struct that gets the values
 	coordinates []DatasetCoordinates // the dataset coordinates
 
-	samplingRate float64 // the portion of the datasets to examine
-	// the dataset indices chosen for samples
-	samples    map[int]float64
-	appxValues []float64 // the appx values of ALL the datasets
+	samplingRate float64         // the portion of the datasets to examine
+	samples      map[int]float64 // the dataset indices chosen for samples
+	appxValues   []float64       // the appx values of ALL the datasets
+
+	execTime float64 // the total time in seconds
+	evalTime float64 // the time needed to evaluate the datasets in seconds
 }
 
 // Datasets returns the datasets slice
@@ -136,6 +144,16 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 	return errors
 }
 
+// ExecTime returns the total exection time of the Modeler
+func (a *AbstractModeler) ExecTime() float64 {
+	return a.execTime
+}
+
+// EvalTime returns the dataset evaluation time of the Modeler
+func (a *AbstractModeler) EvalTime() float64 {
+	return a.evalTime
+}
+
 // ScriptBasedModeler utilizes a script to train an ML model and obtain is values
 type ScriptBasedModeler struct {
 	AbstractModeler
@@ -158,6 +176,7 @@ func (m *ScriptBasedModeler) Configure(conf map[string]string) error {
 // Run executes the modeling process and populates the samples, realValues and
 // appxValues slices.
 func (m *ScriptBasedModeler) Run() error {
+	start := time.Now()
 	// sample the datasets
 	permutation := rand.Perm(len(m.datasets))
 	s := int(math.Floor(m.samplingRate * float64(len(m.datasets))))
@@ -167,7 +186,9 @@ func (m *ScriptBasedModeler) Run() error {
 	var trainingSet, testSet [][]float64
 	for i := 0; i < len(permutation) && (len(m.samples) < s); i++ {
 		idx := permutation[i]
+		start2 := time.Now()
 		val, err := m.evaluator.Evaluate(m.datasets[idx].Path())
+		m.evalTime += (time.Since(start2).Seconds())
 		if err != nil {
 			log.Printf("%s: %s\n", m.datasets[idx].Path(), err.Error())
 		} else {
@@ -189,6 +210,7 @@ func (m *ScriptBasedModeler) Run() error {
 	m.appxValues = appx
 	os.Remove(trainFile)
 	os.Remove(testFile)
+	m.execTime = time.Since(start).Seconds()
 	return nil
 }
 
