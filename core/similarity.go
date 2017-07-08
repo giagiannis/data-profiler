@@ -195,13 +195,26 @@ func datasetSimilarityEstimatorCompute(e DatasetSimilarityEstimator) error {
 		e.SimilarityMatrix().IndexDisabled(false) // I need the index
 		if count, ok := e.PopulationPolicy().Parameters["count"]; ok {
 			log.Printf("Fixed number of points execution (count: %.0f)\n", count)
+			chosenIdxs := make(map[int]bool)
 			for i := 0.0; i < count; i++ {
-				idx, val := e.SimilarityMatrix().LeastSimilar()
-				log.Println("Computing the similarities for ", idx, val)
+				var idx int
+				if _, ok2 := e.PopulationPolicy().Parameters["random"]; ok2 {
+					for len(chosenIdxs) < len(e.Datasets()) {
+						idx = rand.Intn(len(e.Datasets()))
+						if _, ok := chosenIdxs[idx]; !ok {
+							chosenIdxs[idx] = true
+							break
+						}
+					}
+				} else {
+					idx, _ = e.SimilarityMatrix().LeastSimilar()
+				}
+				log.Println("Computing the similarities for ", idx)
 				for j := 0; j < len(e.Datasets()); j++ {
 					d1, d2 := e.Datasets()[idx], e.Datasets()[j]
 					e.SimilarityMatrix().Set(idx, j, e.Similarity(d1, d2))
 				}
+
 			}
 		} else if threshold, ok := e.PopulationPolicy().Parameters["threshold"]; ok {
 			log.Printf("Threshold based execution (threshold: %.5f)\n", threshold)
