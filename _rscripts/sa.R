@@ -13,9 +13,11 @@ coords <- as.matrix(dataset[,1:ncol(dataset)-1])
 distances <- as.matrix(dataset[ncol(dataset)])
 
 stress <- function(x) {
-	y <- numeric(nrow(coords))
+	y <- numeric()
 	for(i in 1:nrow(coords))  {
-			y[i] <- sum(sqrt(sum((x-coords[i,])^2)) - distances[i])
+			measured <- sqrt(sum((x-coords[i,])^2))
+			y[i] <- (distances[i] - measured)^2/distances[i]
+			#y[i] <- sum(sqrt(sum((x-coords[i,])^2)) - distances[i])
 	}
 	sqrt(sum(y^2))
 }
