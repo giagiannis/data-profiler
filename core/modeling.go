@@ -114,6 +114,7 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 	errors["Res050-all"] = Percentile(residuals, 50)
 	errors["Res075-all"] = Percentile(residuals, 75)
 	errors["Res100-all"] = Percentile(residuals, 100)
+	errors["Kendall-all"] = Kendall(actual, a.appxValues)
 
 	// using only unknown datasets
 	unknownCount := len(a.datasets) - len(a.samples)
@@ -140,6 +141,7 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 	errors["Res050-unknown"] = Percentile(residualsUnknown, 50)
 	errors["Res075-unknown"] = Percentile(residualsUnknown, 75)
 	errors["Res100-unknown"] = Percentile(residualsUnknown, 100)
+	errors["Kendall-unknown"] = Kendall(actualUnknown, appxUnknown)
 
 	return errors
 }
