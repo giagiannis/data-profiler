@@ -19,6 +19,8 @@ import (
 type CompositeEstimator struct {
 	AbstractDatasetSimilarityEstimator
 
+	datasetIndexes map[string]int
+
 	// the slice of estimators to use for the similarity evaluation
 	estimators map[string]DatasetSimilarityEstimator
 	// the math expression used for the estimation
@@ -27,9 +29,6 @@ type CompositeEstimator struct {
 
 // Compute method constructs the Similarity Matrix
 func (e *CompositeEstimator) Compute() error {
-	for _, est := range e.estimators {
-		est.Compute()
-	}
 	return datasetSimilarityEstimatorCompute(e)
 }
 
@@ -42,7 +41,11 @@ func (e *CompositeEstimator) Similarity(a, b *Dataset) float64 {
 	}
 	params := make(map[string]interface{})
 	for k, est := range e.estimators {
-		params[k] = est.Similarity(a, b)
+		if est.SimilarityMatrix() != nil {
+			params[k] = est.SimilarityMatrix().Get(e.datasetIndexes[a.Path()], e.datasetIndexes[b.Path()])
+		} else {
+			params[k] = est.Similarity(a, b)
+		}
 	}
 	result, err := expression.Evaluate(params)
 	if err != nil {
@@ -132,6 +135,12 @@ func (e *CompositeEstimator) Configure(conf map[string]string) {
 			}
 		}
 	}
+	log.Println("Creating inverse dataset index")
+	e.datasetIndexes = make(map[string]int)
+	for i, d := range e.datasets {
+		e.datasetIndexes[d.Path()] = i
+	}
+
 }
 
 // Options returns the applicable parameters needed by the Estimator.

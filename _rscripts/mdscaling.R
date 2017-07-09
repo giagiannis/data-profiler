@@ -29,15 +29,25 @@ k <- as.numeric(args[2])
 cmd <- cmdscale(d, k=k, eig=TRUE)
 cat(cmd$GOF[2])
 cat("\n")
-fit <-sammon(d, trace=FALSE, k=k)
-#fit <- cmdscale(d, k=k, eig=TRUE)
-#cat(fit$GOF[2])
-cat(fit$stress)
+
+# use only if cmdscaling only
+cat(cmd$GOF[2])
 cat("\n")
-for(i in 1:nrow(fit$points)) {
-		for(j in 1:ncol(fit$points)) {
-				cat(fit$points[i,j])
+for(i in 1:nrow(cmd$points)) {
+		for(j in 1:ncol(cmd$points)) {
+				cat(cmd$points[i,j])
 				cat(" ")
 		}
 		cat("\n")
 }
+
+#fit <-sammon(d, trace=FALSE, k=k)
+#cat(fit$stress)
+#cat("\n")
+#for(i in 1:nrow(fit$points)) {
+#		for(j in 1:ncol(fit$points)) {
+#				cat(fit$points[i,j])
+#				cat(" ")
+#		}
+#		cat("\n")
+#}

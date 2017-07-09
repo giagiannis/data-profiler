@@ -194,6 +194,7 @@ func (e *BhattacharyyaEstimator) Serialize() []byte {
 	for _, s := range e.datasetsSize {
 		buffer.Write(getBytesInt(s))
 	}
+
 	// write kdtree
 	serializedTree := e.kdTree.Serialize()
 	buffer.Write(getBytesInt(len(serializedTree)))

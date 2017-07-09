@@ -16,13 +16,14 @@ if(!exists("titleComment")) {
 set terminal postscript eps size 7,5.0 enhanced color font 'Arial,34'
 set xlabel "Sampling Rate"
 set grid
-set key top right
 
 set style line 1 lt 1 pt 7 lc rgb "#000000" lw 4 ps 4
 set style line 2 lt 1 pt 2 lc rgb "#333333" lw 4 ps 4
 set style line 3 lt 1 pt 4 lc rgb "#777777" lw 4 ps 4
 set style line 4 lt 1 pt 10 lc rgb "#999999" lw 4 ps 4
 set style line 5 lt 1 pt 13 lc rgb "#aaaaaa" lw 4 ps 4
+set style line 6 lt 1 pt 14 lc rgb "#cccccc" lw 4 ps 4
+set key top right font ",15" samplen 1 outside horizontal
 
 colNames=system("head -n 1 ".word(inputFile,1))
 do for [t=2:67] {
