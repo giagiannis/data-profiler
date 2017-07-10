@@ -161,6 +161,7 @@ func (a *AbstractModeler) getMetrics(testIdx []int, actual []float64, label stri
 	errors["RMSE-"+label] = RootMeanSquaredError(actualUnknown, appxUnknown)
 	errors["RMSLE-"+label] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
 	errors["MAPE-"+label] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["MdAPE-"+label] = MedianAbsolutePercentageError(actualUnknown, appxUnknown)
 	errors["MAE-"+label] = MeanAbsoluteError(actualUnknown, appxUnknown)
 	errors["R^2-"+label] = RSquared(actualUnknown, appxUnknown)
 	errors["Res000-"+label] = Percentile(residualsUnknown, 0)
@@ -362,6 +363,25 @@ func MeanAbsoluteError(actual, predicted []float64) float64 {
 	}
 	if count > 0 {
 		return sum / count
+	}
+	return math.NaN()
+}
+
+// MedianAbsolutePercentageError returns the MdAPE of the actual vs the predicted values
+func MedianAbsolutePercentageError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+	apes := make([]float64, 0)
+	for i := range actual {
+		if actual[i] != 0.0 && !math.IsNaN(actual[i]) {
+			val := math.Abs((actual[i] - predicted[i]) / actual[i])
+			apes = append(apes, val)
+		}
+	}
+	if len(apes) > 0 {
+		return Percentile(apes, 50)
 	}
 	return math.NaN()
 }
