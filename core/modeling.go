@@ -88,7 +88,7 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 		return nil
 	}
 	errors := make(map[string]float64)
-	// evaluation for the entire dataset
+
 	var actual []float64
 	for _, d := range a.datasets {
 		val, err := a.evaluator.Evaluate(d.Path())
@@ -99,50 +99,76 @@ func (a *AbstractModeler) ErrorMetrics() map[string]float64 {
 			actual = append(actual, val)
 		}
 	}
-	residuals := make([]float64, len(actual))
-	for i := range actual {
-		residuals[i] = math.Abs(actual[i] - a.appxValues[i])
-	}
-	sort.Float64s(residuals) // avoid multiple re-sortings
-	errors["RMSE-all"] = RootMeanSquaredError(actual, a.appxValues)
-	errors["RMSLE-all"] = RootMeanSquaredLogError(actual, a.appxValues)
-	errors["MAPE-all"] = MeanAbsolutePercentageError(actual, a.appxValues)
-	errors["MAE-all"] = MeanAbsoluteError(actual, a.appxValues)
-	errors["R^2-all"] = RSquared(actual, a.appxValues)
-	errors["Res000-all"] = Percentile(residuals, 0)
-	errors["Res025-all"] = Percentile(residuals, 25)
-	errors["Res050-all"] = Percentile(residuals, 50)
-	errors["Res075-all"] = Percentile(residuals, 75)
-	errors["Res100-all"] = Percentile(residuals, 100)
-	errors["Kendall-all"] = Kendall(actual, a.appxValues)
 
-	// using only unknown datasets
-	unknownCount := len(a.datasets) - len(a.samples)
-	actualUnknown, appxUnknown, residualsUnknown :=
-		make([]float64, unknownCount),
-		make([]float64, unknownCount),
-		make([]float64, unknownCount)
-	j := 0
+	// evaluation for the entire dataset
+	allIndices := make([]int, len(actual))
+	for i := range actual {
+		allIndices[i] = i
+	}
+	for k, v := range a.getMetrics(allIndices, actual, "all") {
+		errors[k] = v
+	}
+
+	// evaluation for the unknown datasets
+	var unknownIndices []int
 	for i := range actual {
 		if _, ok := a.samples[i]; !ok {
-			actualUnknown[j] = actual[i]
-			appxUnknown[j] = a.appxValues[i]
-			residualsUnknown[j] = math.Abs(actualUnknown[j] - appxUnknown[j])
-			j++
+			unknownIndices = append(unknownIndices, i)
 		}
 	}
-	errors["RMSE-unknown"] = RootMeanSquaredError(actualUnknown, appxUnknown)
-	errors["RMSLE-unknown"] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
-	errors["MAPE-unknown"] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
-	errors["MAE-unknown"] = MeanAbsoluteError(actualUnknown, appxUnknown)
-	errors["R^2-unknown"] = RSquared(actualUnknown, appxUnknown)
-	errors["Res000-unknown"] = Percentile(residualsUnknown, 0)
-	errors["Res025-unknown"] = Percentile(residualsUnknown, 25)
-	errors["Res050-unknown"] = Percentile(residualsUnknown, 50)
-	errors["Res075-unknown"] = Percentile(residualsUnknown, 75)
-	errors["Res100-unknown"] = Percentile(residualsUnknown, 100)
-	errors["Kendall-unknown"] = Kendall(actualUnknown, appxUnknown)
+	for k, v := range a.getMetrics(unknownIndices, actual, "unknown") {
+		errors[k] = v
+	}
 
+	tempErrors := make(map[string][]float64)
+	for r := 0; r < 10; r++ {
+		perm := rand.Perm(len(unknownIndices))
+		var idcs []int
+		for _, i := range perm {
+			idcs = append(idcs, unknownIndices[i])
+		}
+		for _, s := range []float64{0.05, 0.10, 0.20, 0.30, 0.40} {
+			newlength := int(float64(len(actual)) * s)
+			if newlength < len(idcs) && newlength > 0 {
+				for k, v := range a.getMetrics(idcs[1:newlength], actual, fmt.Sprintf("%02.0f%%", 100*s)) {
+					//errors[k] = v
+					if _, ok := tempErrors[k]; !ok {
+						tempErrors[k] = make([]float64, 0)
+					}
+					tempErrors[k] = append(tempErrors[k], v)
+				}
+			}
+		}
+	}
+	for k, v := range tempErrors {
+		errors[k] = Mean(v)
+	}
+
+	return errors
+}
+
+func (a *AbstractModeler) getMetrics(testIdx []int, actual []float64, label string) map[string]float64 {
+	actualUnknown, appxUnknown, residualsUnknown :=
+		make([]float64, len(testIdx)),
+		make([]float64, len(testIdx)),
+		make([]float64, len(testIdx))
+	for i, v := range testIdx {
+		actualUnknown[i] = actual[v]
+		appxUnknown[i] = a.appxValues[v]
+		residualsUnknown[i] = math.Abs(actualUnknown[i] - appxUnknown[i])
+	}
+	errors := make(map[string]float64)
+	errors["RMSE-"+label] = RootMeanSquaredError(actualUnknown, appxUnknown)
+	errors["RMSLE-"+label] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
+	errors["MAPE-"+label] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["MAE-"+label] = MeanAbsoluteError(actualUnknown, appxUnknown)
+	errors["R^2-"+label] = RSquared(actualUnknown, appxUnknown)
+	errors["Res000-"+label] = Percentile(residualsUnknown, 0)
+	errors["Res025-"+label] = Percentile(residualsUnknown, 25)
+	errors["Res050-"+label] = Percentile(residualsUnknown, 50)
+	errors["Res075-"+label] = Percentile(residualsUnknown, 75)
+	errors["Res100-"+label] = Percentile(residualsUnknown, 100)
+	errors["Kendall-"+label] = Kendall(actualUnknown, appxUnknown)
 	return errors
 }
 
