@@ -110,24 +110,28 @@ func expOnlineIndexerRun() {
 	log.Println("Initial total stress:", currentStress)
 	fmt.Fprintln(stressOutput, currentStress)
 
+	if len(params.datasets) == 0 {
+		return
+	}
+
 	targetDatasets := make([]*core.Dataset, len(params.est.Datasets()))
 	for i := range targetDatasets {
 		targetDatasets[i] = params.est.Datasets()[i]
 	}
 
-	if len(params.datasets) == 0 {
-		return
-	}
 	for _, d := range params.datasets {
 		old := sm
 		sm = core.NewDatasetSimilarities(old.Capacity() + 1)
 		for i := 0; i < old.Capacity(); i++ {
 			for j := 0; j < old.Capacity(); j++ {
 				sm.Set(i, j, old.Get(i, j))
+				sm.Set(j, i, old.Get(j, i))
 			}
 		}
 		for i := 0; i < sm.Capacity()-1; i++ {
-			sm.Set(i, sm.Capacity()-1, params.est.Similarity(d, targetDatasets[i]))
+			sim := params.est.Similarity(d, targetDatasets[i])
+			sm.Set(i, sm.Capacity()-1, sim)
+			sm.Set(sm.Capacity()-1, i, sim)
 		}
 		targetDatasets = append(targetDatasets, d)
 
@@ -167,8 +171,10 @@ func sammonStress(similarityMatrix *core.DatasetSimilarityMatrix, coords []core.
 			measured := getDistance(coords[i], coords[j])
 			if actual != 0 {
 				stress += ((actual - measured) * (actual - measured) / actual)
+				foo += actual
+			} else {
+				log.Println(i, j, "zero")
 			}
-			foo += actual
 		}
 	}
 	return stress / foo

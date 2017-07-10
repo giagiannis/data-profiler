@@ -351,7 +351,8 @@ func MeanAbsolutePercentageError(actual, predicted []float64) float64 {
 	for i := range actual {
 		if actual[i] != 0.0 && !math.IsNaN(actual[i]) {
 			count += 1.0
-			sum += math.Abs((actual[i] - predicted[i]) / actual[i])
+			val := math.Abs((actual[i] - predicted[i]) / actual[i])
+			sum += val
 		}
 	}
 	if count > 0 {

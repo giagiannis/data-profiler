@@ -31,23 +31,25 @@ cat(cmd$GOF[2])
 cat("\n")
 
 # use only if cmdscaling only
-cat(cmd$GOF[2])
-cat("\n")
-for(i in 1:nrow(cmd$points)) {
-		for(j in 1:ncol(cmd$points)) {
-				cat(cmd$points[i,j])
-				cat(" ")
-		}
-		cat("\n")
-}
-
-#fit <-sammon(d, trace=FALSE, k=k)
-#cat(fit$stress)
+#cat(cmd$GOF[2])
 #cat("\n")
-#for(i in 1:nrow(fit$points)) {
-#		for(j in 1:ncol(fit$points)) {
-#				cat(fit$points[i,j])
+#for(i in 1:nrow(cmd$points)) {
+#		for(j in 1:ncol(cmd$points)) {
+#				cat(cmd$points[i,j])
 #				cat(" ")
 #		}
 #		cat("\n")
 #}
+
+
+
+fit <-sammon(d,y=cmd$points, trace=FALSE, k=k)
+cat(fit$stress)
+cat("\n")
+for(i in 1:nrow(fit$points)) {
+		for(j in 1:ncol(fit$points)) {
+				cat(fit$points[i,j])
+				cat(" ")
+		}
+		cat("\n")
+}
