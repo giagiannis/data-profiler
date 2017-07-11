@@ -152,13 +152,18 @@ func (a *AbstractModeler) getMetrics(testIdx []int, actual []float64, label stri
 		make([]float64, len(testIdx)),
 		make([]float64, len(testIdx)),
 		make([]float64, len(testIdx))
+	maxValue := math.NaN()
 	for i, v := range testIdx {
+		if math.IsNaN(maxValue) || maxValue < actual[v] {
+			maxValue = actual[v]
+		}
 		actualUnknown[i] = actual[v]
 		appxUnknown[i] = a.appxValues[v]
 		residualsUnknown[i] = math.Abs(actualUnknown[i] - appxUnknown[i])
 	}
 	errors := make(map[string]float64)
 	errors["RMSE-"+label] = RootMeanSquaredError(actualUnknown, appxUnknown)
+	errors["NRMSE-"+label] = RootMeanSquaredError(actualUnknown, appxUnknown) / maxValue
 	errors["RMSLE-"+label] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
 	errors["MAPE-"+label] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
 	errors["MdAPE-"+label] = MedianAbsolutePercentageError(actualUnknown, appxUnknown)
