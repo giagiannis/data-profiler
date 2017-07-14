@@ -24,6 +24,7 @@ func TestNewOnlineIndexer(t *testing.T) {
 		t.Fail()
 	}
 	indexer := NewOnlineIndexer(estim, md.Coordinates(), onlineIndexingScript)
+	indexer.DatasetsToCompare(10)
 	coords, _, err := indexer.Calculate(datasets[rand.Int()%len(datasets)])
 	if err != nil || coords == nil {
 		t.Log(err)
