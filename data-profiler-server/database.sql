@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `coordinates` (
 		`filename` VARCHAR(500),
 		`k` VARCHAR(500),
 		`gof` VARCHAR(2000),
+		`stress` VARCHAR(2000),
 		`matrixid` INTEGER,
 		FOREIGN KEY(matrixid) REFERENCES matrices(id)
 );

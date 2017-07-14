@@ -60,6 +60,7 @@ var routingControllerTemplates = map[string]cntTmpltCouple{
 	"operator/delete": {controllerOperatorDelete, ""},
 	"modeling/delete": {controllerModelDelete, ""},
 	"scores/text":     {controllerScoresText, ""},
+	"datasets/delete": {controllerDatasetDelete, ""},
 
 	// TODO: implement these URLs
 	"about/":  {nil, "about.html"},

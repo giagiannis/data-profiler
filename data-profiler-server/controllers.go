@@ -24,6 +24,14 @@ func controllerDatasetView(w http.ResponseWriter, r *http.Request) Model {
 	return m
 }
 
+// /datasets/<id>/delete
+func controllerDatasetDelete(w http.ResponseWriter, r *http.Request) Model {
+	_, id, _ := parseURL(r.URL.Path)
+	modelDatasetDelete(id)
+	http.Redirect(w, r, "/datasets/", 307)
+	return nil
+}
+
 // /download/
 func controllerDownload(w http.ResponseWriter, r *http.Request) Model {
 	fileType := r.URL.Query().Get("type")

@@ -1,12 +1,98 @@
 {{ define "title" }}Model Visualization{{ end }}
 
 {{ define "body"}}
-<pre id='labels' hidden>{{$.Labels}}</pre>
-<pre id='samples' hidden>{{$.Samples}}</pre>
-<pre id='approximated' hidden>{{$.ApproximatedValues}}</pre>
-<pre id='coordinates' hidden>{{$.Coordinates}}</pre>
-<pre id='scores' hidden>{{$.ScoresID}}</pre>
-<div id="container" style="height: 800px"></div>
+
+<div id='tabs'>
+		<ul>
+				<li><a href='#projection'>Projection</a></li>
+				<li><a href='#errors'>Errors</a></li>
+		</ul>
+
+
+<div id='projection'>
+		<h2>Model Projection</h2>
+		<pre id='labels' hidden>{{$.Labels}}</pre>
+		<pre id='samples' hidden>{{$.Samples}}</pre>
+		<pre id='approximated' hidden>{{$.ApproximatedValues}}</pre>
+		<pre id='coordinates' hidden>{{$.Coordinates}}</pre>
+		<pre id='scores' hidden>{{$.ScoresID}}</pre>
+		<div id="container" style="height: 800px"></div>
+		<label for='appx'>Approximated values:<input type='checkbox' name='appx' id='appxCheckbox' onclick='depictAppxValues()' checked/></label>
+		<br/>
+		<label for='samples'>Samples:<input type='checkbox' name='samples' id='sampleCheckbox' onclick='depictSamples()' checked/></label>
+		<br/>
+		<label for='actual'>Actual values:<input type='checkbox' name='actual' id='actualCheckbox' onclick='depictActualValues()'/></label>
+</div>
+<div id='errors'>
+<h2>Error Metrics</h2>
+<!--<table class='tablelist'>
+{{ range $k, $v := .Errors}}
+<tr><th>{{$k}}</th><td>{{$v}}</td></tr>
+{{end}}
+
+</table>
+-->
+<div id='errortable'></div>
+<pre id='errors_raw' hidden>
+{{ range $k, $v := .Errors}}
+{{$k}},{{$v}}
+{{end}}
+</pre>
+<script  type='text/javascript'>
+var errors=$("#errors_raw").html()
+metrics = errors.split("\n");
+prefixes = {};
+suffixes = {};
+errorsMap = {};
+for(var i=0;i<metrics.length;i++) {
+		entry = metrics[i];
+		kv = entry.split(",");
+		if(kv.length >0){
+			title =kv[0];
+			value = kv[1];
+			kv = title.split("-");
+			prefix = kv[0];
+			suffix = kv[1];
+			if(prefix != undefined && prefix != "") {
+					prefixes[prefix]=undefined;
+			}
+			if(suffix != undefined && suffix != "") {
+					suffixes[suffix]=undefined;
+			}
+			if(prefix!=undefined && prefix != "" && errorsMap[prefix]==undefined) {
+					errorsMap[prefix] = {}
+			}
+			if(suffix!=undefined && suffix!= "" && errorsMap[prefix][suffix]==undefined) {
+					errorsMap[prefix][suffix] = value
+			}
+		}
+}
+htmlString="<table class='tablelist'>";
+
+htmlString=htmlString+"<tr>";
+htmlString=htmlString+"<th></th>";
+for(var key in suffixes) {
+		htmlString=htmlString+"<th style='text-align:center;'>"+key+"</th>";
+}
+
+for (var key1 in prefixes) {
+	htmlString=htmlString+"<tr>";
+	htmlString=htmlString+"<th>"+key1+"</th>";
+
+	for (var key2 in suffixes) {
+	htmlString=htmlString+"<td style='text-align:right;'>"+errorsMap[key1][key2]+"</td>";
+	}
+	htmlString=htmlString+"</tr>";
+}
+
+htmlString=htmlString+"</tr>";
+htmlString=htmlString+"</table>";
+
+$("#errortable").html(htmlString);
+</script>
+</div>
+</div>
+
 <script>
 var chart;
 var approximatedValues = [];
@@ -106,6 +192,7 @@ chart = new Highcharts.Chart({
 		chart: {
 				renderTo: targetDiv,
 				margin: 100,
+				width:950,
 				type: 'scatter',
 				options3d: {
 						enabled: true,
@@ -256,27 +343,18 @@ function depictSamples() {
 }
 
 </script>
-<div>
-		<label for='appx'>Approximated values:<input type='checkbox' name='appx' id='appxCheckbox' onclick='depictAppxValues()' checked/></label>
-		<br/>
-		<label for='samples'>Samples:<input type='checkbox' name='samples' id='sampleCheckbox' onclick='depictSamples()' checked/></label>
-		<br/>
-		<label for='actual'>Actual values:<input type='checkbox' name='actual' id='actualCheckbox' onclick='depictActualValues()'/></label>
-</div>
-<div>
-<h2>Error Metrics</h2>
-<table class='tablelist'>
-{{ range $k, $v := .Errors}}
-<tr><th>{{$k}}</th><td>{{$v}}</td></tr>
-{{end}}
 
-</table>
 
-</div>
+
+
+
+
+
 <script>
 if(scoresID=="") {
 		$("#actualCheckbox").attr("disabled", true);
 }
+$("#tabs").tabs();
 </script>
 
 

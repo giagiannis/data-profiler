@@ -136,7 +136,8 @@ func NewMDSComputationTask(smID, datasetID string, conf map[string]string) *Task
 			return err
 		}
 		gof := fmt.Sprintf("%.5f", mds.Gof())
-		modelCoordinatesInsert(mds.Coordinates(), dat.ID, conf["k"], gof, smID)
+		stress := fmt.Sprintf("%.5f", mds.Stress())
+		modelCoordinatesInsert(mds.Coordinates(), dat.ID, conf["k"], gof, stress, smID)
 		return nil
 	}
 	return task

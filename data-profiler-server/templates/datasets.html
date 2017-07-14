@@ -29,6 +29,11 @@ Datasets List
 <button style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" onclick="location.href='/datasets/{{ $val.ID }}'" title="Show {{ $val.Name }}">
 <span class="ui-icon ui-icon-zoomin" ></span>
 </button>
+
+<button style='height:30px;' class="ui-button ui-widget ui-corner-all ui-button-icon-only" style='background:#aa0000;' title="Delete {{ $val.Name }}" onclick="window.location.href='/datasets/{{ $val.ID }}/delete'">
+<span class="ui-icon ui-icon-trash" ></span>
+</button>
+
 </td>
 </tr>
 {{end}}

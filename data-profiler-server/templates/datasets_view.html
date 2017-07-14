@@ -155,9 +155,14 @@ onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span clas
 		<td style='text-align:right;'>{{$model.SamplingRate | printf "%.2f"}}</td>
 		<td>
 				<ul>
-				{{ range $k, $v:= $model.Errors }}
+<!--				{{ range $k, $v:= $model.Errors }}
 				<li><span style='font-weight: bold'/>{{$k}}</span>:{{$v}}</li>
 				{{ end}}
+-->			
+				<li><span style='font-weight: bold'/>MAE</span>:{{index $model.Errors "MAE-all" }}</li>
+				<li><span style='font-weight: bold'/>RMSE</span>:{{index $model.Errors "RMSE-all" }}</li>
+				<li><span style='font-weight: bold'/>MdAPE</span>:{{index $model.Errors "MdAPE-all" }}</li>
+				<li><span style='font-weight: bold'/>NRMSE</span>:{{index $model.Errors "NRMSE-all" }}</li>
 				</ul>
 		</td>
 		<td>

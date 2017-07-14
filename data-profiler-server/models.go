@@ -62,6 +62,7 @@ type ModelCoordinates struct {
 	matrixID string
 	K        string
 	GOF      string
+	Stress   string
 }
 
 // ModelDatasetModel represents a model of an operator for a given stuff
@@ -105,6 +106,12 @@ func modelDatasetsList() []*ModelDataset {
 		result = append(result, obj)
 	}
 	return result
+}
+
+func modelDatasetDelete(id string) *ModelDataset {
+	m := modelDatasetGet(id)
+	deleteByID("datasets", id)
+	return m
 }
 
 func modelDatasetInsert(name, description, path string) string {
@@ -289,7 +296,7 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	db := dbConnect()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT *" +
+	rows, err := db.Query("SELECT id, path, filename, k, gof, stress, matrixid" +
 		" FROM coordinates WHERE id == " + id)
 	if err != nil {
 		log.Println(err)
@@ -299,7 +306,7 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	if rows.Next() {
 		obj := new(ModelCoordinates)
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &obj.matrixID)
 		return obj
 	}
 	return nil
@@ -320,7 +327,7 @@ func modelCoordinatesGetByDataset(datasetID string) []*ModelCoordinates {
 	for rows.Next() {
 		obj := new(ModelCoordinates)
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &obj.matrixID)
 		result = append(result, obj)
 	}
 	return result
@@ -341,13 +348,13 @@ func modelCoordinatesGetByMatrix(matrixID string) []*ModelCoordinates {
 	for rows.Next() {
 		obj := new(ModelCoordinates)
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &obj.matrixID)
 		result = append(result, obj)
 	}
 	return result
 }
 
-func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, matrixID string) *ModelCoordinates {
+func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K, GOF, Stress, matrixID string) *ModelCoordinates {
 	dts := modelDatasetGetInfo(datasetID)
 	var coords [][]float64
 	for _, c := range coordinates {
@@ -359,8 +366,8 @@ func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K,
 	db := dbConnect()
 	defer db.Close()
 	stmt, err := db.Prepare(
-		"INSERT INTO coordinates(path,filename,k,gof,matrixid) " +
-			"VALUES(?,?,?,?,?)")
+		"INSERT INTO coordinates(path,filename,k,gof,stress,matrixid) " +
+			"VALUES(?,?,?,?,?,?)")
 	defer stmt.Close()
 	if err != nil {
 		log.Println(err)
@@ -369,6 +376,7 @@ func modelCoordinatesInsert(coordinates []core.DatasetCoordinates, datasetID, K,
 		path.Base(filePath),
 		K,
 		GOF,
+		Stress,
 		matrixID)
 	if err != nil {
 		log.Println(err)
