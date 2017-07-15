@@ -6,28 +6,28 @@ Tasks
 <h1>Tasks</h1>
 {{ if . }}
 <table class='tablelist'>
-<tr>
-		<th>Description</th>
-		<th>Dataset</th>
-		<th>Status</th>
-		<th>Started</th>
-		<th>Duration (sec)</th>
-</tr>
-{{ range $i, $task := . }}
-<tr>
-		<td>{{ $task.Description }} </td>
-		<td><a href="/datasets/{{ $task.Dataset.ID}}">{{ $task.Dataset.Name}}</a></td>
-		<td>{{ $task.Status }} </td>
-		<td>{{ $task.Started }} </td>
-		<td>{{ printf "%.2f" $task.Duration }} </td>
-</tr>
-{{ end }}
+		<tr>
+				<th>Description</th>
+				<th>Dataset</th>
+				<th>Status</th>
+				<th>Started</th>
+				<th>Duration (sec)</th>
+		</tr>
+		{{ range $i, $task := . }}
+		<tr>
+				<td>{{ $task.Description }} </td>
+				<td><a href="/datasets/{{ $task.Dataset.ID}}">{{ $task.Dataset.Name}}</a></td>
+				<td>{{ $task.Status }} </td>
+				<td>{{ $task.Started }} </td>
+				<td>{{ printf "%.2f" $task.Duration }} </td>
+		</tr>
+		{{ end }}
 </table>
 <script type='text/javascript'>
 setTimeout(function() {
 		if ($("table").html().includes("RUNNING")) {
 				window.location = window.location;
-//			location.reload(true);
+				//			location.reload(true);
 		}
 }, 1000);
 </script>

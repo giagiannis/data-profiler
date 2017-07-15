@@ -305,6 +305,27 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 	return nil
 }
 
+// /modeling/<id>/comparison/
+func controllerModelComparison(w http.ResponseWriter, r *http.Request) Model {
+	r.ParseForm()
+
+	xLabel := r.PostForm["xlabel"][0]
+	yLabel := r.PostForm["ylabel"][0]
+	result := make(map[string]string)
+	for _, modelID := range r.PostForm["ids"] {
+		mod := modelDatasetModelGet(modelID)
+		var x string
+		if xLabel == "SR" {
+			x = fmt.Sprintf("%.2f", mod.SamplingRate)
+		}
+		result[x] = mod.Errors[yLabel]
+	}
+	return struct {
+		Data           map[string]string
+		XLabel, YLabel string
+	}{result, xLabel, yLabel}
+}
+
 // /modeling/new/new
 func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")

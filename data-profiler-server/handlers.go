@@ -16,14 +16,15 @@ type cntTmpltCouple struct {
 // templateDependencies lists the necessary templates that need to be rendered
 // for each template
 var templateDependencies = map[string][]string{
-	"about.html":         {"base.html"},
-	"datasets.html":      {"base.html"},
-	"datasets_view.html": {"base.html"},
-	"tasks.html":         {"base.html"},
-	"error.html":         {"base.html"},
-	"sm_heatmap.html":    {"base.html"},
-	"coords_visual.html": {"base.html"},
-	"model_visual.html":  {"base.html"},
+	"about.html":            {"base.html"},
+	"datasets.html":         {"base.html"},
+	"datasets_view.html":    {"base.html"},
+	"tasks.html":            {"base.html"},
+	"error.html":            {"base.html"},
+	"sm_heatmap.html":       {"base.html"},
+	"coords_visual.html":    {"base.html"},
+	"model_visual.html":     {"base.html"},
+	"model_comparison.html": {"base.html"},
 
 	// The rest are popups
 	"forms/new_sm_form.html":      {},
@@ -37,12 +38,13 @@ var templateDependencies = map[string][]string{
 // routingControllerTemplates hold the controller and the respective template
 // that need to be rendered for each possible path
 var routingControllerTemplates = map[string]cntTmpltCouple{
-	"datasets/":       {controllerDatasetList, "datasets.html"},
-	"datasets/view":   {controllerDatasetView, "datasets_view.html"},
-	"tasks/":          {controllerTasksList, "tasks.html"},
-	"sm/visual":       {controllerSMVisual, "sm_heatmap.html"},
-	"coords/visual":   {controllerCoordsVisual, "coords_visual.html"},
-	"modeling/visual": {controllerModelVisual, "model_visual.html"},
+	"datasets/":           {controllerDatasetList, "datasets.html"},
+	"datasets/view":       {controllerDatasetView, "datasets_view.html"},
+	"tasks/":              {controllerTasksList, "tasks.html"},
+	"sm/visual":           {controllerSMVisual, "sm_heatmap.html"},
+	"coords/visual":       {controllerCoordsVisual, "coords_visual.html"},
+	"modeling/visual":     {controllerModelVisual, "model_visual.html"},
+	"modeling/comparison": {controllerModelComparison, "model_comparison.html"},
 
 	// forms
 	"datasets/newsm": {controllerDatasetNewSM, "forms/new_sm_form.html"},

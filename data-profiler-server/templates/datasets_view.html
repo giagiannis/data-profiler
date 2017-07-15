@@ -145,11 +145,24 @@ No operators found
 onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span class="ui-icon ui-icon-plusthick" ></span></button>
 </h2>
 {{ if .Models }}
+<script type='text/javascript'>
+function toggleSelectAllCheckboxes(obj,name) {
+		if($("#"+obj).is(":checked")) {
+			$("input[name=ids]").prop("checked",true);
+		} else {
+			$("input[name=ids]").prop("checked",false);
+		}
+}
+</script>
+<form method='post' action='/modeling/{{ $.ID }}/comparison'>
 <table class='tablelist'>
-		<tr><th>Coordinates</th><th>Operator</th><th>SR</th><th>Errors</th><th>Configuration</th><th>Actions</th></tr>
+		<tr>
+				<th><input type='checkbox' id="ids_handler" onclick='toggleSelectAllCheckboxes("ids_handler","ids")'/></th>
+				<th>Coordinates</th><th>Operator</th><th>SR</th><th>Errors</th><th>Configuration</th><th>Actions</th></tr>
 
 {{ range $k, $model := .Models }} 
 <tr>
+		<td><input type='checkbox' name='ids' value='{{$model.ID}}'/></td>
 		<td>{{$model.Coordinates.Filename}}</td>
 		<td>{{$model.Operator.Name}}</td>
 		<td style='text-align:right;'>{{$model.SamplingRate | printf "%.2f"}}</td>
@@ -173,22 +186,22 @@ onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span clas
 				</ul>
 		</td>
 		<td>
-		<button title="Download the sampled datasets" class="ui-button ui-widget ui-corner-all" 
+		<button type='button' title="Download the sampled datasets" class="ui-button ui-widget ui-corner-all" 
 		onclick="window.location.href='/download/?type=samples&id={{$model.ID}}&name=samples.json'">
 		<img src='/static/download.png' width=30/></a>
 		</button>
 		<br/>
-		<button title="Download the approximated scores" class="ui-button ui-widget ui-corner-all" 
+		<button type='button' title="Download the approximated scores" class="ui-button ui-widget ui-corner-all" 
 				onclick="window.location.href='/download/?type=appx&id={{$model.ID}}&name=appx.csv'">
 		<img src='/static/download.png' width=30/></a>
 		</button>
 		<br/>
-		<button title="Visualize model" class="ui-button ui-widget ui-corner-all" 
+		<button type='button' title="Visualize model" class="ui-button ui-widget ui-corner-all" 
 				onclick="window.location.href='/modeling/{{$model.ID}}/visual'">
 		<img src='/static/visualize.png' width=30/></a>
 		</button>
 		<br/>
-		<button title="Delete Model" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
+		<button type='button' title="Delete Model" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
 						onclick="window.location.href='/modeling/{{ $model.ID }}/delete/?datasetID={{$.ID}}'">
 					<img src='/static/delete.png' width=30/></a>
 				</button>
@@ -196,7 +209,17 @@ onclick="createPopup('/modeling/{{$.ID}}/new', 'Create new model');"> <span clas
 		</td>
 </tr>
 {{ end }} 
+<tr><td></td><td></td><td></td><td></td><td></td><td></td>
+		<td>
+		<input type='text' name='xlabel' value='SR' hidden/>				
+		<input type='text' name='ylabel' value='MdAPE-all' hidden/>				
+		<button title="Compare models" class="ui-button ui-widget ui-corner-all" 
+				onclick="console.log($('input[name=ids]'))"
+				><img src='/static/stats.png' width=30/></a></button>
+		</td>
+</tr>
 </table>
+</form>
 {{else }}
 No models found
 {{end}}
