@@ -163,7 +163,17 @@ function toggleSelectAllCheckboxes(obj,name) {
 {{ range $k, $model := .Models }} 
 <tr>
 		<td><input type='checkbox' name='ids' value='{{$model.ID}}'/></td>
-		<td>{{$model.Coordinates.Filename}}</td>
+		<td>
+				<ul>
+		
+						<li><span style='font-weight:bold'>{{$model.Coordinates.Filename}}</span></li>
+						<hr/>
+						<li><span style='font-weight:bold'>k:</span>{{ $model.Coordinates.K }}</li>
+					{{range $k,$v := $model.Coordinates.SimilarityMatrix.Configuration}}
+					<li><span style='font-weight:bold'>{{ $k }}:</span>{{ $v }}</li>
+					{{end}}
+				</ul>
+		</td>
 		<td>{{$model.Operator.Name}}</td>
 		<td style='text-align:right;'>{{$model.SamplingRate | printf "%.2f"}}</td>
 		<td>
@@ -211,8 +221,9 @@ function toggleSelectAllCheckboxes(obj,name) {
 {{ end }} 
 <tr><td></td><td></td><td></td><td></td><td></td><td></td>
 		<td>
-		<input type='text' name='xlabel' value='SR' hidden/>				
-		<input type='text' name='ylabel' value='MdAPE-all' hidden/>				
+				<!--		<input type='text' name='xlabel' value='SR' hidden/>				-->
+		<select name='xlabel' id='xlabel'></select>
+		<select name='ylabel' id='ylabel'></select>
 		<button title="Compare models" class="ui-button ui-widget ui-corner-all" 
 				onclick="console.log($('input[name=ids]'))"
 				><img src='/static/stats.png' width=30/></a></button>
@@ -220,6 +231,46 @@ function toggleSelectAllCheckboxes(obj,name) {
 </tr>
 </table>
 </form>
+<pre id='xlabels' hidden>
+{{ range $m := .Models }}
+{{ range $k, $v := $m.Coordinates.SimilarityMatrix.Configuration }}
+{{ $k }}
+{{ end }} 
+{{ end }}
+</pre>
+
+<script type='text/javascript'>
+a = $("#xlabels").html().split("\n");
+foo = {"SR" : "", "k" :""};
+for(i=0;i<a.length;i++) {
+		if (a[i]!="") {
+				foo[a[i]] = "";
+		}
+}
+for (var key in foo) {
+	$("#xlabel").append("<option value='"+key+"'>"+key+"</option>");
+}
+</script>
+
+<pre id='ylabels' hidden>
+{{ range $m := .Models }}
+{{ range $k, $v := $m.Errors }}
+{{ $k }}
+{{ end }} 
+{{ end }}
+</pre>
+<script type='text/javascript'>
+a = $("#ylabels").html().split("\n");
+foo = {};
+for(i=0;i<a.length;i++) {
+		if (a[i]!="") {
+				foo[a[i]] = "";
+		}
+}
+for (var key in foo) {
+	$("#ylabel").append("<option value='"+key+"'>"+key+"</option>");
+}
+</script>
 {{else }}
 No models found
 {{end}}

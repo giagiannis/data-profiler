@@ -233,8 +233,8 @@ func controllerCoordsVisual(w http.ResponseWriter, r *http.Request) Model {
 	if err != nil {
 		log.Println(err)
 	}
-
-	sm := modelSimilarityMatrixGet(m.matrixID)
+	sm := m.SimilarityMatrix
+	//	sm := modelSimilarityMatrixGet(m.matrixID)
 	if sm == nil {
 		log.Println("SM not found")
 		return nil
@@ -308,20 +308,23 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 // /modeling/<id>/comparison/
 func controllerModelComparison(w http.ResponseWriter, r *http.Request) Model {
 	r.ParseForm()
-
 	xLabel := r.PostForm["xlabel"][0]
 	yLabel := r.PostForm["ylabel"][0]
-	result := make(map[string]string)
+	result := make([]struct{ Key, Value string }, 0)
 	for _, modelID := range r.PostForm["ids"] {
 		mod := modelDatasetModelGet(modelID)
 		var x string
 		if xLabel == "SR" {
 			x = fmt.Sprintf("%.2f", mod.SamplingRate)
+		} else if xLabel == "k" {
+			x = mod.Coordinates.K
+		} else {
+			x = mod.Coordinates.SimilarityMatrix.Configuration[xLabel]
 		}
-		result[x] = mod.Errors[yLabel]
+		result = append(result, struct{ Key, Value string }{x, mod.Errors[yLabel]})
 	}
 	return struct {
-		Data           map[string]string
+		Data           []struct{ Key, Value string }
 		XLabel, YLabel string
 	}{result, xLabel, yLabel}
 }

@@ -5,8 +5,8 @@ Models Comparison
 {{ define "body" }}
 <h1>Model Comparison</h1>
 <pre id='series' hidden>
-{{ range $k,$v := $.Data}} 
-{{ $k}},{{ $v }}
+{{ range $v := $.Data}} 
+{{ $v.Key}},{{ $v.Value }}
 {{ end }}
 </pre>
 
@@ -23,6 +23,14 @@ for(i=0;i<splitted.length;i++) {
 				data.push([parseFloat(kv[0]),parseFloat(kv[1])]);
 		}
 }
+data.sort(function(o1,o2){
+		if(o1[0]>o2[0]) {
+				return 1
+		} else if(o1[0]<o2[0]) {
+				return -1
+		} 
+		return 0
+})
 Highcharts.chart('container', {
 
 		title: {

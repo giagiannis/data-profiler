@@ -56,13 +56,13 @@ type ModelSimilarityMatrix struct {
 
 // ModelCoordinates represents a set of coordinates
 type ModelCoordinates struct {
-	ID       string
-	Path     string
-	Filename string
-	matrixID string
-	K        string
-	GOF      string
-	Stress   string
+	ID               string
+	Path             string
+	Filename         string
+	K                string
+	GOF              string
+	Stress           string
+	SimilarityMatrix *ModelSimilarityMatrix
 }
 
 // ModelDatasetModel represents a model of an operator for a given stuff
@@ -305,8 +305,10 @@ func modelCoordinatesGet(id string) *ModelCoordinates {
 	defer rows.Close()
 	if rows.Next() {
 		obj := new(ModelCoordinates)
+		matrixID := ""
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.Stress, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &matrixID)
+		obj.SimilarityMatrix = modelSimilarityMatrixGet(matrixID)
 		return obj
 	}
 	return nil
@@ -326,8 +328,10 @@ func modelCoordinatesGetByDataset(datasetID string) []*ModelCoordinates {
 	var result []*ModelCoordinates
 	for rows.Next() {
 		obj := new(ModelCoordinates)
+		matrixID := ""
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.Stress, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &matrixID)
+		obj.SimilarityMatrix = modelSimilarityMatrixGet(matrixID)
 		result = append(result, obj)
 	}
 	return result
@@ -347,8 +351,10 @@ func modelCoordinatesGetByMatrix(matrixID string) []*ModelCoordinates {
 	var result []*ModelCoordinates
 	for rows.Next() {
 		obj := new(ModelCoordinates)
+		matrixID := ""
 		rows.Scan(&obj.ID, &obj.Path, &obj.Filename, &obj.K,
-			&obj.GOF, &obj.Stress, &obj.matrixID)
+			&obj.GOF, &obj.Stress, &matrixID)
+		obj.SimilarityMatrix = modelSimilarityMatrixGet(matrixID)
 		result = append(result, obj)
 	}
 	return result
