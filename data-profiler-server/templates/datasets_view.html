@@ -219,17 +219,33 @@ function toggleSelectAllCheckboxes(obj,name) {
 		</td>
 </tr>
 {{ end }} 
-<tr><td></td><td></td><td></td><td></td><td></td><td></td>
-		<td>
-				<!--		<input type='text' name='xlabel' value='SR' hidden/>				-->
-		<select name='xlabel' id='xlabel'></select>
-		<select name='ylabel' id='ylabel'></select>
-		<button title="Compare models" class="ui-button ui-widget ui-corner-all" 
+</table>
+<table class='tablelist'>
+						<tr>	
+								<th colspan=2 style='text-align:center;'>Models Comparison</th>
+						</tr>
+						<tr>
+								<td>x axis</td>
+								<td>
+								<select name='xlabel' id='xlabel'></select>
+								</td>
+						</tr>
+						<tr>
+								<td>y axis</td>
+								<td>
+								<select name='ylabel' id='ylabel'></select>
+								</td>
+						</tr>
+						<tr>
+								<td colspan=2 style='text-align:center;'>
+<button title="Compare models" class="ui-button ui-widget ui-corner-all" 
 				onclick="console.log($('input[name=ids]'))"
 				><img src='/static/stats.png' width=30/></a></button>
-		</td>
-</tr>
-</table>
+
+								</td>
+						</tr>
+				</table>
+
 </form>
 <pre id='xlabels' hidden>
 {{ range $m := .Models }}
