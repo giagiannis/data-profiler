@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -16,33 +15,42 @@ import (
 )
 
 type expAccuracyParams struct {
-	mlScript    *string         // script used for approximation
-	output      *string         // output file path
-	repetitions *int            // number of times to repeat experiment
-	threads     *int            // number of threads to utilize
-	datasets    []*core.Dataset //datasets to use
+	output      *string          // output file path
+	repetitions *int             // number of times to repeat experiment
+	threads     *int             // number of threads to utilize
+	datasets    []*core.Dataset  //datasets to use
+	modelerType core.ModelerType // type of modeler
 
-	coords    []core.DatasetCoordinates // coords of datasets
-	evaluator core.DatasetEvaluator     // evaluator of the datasets
+	smpath   *string // similarity matrix
+	k        *int    // k of knn
+	mlScript *string // script used for approximation
+	coords   *string // coords of datasets
+
+	evaluator core.DatasetEvaluator // evaluator of the datasets
 
 	samplingRates []float64 // samplings rates to run
 }
 
 func expAccuracyParseParams() *expAccuracyParams {
 	params := new(expAccuracyParams)
+	modelerTypeStr :=
+		flag.String("mt", "script", "modeler type [knn | script]")
 	params.mlScript =
-		flag.String("ml", "", "ML script to use for approximation")
+		flag.String("ml", "", "ML script to use for approximation (from script ML)")
 	params.output =
 		flag.String("o", "", "output path")
 	params.repetitions =
 		flag.Int("r", 1, "number of repetitions")
 	params.threads =
 		flag.Int("t", 1, "number of threads")
+	params.coords =
+		flag.String("c", "", "coordinates file (from script ml)")
+	params.smpath =
+		flag.String("sm", "", "similarity matrix (from knn ml)")
+	params.k =
+		flag.Int("k", 5, "k (from knn ml)")
 	loger :=
 		flag.String("l", "", "log file")
-
-	coordsFile :=
-		flag.String("c", "", "coordinates file")
 	scoresFile :=
 		flag.String("s", "", "scores file")
 	inputPath :=
@@ -52,7 +60,7 @@ func expAccuracyParseParams() *expAccuracyParams {
 
 	flag.Parse()
 	setLogger(*loger)
-	if *params.mlScript == "" || *params.output == "" || *coordsFile == "" ||
+	if *params.mlScript == "" || *params.output == "" || *params.coords == "" ||
 		*scoresFile == "" || *inputPath == "" || *srString == "" {
 		fmt.Println("Options:")
 		flag.PrintDefaults()
@@ -72,19 +80,19 @@ func expAccuracyParseParams() *expAccuracyParams {
 	// datasets parsing
 	params.datasets = core.DiscoverDatasets(*inputPath)
 
-	// coordinates file parsing
-	buf, err := ioutil.ReadFile(*coordsFile)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	params.coords = core.DeserializeCoordinates(buf)
-
 	// evaluator allocation
+	var err error
 	params.evaluator, err = core.NewDatasetEvaluator(core.FileBasedEval, map[string]string{"scores": *scoresFile})
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	// modeler type parsing
+	if *modelerTypeStr == "string" {
+		params.modelerType = core.ScriptBasedModelerType
+	} else if *modelerTypeStr == "knn" {
+		params.modelerType = core.KNNModelerType
+	}
 	return params
 }
 
@@ -106,8 +114,12 @@ func expAccuracyRun() {
 
 	for r := 0; r < *params.repetitions; r++ {
 		for _, sr := range params.samplingRates {
-			modeler := core.NewModeler(params.datasets, sr, params.coords, params.evaluator)
-			modeler.Configure(map[string]string{"script": *params.mlScript})
+			modeler := core.NewModeler(params.modelerType, params.datasets, sr, params.evaluator)
+			if params.modelerType == core.ScriptBasedModelerType {
+				modeler.Configure(map[string]string{"script": *params.mlScript, "coordinates": *params.coords})
+			} else {
+				modeler.Configure(map[string]string{"k": fmt.Sprintf("%d", *params.k), "smatrix": *params.smpath})
+			}
 			go runModeler(sr, modeler, sync, resChannel)
 		}
 	}

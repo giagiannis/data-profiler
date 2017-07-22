@@ -15,6 +15,43 @@ import (
 	"time"
 )
 
+type ModelerType uint8
+
+const (
+	ScriptBasedModelerType ModelerType = iota
+	KNNModelerType         ModelerType = iota + 1
+)
+
+func NewModelerType(t string) ModelerType {
+	if strings.ToLower(t) == "script" {
+		return ScriptBasedModelerType
+	} else {
+		return KNNModelerType
+	}
+}
+
+// NewModeler is the factory method for the modeler object
+func NewModeler(
+	modelerType ModelerType,
+	datasets []*Dataset,
+	sr float64,
+	evaluator DatasetEvaluator) Modeler {
+	if modelerType == ScriptBasedModelerType {
+		modeler := new(ScriptBasedModeler)
+		modeler.datasets = datasets
+		modeler.samplingRate = sr
+		modeler.evaluator = evaluator
+		return modeler
+	} else if modelerType == KNNModelerType {
+		modeler := new(KNNModeler)
+		modeler.datasets = datasets
+		modeler.samplingRate = sr
+		modeler.evaluator = evaluator
+		return modeler
+	}
+	return nil
+}
+
 // Modeler is the interface for the objects that model the dataset space.
 type Modeler interface {
 	//  Configure is responsible to provide the necessary configuration
@@ -39,25 +76,10 @@ type Modeler interface {
 	EvalTime() float64
 }
 
-// NewModeler is the factory method for the modeler object
-func NewModeler(
-	datasets []*Dataset,
-	sr float64,
-	coordinates []DatasetCoordinates,
-	evaluator DatasetEvaluator) Modeler {
-	modeler := new(ScriptBasedModeler)
-	modeler.datasets = datasets
-	modeler.samplingRate = sr
-	modeler.coordinates = coordinates
-	modeler.evaluator = evaluator
-	return modeler
-}
-
 // AbstractModeler implements the common methods of the Modeler structs
 type AbstractModeler struct {
-	datasets    []*Dataset           // the datasets the modeler refers to
-	evaluator   DatasetEvaluator     // the evaluator struct that gets the values
-	coordinates []DatasetCoordinates // the dataset coordinates
+	datasets  []*Dataset       // the datasets the modeler refers to
+	evaluator DatasetEvaluator // the evaluator struct that gets the values
 
 	samplingRate float64         // the portion of the datasets to examine
 	samples      map[int]float64 // the dataset indices chosen for samples
@@ -188,10 +210,30 @@ func (a *AbstractModeler) EvalTime() float64 {
 	return a.evalTime
 }
 
+func (m *AbstractModeler) deploySamples() {
+	s := int(math.Floor(m.samplingRate * float64(len(m.datasets))))
+	// sample the datasets
+	permutation := rand.Perm(len(m.datasets))
+	m.samples = make(map[int]float64)
+	// deploy samples
+	for i := 0; i < len(permutation) && (len(m.samples) < s); i++ {
+		idx := permutation[i]
+		start2 := time.Now()
+		val, err := m.evaluator.Evaluate(m.datasets[idx].Path())
+		m.evalTime += (time.Since(start2).Seconds())
+		if err != nil {
+			log.Printf("%s: %s\n", m.datasets[idx].Path(), err.Error())
+		} else {
+			m.samples[idx] = val
+		}
+	}
+}
+
 // ScriptBasedModeler utilizes a script to train an ML model and obtain is values
 type ScriptBasedModeler struct {
 	AbstractModeler
-	script string // the script to use for modeling
+	script      string               // the script to use for modeling
+	coordinates []DatasetCoordinates // the dataset coordinates
 }
 
 // Configure expects the necessary conf options for the specified struct.
@@ -204,6 +246,17 @@ func (m *ScriptBasedModeler) Configure(conf map[string]string) error {
 		log.Println("script parameter is missing")
 		return errors.New("script parameter is missing")
 	}
+
+	if val, ok := conf["coordinates"]; ok {
+		buf, err := ioutil.ReadFile(val)
+		if err != nil {
+			log.Println(err)
+		}
+		m.coordinates = DeserializeCoordinates(buf)
+	} else {
+		log.Println("coordinates parameter is missing")
+		return errors.New("coordinates parameter is missing")
+	}
 	return nil
 }
 
@@ -211,27 +264,12 @@ func (m *ScriptBasedModeler) Configure(conf map[string]string) error {
 // appxValues slices.
 func (m *ScriptBasedModeler) Run() error {
 	start := time.Now()
-	// sample the datasets
-	permutation := rand.Perm(len(m.datasets))
-	s := int(math.Floor(m.samplingRate * float64(len(m.datasets))))
-	m.samples = make(map[int]float64)
+	m.deploySamples()
 
-	// deploy samples
 	var trainingSet, testSet [][]float64
-	for i := 0; i < len(permutation) && (len(m.samples) < s); i++ {
-		idx := permutation[i]
-		start2 := time.Now()
-		val, err := m.evaluator.Evaluate(m.datasets[idx].Path())
-		m.evalTime += (time.Since(start2).Seconds())
-		if err != nil {
-			log.Printf("%s: %s\n", m.datasets[idx].Path(), err.Error())
-		} else {
-			m.samples[idx] = val
-			trainingSet = append(trainingSet, append(m.coordinates[idx], val))
-		}
-
+	for idx, val := range m.samples {
+		trainingSet = append(trainingSet, append(m.coordinates[idx], val))
 	}
-	log.Println("Picked", len(m.samples), "out of the requested", s, "samples")
 	trainFile := createCSVFile(trainingSet, true)
 	for _, v := range m.coordinates {
 		testSet = append(testSet, v)
@@ -270,6 +308,87 @@ func (m *ScriptBasedModeler) executeMLScript(trainFile, testFile string) ([]floa
 	}
 	return result, nil
 }
+
+// KNNModeler utilizes a similarity matrix in order to approximate the training set
+type KNNModeler struct {
+	AbstractModeler
+	k  int                      // the number of neighbors to check
+	sm *DatasetSimilarityMatrix // the similarity matrix
+}
+
+// Configure is the method used to provide the essential paremeters for the conf of the modeler
+func (m *KNNModeler) Configure(conf map[string]string) error {
+	if val, ok := conf["k"]; ok {
+		intVal, err := strconv.ParseInt(val, 10, 32)
+		m.k = int(intVal)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		log.Println("No k parameter provided")
+		return errors.New("No k parameter provided")
+	}
+
+	if val, ok := conf["smatrix"]; ok {
+		buf, err := ioutil.ReadFile(val)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		m.sm = new(DatasetSimilarityMatrix)
+		m.sm.Deserialize(buf)
+	} else {
+		log.Println("No smatrix parameter provided")
+		return errors.New("No smatrix parameter provided")
+	}
+
+	return nil
+}
+
+// Run executes the training part and obtains the model
+func (k *KNNModeler) Run() error {
+	start := time.Now()
+	k.deploySamples()
+	k.appxValues = make([]float64, len(k.datasets))
+	for i := range k.datasets {
+		if _, ok := k.samples[i]; ok {
+			k.appxValues[i] = k.samples[i]
+		} else {
+			k.appxValues[i] = k.approximateValue(i)
+		}
+	}
+
+	k.execTime = time.Since(start).Seconds()
+	return nil
+}
+
+func (k *KNNModeler) approximateValue(id int) float64 {
+	var pList pairList
+	for j := range k.samples {
+		s := k.sm.Get(id, j)
+		pList = append(pList, pair{j, s})
+	}
+	sort.Sort(sort.Reverse((pList)))
+	weights := 0.0
+	values := 0.0
+	for i := 0; i < len(pList) && i < k.k; i++ {
+		p := pList[i]
+		values += p.Similarity * k.samples[p.Id]
+		weights += p.Similarity
+	}
+	return values / weights
+}
+
+type pair struct {
+	Id         int
+	Similarity float64
+}
+
+type pairList []pair
+
+func (p pairList) Len() int           { return len(p) }
+func (p pairList) Less(i, j int) bool { return p[i].Similarity < p[j].Similarity }
+func (p pairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // createCSVFile serializes a double float slice to a CSV file and returns
 // the filename

@@ -20,10 +20,10 @@ type DatasetCoordinates []float64
 // on a CSV serialization form
 func DeserializeCoordinates(buffer []byte) []DatasetCoordinates {
 	coords := make([]DatasetCoordinates, 0)
-	for i, line := range strings.Split(string(buffer), "\n") {
-		a := strings.Split(line, " ")
+	for _, line := range strings.Split(string(buffer), "\n") {
+		a := strings.Split(line, ",")
 		res := make(DatasetCoordinates, 0)
-		if i > 0 && len(a) > 0 {
+		if len(a) > 0 {
 			for _, s := range a {
 				if s != "" {
 					v, err := strconv.ParseFloat(s, 64)
@@ -44,13 +44,12 @@ func DeserializeCoordinates(buffer []byte) []DatasetCoordinates {
 // SerializeCoordinates returns a CSV serilization of a coordinates slice
 func SerializeCoordinates(coords []DatasetCoordinates) []byte {
 	buffer := new(bytes.Buffer)
-	for i := 0; i < len(coords[0]); i++ {
-		buffer.WriteString(fmt.Sprintf("x_%d ", i+1))
-	}
-	buffer.WriteString(fmt.Sprintf("\n"))
 	for _, d := range coords {
-		for _, c := range d {
-			buffer.WriteString(fmt.Sprintf("%.5f ", c))
+		for i, c := range d {
+			buffer.WriteString(fmt.Sprintf("%.5f", c))
+			if i != len(coords[0]) {
+				buffer.WriteString(",")
+			}
 		}
 		buffer.WriteString(fmt.Sprintf("\n"))
 	}

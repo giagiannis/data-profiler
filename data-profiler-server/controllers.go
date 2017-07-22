@@ -337,9 +337,11 @@ func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 		// just render form
 		operators := modelOperatorGetByDataset(id)
 		coordinates := modelCoordinatesGetByDataset(id)
+		matrices := modelSimilarityMatrixGetByDataset(id)
 		return struct {
 			Operators   []*ModelOperator
 			Coordinates []*ModelCoordinates
+			Matrices    []*ModelSimilarityMatrix
 			MLScripts   map[string]string
 			DatasetID   string
 		}{
@@ -347,21 +349,32 @@ func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 			Coordinates: coordinates,
 			MLScripts:   Conf.Scripts.ML,
 			DatasetID:   id,
+			Matrices:    matrices,
 		}
 	}
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
 	}
-	dataset := r.Form["datasetid"][0]
-	coordinates := r.Form["coordinatesid"][0]
 	operator := r.Form["operatorid"][0]
 	mlScript := r.Form["script"][0]
+	modelType := r.Form["modeltype"][0]
+	matrixid := r.Form["matrixid"][0]
+	k := r.Form["k"][0]
+	dataset := r.Form["datasetid"][0]
+	coordinates := r.Form["coordinatesid"][0]
 	sr, err := strconv.ParseFloat(r.Form["sr"][0], 64)
 	if err != nil {
 		log.Println(err)
 	}
-	TEngine.Submit(NewModelTrainTask(dataset, operator, coordinates, mlScript, sr))
+
+	log.Println(operator, mlScript, modelType, matrixid, k, dataset, coordinates)
+	TEngine.Submit(
+		NewModelTrainTask(
+			dataset, operator, sr,
+			modelType,
+			coordinates, mlScript,
+			matrixid, k))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }

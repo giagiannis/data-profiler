@@ -184,25 +184,19 @@ func NewOperatorRunTask(operatorID string) *Task {
 
 // NewModelTrainTask generates a new ML for a given (dataset,operator) combination,
 // according to the user-specified parameters.
-func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr float64) *Task {
+func NewModelTrainTask(datasetID, operatorID string, sr float64,
+	modelType string,
+	coordinatesID, mlScript string,
+	matrixID, k string) *Task {
 	m := modelDatasetGetInfo(datasetID)
 	task := new(Task)
 	task.Description = fmt.Sprintf("Model training (%s for %s)", path.Base(mlScript), m.Name)
 	task.Dataset = m
 	task.fnc = func() error {
 		datasets := core.DiscoverDatasets(m.Path)
-		c := modelCoordinatesGet(coordinatesID)
-		buf, err := ioutil.ReadFile(c.Path)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		var coordinates []core.DatasetCoordinates
-		for _, l := range deserializeCSVFile(buf) {
-			coordinates = append(coordinates, l)
-		}
 		o := modelOperatorGet(operatorID)
 		var evaluator core.DatasetEvaluator
+		var err error
 		if o.ScoresFile != "" {
 			evaluator, err = core.NewDatasetEvaluator(core.FileBasedEval, map[string]string{"scores": o.ScoresFile})
 		} else {
@@ -212,9 +206,17 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 			log.Println(err)
 			return err
 		}
-
-		modeler := core.NewModeler(datasets, sr, coordinates, evaluator)
-		modeler.Configure(map[string]string{"script": mlScript})
+		t := core.NewModelerType(modelType)
+		modeler := core.NewModeler(t, datasets, sr, evaluator)
+		var conf map[string]string
+		if t == core.ScriptBasedModelerType {
+			c := modelCoordinatesGet(coordinatesID)
+			conf = map[string]string{"script": mlScript, "coordinates": c.Path}
+		} else if t == core.KNNModelerType {
+			m := modelSimilarityMatrixGet(matrixID)
+			conf = map[string]string{"k": k, "smatrix": m.Path}
+		}
+		modeler.Configure(conf)
 		err = modeler.Run()
 		if err != nil {
 			log.Println(err)
@@ -229,9 +231,7 @@ func NewModelTrainTask(datasetID, operatorID, coordinatesID, mlScript string, sr
 		for k, v := range modeler.ErrorMetrics() {
 			errors[k] = fmt.Sprintf("%.5f", v)
 		}
-		modelDatasetModelInsert(coordinatesID, operatorID, datasetID, samplesBuffer, appxBuffer,
-			map[string]string{"script": mlScript}, errors,
-			sr)
+		modelDatasetModelInsert(coordinatesID, operatorID, datasetID, samplesBuffer, appxBuffer, conf, errors, sr)
 		return nil
 	}
 	return task

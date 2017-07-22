@@ -1,6 +1,7 @@
 package core
 
 import (
+	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -14,21 +15,20 @@ func TestScriptBasedModelerConfiguration(t *testing.T) {
 		t.Log("Should have returned an error!")
 		t.FailNow()
 	}
-	err = m.Configure(map[string]string{"script": mlScript})
+	err = m.Configure(map[string]string{"script": mlScript, "coordinates": "assadasd"})
 	if err != nil {
-		t.Log("Should have not returned an error!")
+		t.Log("Should have not returned an error!", err)
 		t.FailNow()
 	}
 }
 
 func TestScriptBasedModelerRun(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 3)
-	m, err := createModeler(datasets)
+	m, err := createScriptBasedModeler(datasets)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
 	}
-	m.Configure(map[string]string{"script": mlScriptAppx})
 	err = m.Run()
 	if err != nil {
 		t.Log(err)
@@ -42,20 +42,17 @@ func TestScriptBasedModelerRun(t *testing.T) {
 		t.Log("Wrong number of approximated values")
 		t.Fail()
 	}
-
 	cleanDatasets(datasets)
-
 }
 
 func TestErrorMetrics(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 50, 3)
-	m, err := createModeler(datasets)
+	m, err := createScriptBasedModeler(datasets)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
 	}
 
-	m.Configure(map[string]string{"script": mlScriptAppx})
 	if m.ErrorMetrics() != nil {
 		t.Log("ErrorMetrics should have been nil")
 		t.Fail()
@@ -77,7 +74,7 @@ func TestErrorMetrics(t *testing.T) {
 func TestScriptBasedModelerMissingDatasets(t *testing.T) {
 	datasets := createPoolBasedDatasets(1000, 50, 3)
 	noDeletedDatasets := 47
-	m, err := createModeler(datasets)
+	m, err := createScriptBasedModeler(datasets)
 	if err != nil {
 		t.Log(err)
 		t.Fail()
@@ -88,7 +85,6 @@ func TestScriptBasedModelerMissingDatasets(t *testing.T) {
 		os.Remove(path)
 	}
 
-	m.Configure(map[string]string{"script": mlScriptAppx})
 	err = m.Run()
 	if err != nil {
 		t.Log(err)
@@ -108,28 +104,6 @@ func TestScriptBasedModelerMissingDatasets(t *testing.T) {
 	}
 
 	cleanDatasets(datasets)
-}
-
-func createModeler(datasets []*Dataset) (Modeler, error) {
-	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
-	e.Configure(map[string]string{"partitions": "256"})
-	e.Compute()
-	sm := e.SimilarityMatrix()
-
-	mds := NewMDScaling(sm, 3, mdsScript)
-	mds.Compute()
-	coords := mds.Coordinates()
-
-	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
-		"script":  operatorScript,
-		"testset": "",
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	m := NewModeler(datasets, 0.2, coords, eval)
-	return m, nil
 }
 
 func TestErrorMetricFunctions(t *testing.T) {
@@ -170,4 +144,77 @@ func TestErrorMetricFunctions(t *testing.T) {
 		t.Log("Percentiles gone wrong")
 		t.Fail()
 	}
+}
+
+func TestKNNModeler(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 50, 3)
+	m, err := createKNNModeler(datasets)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	err = m.Run()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+	if m.Samples() == nil || len(m.Samples()) == 0 {
+		t.Log("Should have created samples")
+		t.Fail()
+	}
+	if len(m.AppxValues()) != len(m.Datasets()) {
+		t.Log("Wrong number of approximated values")
+		t.Fail()
+	}
+	cleanDatasets(datasets)
+}
+
+func createScriptBasedModeler(datasets []*Dataset) (Modeler, error) {
+	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	e.Configure(map[string]string{"partitions": "256"})
+	e.Compute()
+	sm := e.SimilarityMatrix()
+
+	mds := NewMDScaling(sm, 3, mdsScript)
+	mds.Compute()
+	coords := mds.Coordinates()
+	buf := SerializeCoordinates(coords)
+	f, _ := ioutil.TempFile("/tmp", "fooo")
+	ioutil.WriteFile(f.Name(), buf, 0644)
+	f.Close()
+
+	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
+		"script":  operatorScript,
+		"testset": "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	m := NewModeler(ScriptBasedModelerType, datasets, 0.2, eval)
+	m.Configure(map[string]string{"script": mlScriptAppx, "coordinates": f.Name()})
+	return m, nil
+}
+
+func createKNNModeler(datasets []*Dataset) (Modeler, error) {
+	e := NewDatasetSimilarityEstimator(SimilarityTypeBhattacharyya, datasets)
+	e.Configure(map[string]string{"partitions": "256"})
+	e.Compute()
+	sm := e.SimilarityMatrix()
+	buf := sm.Serialize()
+	f, _ := ioutil.TempFile("/tmp", "fooo")
+	ioutil.WriteFile(f.Name(), buf, 0644)
+	f.Close()
+
+	eval, err := NewDatasetEvaluator(OnlineEval, map[string]string{
+		"script":  operatorScript,
+		"testset": "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	m := NewModeler(KNNModelerType, datasets, 0.5, eval)
+	m.Configure(map[string]string{"k": "10", "smatrix": f.Name()})
+	return m, nil
 }

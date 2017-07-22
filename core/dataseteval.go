@@ -79,7 +79,7 @@ func (e *OnlineDatasetEvaluator) Evaluate(dataset string) (float64, error) {
 	cmd := exec.Command(e.script, dataset, e.testset)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(err)
+		log.Println(err, string(out))
 		return -1, err
 	}
 	val, err := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
