@@ -26,12 +26,13 @@ Dataset Not Found
 </div>
 
 <div id='files'>
-<h2>Files</h2>
+		<h2>Files ({{ len .Files }}) </h2>
 {{ if .Files }}
 <code style='width:800px;'>
 <ul style='column-count:4;'>
 {{ range $id, $f := .Files }}
-<li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>{{ $f }}</a></li>
+<!--<li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>{{ $f }}</a></li>-->
+<li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>Dataset {{ $id }}</a></li>
 {{ end }}
 </ul>
 </code>
