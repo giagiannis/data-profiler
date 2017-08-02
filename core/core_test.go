@@ -14,6 +14,7 @@ const (
 	trainSet             = "../_testdata/datatraining.csv"
 	testSet              = "../_testdata/datatest.csv"
 	analysisScript       = "../_rscripts/pca.R"
+	pairScript           = "../_rscripts/random_number.R"
 	mlScript             = "../_rscripts/lm.R"
 	mlScriptAppx         = "../_rscripts/svm-appx.R"
 	mdsScript            = "../_rscripts/mdscaling.R"

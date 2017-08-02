@@ -26,6 +26,7 @@
 <li> <a href='#correlation'>Correlation Estimator</a></li>
 <li> <a href='#composite'>Composite Estimator</a></li>
 <li> <a href='#script'>Script Estimator</a></li>
+<li> <a href='#scriptpair'>Script Pair Estimator</a></li>
 <li> <a href='#size'>Size Estimator</a></li>
 </ul>
 
@@ -64,7 +65,7 @@
 </div>
 
 <div id='correlation'>
-<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'> 
 <h3>Correlation Estimator Parameters<h3>
 <table class='tablelist'>
 <tr><th>No. threads</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
@@ -179,7 +180,40 @@ function addInput() {
 </span>
 </form>
 </div>
+
+
+
+<div id='scriptpair'>
+<h3>Script Pair Estimator Parameters</h3>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit' enctype="multipart/form-data" >
+<table class='tablelist'>
+<tr><th>No. threads</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
+<tr>
+		<th>Script</th>
+<td>
+		<input type='file' name='script'/>
+<!--
+		<select name="script">
+		{{ range $k, $v:= $.Scripts }}
+		<option value="{{$k}}">{{$v}}</option>
+		{{ end }}
+</select>
+-->
+</td>
+
+</tr>
+<input type='hidden' name='estimatorType' value='scriptpair'/>
+</table>
+{{ template "appx" . }}
+<br/>
+<span style='float:right'>
+<input type='submit' class="ui-button ui-widget ui-corner-all"/>
+</span>
+</form>
 </div>
+</div>
+
+
 
 
 

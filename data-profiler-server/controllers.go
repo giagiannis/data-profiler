@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 
@@ -169,14 +170,36 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 			Matrices map[string]string
 		}{ID: m.ID, Scripts: scripts, Matrices: matrices}
 	}
-	err := r.ParseForm()
+	conf := make(map[string]string)
+	//	err := r.ParseForm()
+	err := r.ParseMultipartForm(2 << 20)
 	if err != nil {
 		log.Println(err)
+	} else {
+		f, h, err := r.FormFile("script")
+		if err != nil {
+			log.Println(err)
+		}
+		tempF, err := ioutil.TempFile("/tmp", "userscript")
+		if err != nil {
+			log.Println(err)
+		}
+		buf, err := ioutil.ReadAll(f)
+		if err != nil {
+			log.Println(err)
+		}
+		tempF.Write(buf)
+		tempF.Close()
+		os.Chmod(tempF.Name(), 0700)
+		conf["script"] = tempF.Name()
+		conf["script-name"] = h.Filename
 	}
-	conf := make(map[string]string)
+
 	for k, v := range r.PostForm {
 		if len(v) > 0 {
-			conf[k] = v[0]
+			if _, ok := conf[k]; !ok {
+				conf[k] = v[0]
+			}
 		} else {
 			conf[k] = ""
 		}
