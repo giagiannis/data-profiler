@@ -211,10 +211,10 @@ func NewModelTrainTask(datasetID, operatorID string, sr float64,
 		var conf map[string]string
 		if t == core.ScriptBasedModelerType {
 			c := modelCoordinatesGet(coordinatesID)
-			conf = map[string]string{"script": mlScript, "coordinates": c.Path}
+			conf = map[string]string{"script": mlScript, "coordinates": path.Base(c.Path)}
 		} else if t == core.KNNModelerType {
 			m := modelSimilarityMatrixGet(matrixID)
-			conf = map[string]string{"k": k, "smatrix": m.Path}
+			conf = map[string]string{"k": k, "smatrix": path.Base(m.Path)}
 		}
 		modeler.Configure(conf)
 		err = modeler.Run()
