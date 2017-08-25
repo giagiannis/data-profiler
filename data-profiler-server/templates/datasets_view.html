@@ -29,7 +29,7 @@ Dataset Not Found
 		<h2>Files ({{ len .Files }}) </h2>
 {{ if .Files }}
 <code style='width:800px;'>
-<ul style='column-count:4;'>
+<ul style='column-count:5;'>
 {{ range $id, $f := .Files }}
 <!--<li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>{{ $f }}</a></li>-->
 <li style='width:50%;'><a href='/download/?type=datafile&id={{ $.ID }}&name={{ $f }}'>Dataset {{ $id }}</a></li>
@@ -122,7 +122,6 @@ No similarity matrices found
 		</button>
 		{{ end}}
 		<br/>
-
 		<button title="Delete Operator" class="ui-button ui-widget ui-corner-all" style='background:#aa0000;' 
 		onclick="window.location.href='/operator/{{ $v.ID }}/delete/?datasetID={{$.ID}}'">
 		<img src='/static/delete.png' width=30/></a>
@@ -165,6 +164,7 @@ function toggleSelectAllCheckboxes(obj,name) {
 <tr>
 		<td><input type='checkbox' name='ids' value='{{$model.ID}}'/></td>
 		<td>
+				<div style='width:200px; overflow:scroll;'>
 				<ul>
 		
 						<li><span style='font-weight:bold'>{{$model.Coordinates.Filename}}</span></li>
@@ -174,27 +174,28 @@ function toggleSelectAllCheckboxes(obj,name) {
 					<li><span style='font-weight:bold'>{{ $k }}:</span>{{ $v }}</li>
 					{{end}}
 				</ul>
+				</div>
 		</td>
 		<td>{{$model.Operator.Name}}</td>
 		<td style='text-align:right;'>{{$model.SamplingRate | printf "%.2f"}}</td>
 		<td>
+				<div style='width:150px; overflow:scroll;'>
 				<ul>
-<!--				{{ range $k, $v:= $model.Errors }}
-				<li><span style='font-weight: bold'/>{{$k}}</span>:{{$v}}</li>
-				{{ end}}
--->			
 				<li><span style='font-weight: bold'/>MAE</span>:{{index $model.Errors "MAE-all" }}</li>
 				<li><span style='font-weight: bold'/>RMSE</span>:{{index $model.Errors "RMSE-all" }}</li>
 				<li><span style='font-weight: bold'/>MdAPE</span>:{{index $model.Errors "MdAPE-all" }}</li>
 				<li><span style='font-weight: bold'/>NRMSE</span>:{{index $model.Errors "NRMSE-all" }}</li>
 				</ul>
+				</div>
 		</td>
 		<td>
+				<div style='width:250px; overflow:scroll;'>
 				<ul>
 				{{ range $k, $v:= $model.Configuration }}
 				<li><span style='font-weight: bold'/>{{$k}}</span>:{{$v}}</li>
 				{{ end}}
 				</ul>
+				</div>
 		</td>
 		<td>
 		<button type='button' title="Download the sampled datasets" class="ui-button ui-widget ui-corner-all" 
