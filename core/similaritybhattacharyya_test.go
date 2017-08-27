@@ -225,3 +225,24 @@ func TestBhattacharyyaSerialization(t *testing.T) {
 
 	cleanDatasets(datasets)
 }
+
+func TestKmeansClustering(t *testing.T) {
+	k, size, attrs := 10, 5000, 5
+	dataset := createPoolBasedDatasets(size, 1, attrs)[0]
+	dataset.ReadFromFile()
+	algo := kMeansAlgorithm{k, dataset.Data(), nil}
+	algo.Run()
+	if len(algo.centroids) != k {
+		t.Log("Less centroids were found")
+		t.Fail()
+	}
+	clusters := algo.assignTuplesToCentroids()
+	count := 0
+	for _, cluster := range clusters {
+		count += len(cluster)
+	}
+	if count != len(dataset.Data()) {
+		t.Log("Lost some tuples")
+		t.Fail()
+	}
+}
