@@ -15,7 +15,3 @@ before_install:
 script:
         - PATH="$HOME/gopath/bin:$PATH"
         - chmod +x .coverage && ./.coverage --coveralls
-
-branches:
-        only:
-                - master
