@@ -10,6 +10,7 @@ RUN apt-get update && \
 		gcc \
 		git \
 		r-base \
+		r-cran-igraph \
 		sqlite3 && \
 	echo "install.packages('GenSA', repos='http://cran.us.r-project.org')" | R --vanilla && \
 	echo "install.packages('e1071', repos='http://cran.us.r-project.org')" | R --vanilla && \
