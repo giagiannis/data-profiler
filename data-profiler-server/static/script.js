@@ -1,8 +1,8 @@
 function createPopup(url, dialogTitle) {
 		$.get( url, function(data) {
 				var d= $( "<div id='popup'>").html(data).dialog({
-						width:"auto", 
-						height:"auto", 
+						width:"auto",
+						height:"auto",
 						title: dialogTitle,
 						position: {
 								my:"center bottom",
@@ -120,7 +120,7 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 						text: 'Click and drag the plot area to rotate in space'
 				},
 				tooltip: {
-						pointFormatter: function(){ 
+						pointFormatter: function(){
 								var message = this.name+"<br/>(";
 								message +=parseFloat(this.x)+","
 								message +=parseFloat(this.y)+","
@@ -136,21 +136,24 @@ function create3DScatterPlot(coordinatesID, labelsID, targetDiv) {
 								width: 10,
 								height: 10,
 								depth: 10
+						},
+						series: {
+							turboThreshold: 5000
 						}
 				},
 				yAxis: {
-						title: { 
+						title: {
 								text : "PC2"
 						}
 				},
 				xAxis: {
-						title: { 
+						title: {
 								text : "PC1"
 						},
 						gridLineWidth: 1
 				},
 				zAxis: {
-						title: { 
+						title: {
 								text : "PC3"
 						},
 						showFirstLabel: false
@@ -205,7 +208,7 @@ function colorizePoints(obj) {
 				// do nothing
 				scores={}
 				for(i=0;i<data.length;i++) {
-						data[i].color = "" 
+						data[i].color = ""
 				}
 				chart.series[0].update({data:data});
 				console.log($("#legend").html())
@@ -247,8 +250,8 @@ function colorizePoints(obj) {
 						colorRegions[idx].count  =colorRegions[idx].count+1
 						if (c!=undefined ){
 								r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
-								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
-								data[i].color = rgbString 
+								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")"
+								data[i].color = rgbString
 						}
 				}
 				legendDiv = "<table class='tablelist' style='font-weight:bold;'>\n";
@@ -257,7 +260,7 @@ function colorizePoints(obj) {
 						if (c!=undefined ){
 								c = colScales[i]
 								r= c[0]*colorStep, g = c[1]*colorStep, b=c[2]*colorStep
-								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")" 
+								rgbString = "rgb("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+")"
 								if (colorRegions[i] == undefined) {
 										legendDiv = legendDiv +
 												"<tr style='color:"+rgbString+"'>"+
@@ -280,8 +283,8 @@ function colorizePoints(obj) {
 				}
 				legendDiv = legendDiv + "</table>";
 				$("<div id='legend'></div>").dialog({
-						width:"auto", 
-						height:"auto", 
+						width:"auto",
+						height:"auto",
 						title:"Color Legend",
 						position: {
 								my:"left top",

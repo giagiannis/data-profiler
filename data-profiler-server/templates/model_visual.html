@@ -215,7 +215,7 @@ chart = new Highcharts.Chart({
 				text: 'Click and drag the plot area to rotate in space'
 		},
 		tooltip: {
-				pointFormatter: function(){ 
+				pointFormatter: function(){
 						var message = this.name+"<br/>(";
 						message +=parseFloat(this.x)+","
 								message +=parseFloat(this.z)+","
@@ -231,21 +231,24 @@ chart = new Highcharts.Chart({
 						width: 10,
 						height: 10,
 						depth: 10
+				},
+				series: {
+					turboThreshold: 5000
 				}
 		},
 		yAxis: {
-				title: { 
+				title: {
 						text : "Operator Values"
 				}
 		},
 		xAxis: {
-				title: { 
+				title: {
 						text : "PC1"
 				},
 				gridLineWidth: 1
 		},
 		zAxis: {
-				title: { 
+				title: {
 						text : "PC2"
 				},
 				showFirstLabel: false
