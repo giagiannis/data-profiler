@@ -25,6 +25,7 @@ type Configuration struct {
 		Dirs   struct {
 			Templates string
 			Static    string
+			Datasets  string
 		}
 	}
 	Database string

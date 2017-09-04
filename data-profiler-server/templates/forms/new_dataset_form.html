@@ -10,7 +10,14 @@
 				</tr>
 				<tr>
 						<th>Path</th>
-						<td><input class="ui-button ui-widget ui-corner-all" type='text' name='path'/></td>
+						<td>
+								<select name='path'>
+								{{ range $k, $v := $.Files }}
+								<option value="{{ $k }}">{{ $v }}</option>
+								{{ end }}
+								</select>
+								<!--<input class="ui-button ui-widget ui-corner-all" type='text' name='path'/>-->
+						</td>
 				</tr>
 		</table>
 <div style='float:right'>

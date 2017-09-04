@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/giagiannis/data-profiler/core"
 )
@@ -314,7 +315,40 @@ func controllerDatasetNewOP(w http.ResponseWriter, r *http.Request) Model {
 func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")
 	if action != "submit" { // render stuff for the form
-		return nil
+		var recursiveWalk func(path string) []string
+		recursiveWalk = func(path string) []string {
+			reservedWords := map[string]bool{
+				"matrices":   true,
+				"estimators": true,
+				"coords":     true,
+				"operators":  true,
+				"appx":       true,
+				"samples":    true,
+			}
+			log.Println(path)
+			files, err := ioutil.ReadDir(path)
+			if err != nil {
+				log.Println(err)
+			}
+			results := make([]string, 0)
+			for _, f := range files {
+				_, ok := reservedWords[f.Name()]
+				if f.IsDir() && !ok {
+					results = append(results, path+"/"+f.Name())
+					current := recursiveWalk(path + "/" + f.Name())
+					results = append(results, current...)
+				}
+			}
+			return results
+		}
+		files := recursiveWalk(Conf.Server.Dirs.Datasets)
+		directories := make(map[string]string)
+		for _, f := range files {
+			directories[f] = strings.Replace(f, Conf.Server.Dirs.Datasets+"/", "", 1)
+		}
+		return struct {
+			Files map[string]string
+		}{Files: directories}
 	}
 	err := r.ParseForm()
 	if err != nil {
