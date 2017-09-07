@@ -189,6 +189,9 @@ func (a *AbstractModeler) getMetrics(testIdx []int, actual []float64, label stri
 	errors["RMSLE-"+label] = RootMeanSquaredLogError(actualUnknown, appxUnknown)
 	errors["MAPE-"+label] = MeanAbsolutePercentageError(actualUnknown, appxUnknown)
 	errors["MdAPE-"+label] = MedianAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["MxAPE-"+label] = MaxAbsolutePercentageError(actualUnknown, appxUnknown)
+	errors["MxAPE10-"+label] = MaxAbsoluteCountPercentageError(actualUnknown, appxUnknown, 10)
+	errors["MxAPE20-"+label] = MaxAbsoluteCountPercentageError(actualUnknown, appxUnknown, 20)
 	errors["MAE-"+label] = MeanAbsoluteError(actualUnknown, appxUnknown)
 	errors["R^2-"+label] = RSquared(actualUnknown, appxUnknown)
 	errors["Res000-"+label] = Percentile(residualsUnknown, 0)
@@ -529,6 +532,59 @@ func MeanAbsolutePercentageError(actual, predicted []float64) float64 {
 		return sum / count
 	}
 	return math.NaN()
+}
+
+// MaxAbsolutePercentageError returns the Max error of the actual vs the
+// predicted values as a percentage.
+func MaxAbsolutePercentageError(actual, predicted []float64) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+
+	err := 0.0
+	for i := range actual {
+		val := 0.0
+		if actual[i] == 0.0 || math.IsNaN(actual[i]) {
+			val = 1.0
+		} else {
+			val = math.Abs((actual[i] - predicted[i]) / actual[i])
+		}
+
+		if val > err {
+			err = val
+		}
+	}
+
+	return err
+}
+
+// MaxAbsoluteCountPercentageError returns the percentage of the dataset
+// that has AbsolutePercentageError gte to percentile.
+func MaxAbsoluteCountPercentageError(actual, predicted []float64, percentile int) float64 {
+	if len(actual) != len(predicted) || len(actual) == 0 {
+		log.Println("actual and predicted values are of different size!!")
+		return math.NaN()
+	}
+
+	count := 0.0
+	percentage := float64(percentile) / 100.0
+
+	for i := range actual {
+		err := 0.0
+		if actual[i] == 0.0 || math.IsNaN(actual[i]) {
+			err = 1.0
+		} else {
+			err = math.Abs((actual[i] - predicted[i]) / actual[i])
+		}
+
+
+		if err > percentage {
+			count += 1.0
+		}
+	}
+
+	return count / float64(len(actual))
 }
 
 // RSquared returns the coeff. of determination of the actual vs the predicted values
