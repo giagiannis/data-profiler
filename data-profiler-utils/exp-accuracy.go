@@ -60,8 +60,8 @@ func expAccuracyParseParams() *expAccuracyParams {
 
 	flag.Parse()
 	setLogger(*loger)
-	if *params.mlScript == "" || *params.output == "" || *params.coords == "" ||
-		*scoresFile == "" || *inputPath == "" || *srString == "" {
+	if *params.output == "" || *scoresFile == "" ||
+		*inputPath == "" || *srString == "" {
 		fmt.Println("Options:")
 		flag.PrintDefaults()
 		os.Exit(1)
