@@ -26,7 +26,7 @@ set style line 6 lt 1 pt 14 lc rgb "#cccccc" lw 4 ps 4
 set key top right font ",15" samplen 1 outside horizontal
 
 colNames=system("head -n 1 ".word(inputFile,1))
-do for [t=2:67] {
+do for [t=2:words(colNames)] {
 	colName=word(colNames,t)
 	set title colName." vs Sampling Rate".titleComment
 	set ylabel colName
