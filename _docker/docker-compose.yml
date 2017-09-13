@@ -1,7 +1,7 @@
 version: '2'
 services:
         data-profiler:
-                image: 'ggian/data-profiler'
+                image: 'ggian/data-profiler:devel'
                 volumes:
                         - ~/graph-datasets:/datasets
                         - ~/graph-datasets/sqlite3.db:/opt/src/github.com/giagiannis/data-profiler/sqlite3.db
