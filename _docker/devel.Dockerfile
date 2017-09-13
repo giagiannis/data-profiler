@@ -19,9 +19,12 @@ RUN apt-get update && \
 	chmod +x ./gimme
 
 RUN eval $(./gimme) && \
+	mkdir -p $GOPATH/src/github.com/giagiannis && \
+	cd $GOPATH/src/github.com/giagiannis && \
 	git clone -b devel https://github.com/giagiannis/data-profiler.git && \
 	cd data-profiler && \
-	go install ./... -v
+	go get -v ./... && \
+	go install -v ./...
 
 ADD entrypoint.sh /
 ADD data-profiler /etc/data-profiler
