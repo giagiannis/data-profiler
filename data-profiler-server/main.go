@@ -31,9 +31,8 @@ type Configuration struct {
 	Database string
 	Logfile  string
 	Scripts  struct {
-		MDS      string
-		Analysis []string
-		ML       map[string]string
+		MDS string
+		ML  map[string]string
 	}
 }
 

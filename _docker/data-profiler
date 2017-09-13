@@ -4,12 +4,11 @@ server:
     dirs:
             templates: /opt/src/github.com/giagiannis/data-profiler/data-profiler-server/templates
             static: /opt/src/github.com/giagiannis/data-profiler/data-profiler-server/static
+			datasets: /datasets
 database: /opt/src/github.com/giagiannis/data-profiler/sqlite3.db
 logfile: ""
 scripts:
         mds: /opt/src/github.com/giagiannis/data-profiler/_rscripts/mdscaling.R
-        analysis:
-                - /opt/src/github.com/giagiannis/data-profiler/_rscripts/pca.R
         ml:
                 SVM : /opt/src/github.com/giagiannis/data-profiler/_rscripts/svm-appx.R
                 Simple Linear Regression : /opt/src/github.com/giagiannis/data-profiler/_rscripts/lm-appx.R

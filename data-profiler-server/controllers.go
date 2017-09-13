@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 
@@ -155,10 +154,6 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 	action := r.URL.Query().Get("action")
 	if action != "submit" {
 		m := modelDatasetGetInfo(id)
-		scripts := make(map[string]string)
-		for _, f := range Conf.Scripts.Analysis {
-			scripts[f] = path.Base(f)
-		}
 		sms := modelSimilarityMatrixGetByDataset(id)
 		matrices := make(map[string]string)
 		for _, s := range sms {
@@ -167,9 +162,8 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 
 		return struct {
 			ID       string
-			Scripts  map[string]string
 			Matrices map[string]string
-		}{ID: m.ID, Scripts: scripts, Matrices: matrices}
+		}{ID: m.ID, Matrices: matrices}
 	}
 	conf := make(map[string]string)
 	//	err := r.ParseForm()
@@ -181,7 +175,7 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 		if err != nil {
 			log.Println(err)
 		}
-		tempF, err := ioutil.TempFile("/tmp", "userscript")
+		tempF, err := ioutil.TempFile("/tmp", h.Filename)
 		if err != nil {
 			log.Println(err)
 		}
@@ -193,7 +187,7 @@ func controllerDatasetNewSM(w http.ResponseWriter, r *http.Request) Model {
 		tempF.Close()
 		os.Chmod(tempF.Name(), 0700)
 		conf["script"] = tempF.Name()
-		conf["script-name"] = h.Filename
+		//		conf["script-name"] = h.Filename
 	}
 
 	for k, v := range r.PostForm {
@@ -325,7 +319,6 @@ func controllerDatasetNew(w http.ResponseWriter, r *http.Request) Model {
 				"appx":       true,
 				"samples":    true,
 			}
-			log.Println(path)
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
 				log.Println(err)

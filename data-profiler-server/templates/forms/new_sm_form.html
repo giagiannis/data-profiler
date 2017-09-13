@@ -147,21 +147,17 @@ function addInput() {
 
 <div id='script'>
 <h3>Script Estimator Parameters</h3>
-<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit'>
+<form method='post' action='/datasets/{{ $.ID }}/newsm?action=submit' enctype="multipart/form-data">
 <table class='tablelist'>
 <tr><th>No. threads</th><td><input type='text' name='concurrency' value='1' class='ui-widget ui-widget-content ui-corner-all' /></td></tr>
 <tr>
 		<th>Script</th>
 <td>
-<select name="script">
-		{{ range $k, $v:= $.Scripts }}
-		<option value="{{$k}}">{{$v}}</option>
-		{{ end }}
-</select>
+		<input type='file' name='script'/>
 </td>
 
 </tr>
-<input type='hidden' name='estimatorType' value='script'/>
+<input type='hidden' name='estimatorType' value='script' />
 <tr>
 		<th>Type</th>
 <td>
@@ -192,13 +188,6 @@ function addInput() {
 		<th>Script</th>
 <td>
 		<input type='file' name='script'/>
-<!--
-		<select name="script">
-		{{ range $k, $v:= $.Scripts }}
-		<option value="{{$k}}">{{$v}}</option>
-		{{ end }}
-</select>
--->
 </td>
 
 </tr>
