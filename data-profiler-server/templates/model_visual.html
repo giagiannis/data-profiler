@@ -6,6 +6,7 @@
 		<ul>
 				<li><a href='#projection'>Projection</a></li>
 				<li><a href='#errors'>Errors</a></li>
+				<li><a href='#residuals'>Residuals</a></li>
 		</ul>
 
 
@@ -91,6 +92,9 @@ htmlString=htmlString+"</table>";
 $("#errortable").html(htmlString);
 </script>
 </div>
+<div id='residuals'>
+		<div id="container2" style="height: 800px"></div>
+</div>
 </div>
 
 <script>
@@ -98,7 +102,8 @@ var chart;
 var approximatedValues = [];
 var actualValues = [];
 var sampleValues = [];
-var scores;
+
+
 
 // data parsing
 var coordinates=$( "#coordinates").html().split("\n");
@@ -107,6 +112,8 @@ var samples= JSON.parse($( "#samples").html());
 var appx= $( "#approximated").html().split(",");
 var scoresID= $( "#scores").html();
 var targetDiv = "container";
+
+var scores = {};
 
 for(var i=0;i<coordinates.length;i++) {
 		str = coordinates[i].split(",");
@@ -301,6 +308,8 @@ $(chart.container).on('mousedown.hc touchstart.hc', function (eStart) {
 				}
 		});
 });
+
+
 function depictActualValues() {
 		if($("#actualCheckbox").is(":checked")) {
 		$.get("/scores/"+scoresID+"/text/", function(d) {
@@ -347,12 +356,6 @@ function depictSamples() {
 
 </script>
 
-
-
-
-
-
-
 <script>
 if(scoresID=="") {
 		$("#actualCheckbox").attr("disabled", true);
@@ -360,6 +363,104 @@ if(scoresID=="") {
 $("#tabs").tabs();
 </script>
 
+<script>
+$.get("/scores/"+scoresID+"/text/", function(d) {
+		var arr = d.split("\n");
+		scores = {};
+		for(var i=0;i<arr.length;i++) {
+				t = arr[i].split(":");
+				if (t.length == 2) {
+						scores[t[0]] = t[1];
+				}
+		}
+		residuals = [];
+		for (o in approximatedValues) {
+				diff = Math.abs(approximatedValues[o].y - scores[approximatedValues[o].name]);
+				residuals.push(diff);
+		}
+		residuals.sort(function(a,b){return a-b;});
+		var median = residuals[Math.ceil(residuals.length/2)];
+		var mean = residuals.reduce(function(a,b){return a+b})/residuals.length;
+		range = residuals[residuals.length-1] - residuals[0];
+		//partitions = Math.floor(residuals.length/5);
+		partitions = 50;
+
+		var newStuff = new Array(partitions);
+		for(i=0;i<partitions;i++){
+				newStuff[i] = 0;
+		}
+		//console.log(newStuff,residuals)
+		index = 0;
+		for(i=0;i<partitions;i++) {
+				while(residuals[index] <= (range/partitions*(i+1))) {
+						//console.log(residuals[index], range/partitions*i);
+						newStuff[i] = newStuff[i]+1;
+						index = index + 1;
+				}
+		}
+		for (i in newStuff) {
+				newStuff[i] /= residuals.length;
+		}
+		residuals = [];
+		for(i=0;i<partitions;i++) {
+				residuals.push({x:range/partitions*(i+1), y:newStuff[i]})
+		}
+		//residuals = newStuff;
+
+		
+		Highcharts.chart('container2', {
+
+				title: {
+						text: 'Residuals distribution'
+				},
+
+				subtitle: {
+						text: ''
+				},
+
+				yAxis: {
+						title: {
+								text: 'Frequency'
+						}
+				},
+				xAxis : {
+						title: {
+								text: 'Residuals'
+						},
+						plotLines: [{
+								color:'red',
+								value: median,
+								width:4,
+								label:{
+										text:"Median (" + parseFloat(median).toFixed(2)+")"
+								}
+						},{
+								color:'green',
+								value: mean,
+								width:4,
+								label:{
+										text:"Mean (" + parseFloat(mean).toFixed(2)+")"
+								}
+						}
+
+						],
+				},
+				series: [{
+						name: "Residuals",
+						type: "column",
+						pointPadding:0,
+						groupPadding:0,
+						data: residuals
+				}],
+
+		});
+
+});
+
+
+
+
+</script>
 
 
 {{ end }}
