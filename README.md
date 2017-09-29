@@ -2,6 +2,18 @@ data-profiler [![Build Status](https://travis-ci.org/giagiannis/data-profiler.sv
 =============
 __data-profiler__ is a Go project used to transform a set of datasets, based on a set of characteristics (distribution similarity, correlation, etc.), in order to model the behavior of an operator, applied on top of them using Machine Learning techniques.
 
+
+Screenshots
+-----------
+
+![Similarity Matrix](https://github.com/giagiannis/data-profiler/raw/master/_imgs/SM.png "Dataset Similarity Matrix")
+
+![Dataset Space](https://github.com/giagiannis/data-profiler/raw/master/_imgs/DS.png "Dataset Space")
+
+![SVM Modeling](https://github.com/giagiannis/data-profiler/raw/master/_imgs/SVMModeling.png "Operator Modeling with SVM")
+
+![SVM Residuals Distribution](https://github.com/giagiannis/data-profiler/raw/master/_imgs/ResidualDistribution.png "SVM Residual Distribution")
+
 Installation
 ------------
 You have two ways of installing __data-profiler__:
