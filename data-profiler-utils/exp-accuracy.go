@@ -112,17 +112,20 @@ func expAccuracyRun() {
 		sync <- true
 	}
 
-	for r := 0; r < *params.repetitions; r++ {
-		for _, sr := range params.samplingRates {
-			modeler := core.NewModeler(params.modelerType, params.datasets, sr, params.evaluator)
-			if params.modelerType == core.ScriptBasedModelerType {
-				modeler.Configure(map[string]string{"script": *params.mlScript, "coordinates": *params.coords})
-			} else {
-				modeler.Configure(map[string]string{"k": fmt.Sprintf("%d", *params.k), "smatrix": *params.smpath})
+	go func() {
+		for r := 0; r < *params.repetitions; r++ {
+			for _, sr := range params.samplingRates {
+				modeler := core.NewModeler(params.modelerType, params.datasets, sr, params.evaluator)
+				if params.modelerType == core.ScriptBasedModelerType {
+					modeler.Configure(map[string]string{"script": *params.mlScript, "coordinates": *params.coords})
+				} else {
+					modeler.Configure(map[string]string{"k": fmt.Sprintf("%d", *params.k), "smatrix": *params.smpath})
+				}
+				go runModeler(sr, modeler, sync, resChannel)
 			}
-			go runModeler(sr, modeler, sync, resChannel)
 		}
-	}
+	}()
+
 	noResults := *params.repetitions * len(params.samplingRates)
 	for i := 0; i < noResults; i++ {
 		v := <-resChannel
