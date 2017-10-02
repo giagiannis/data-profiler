@@ -8,7 +8,7 @@ import (
 func TestKMeansOptions(t *testing.T) {
 	a := new(KMeansPartitioner)
 	o := a.Options()
-	if _, ok := o["k"]; !ok {
+	if _, ok := o["partitions"]; !ok {
 		t.Log("k option does not exist")
 		t.Fail()
 	}
@@ -20,7 +20,7 @@ func TestKMeansOptions(t *testing.T) {
 
 func TestKMeansConfigure(t *testing.T) {
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "10"})
+	a.Configure(map[string]string{"partitions": "10"})
 	if a.k != 10 {
 		t.Log("k should be 10")
 		t.Fail()
@@ -48,7 +48,7 @@ func TestKMeansConstruct(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 10, 2)
 	datasets[0].ReadFromFile()
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "5"})
+	a.Configure(map[string]string{"partitions": "5"})
 	a.Construct(datasets[0].Data())
 	if a.centroids == nil {
 		t.Log("Centroids are null")
@@ -67,7 +67,7 @@ func TestKMeansPartition(t *testing.T) {
 		t.Fail()
 	}
 
-	a.Configure(map[string]string{"k": "5"})
+	a.Configure(map[string]string{"partitions": "5"})
 	a.Construct(datasets[0].Data())
 
 	clusters, err = a.Partition(nil)
@@ -99,7 +99,7 @@ func TestKMeansEstimateWeights(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 10, 2)
 	datasets[0].ReadFromFile()
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "5"})
+	a.Configure(map[string]string{"partitions": "5"})
 	a.estimateWeights(datasets[0].Data())
 	if len(a.weights) != len(datasets[0].Data()[0].Data) {
 		t.Log("no weights returned")
@@ -118,7 +118,7 @@ func TestKMeansInitializeCentroids(t *testing.T) {
 	datasets[0].ReadFromFile()
 
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "5"})
+	a.Configure(map[string]string{"partitions": "5"})
 	a.estimateWeights(datasets[0].Data())
 	a.initializeCentroids(datasets[0].Data())
 	if a.centroids == nil {
@@ -142,7 +142,7 @@ func TestKMeansAssignTuplesToCentroids(t *testing.T) {
 	datasets[0].ReadFromFile()
 
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "5"})
+	a.Configure(map[string]string{"partitions": "5"})
 	a.estimateWeights(datasets[0].Data())
 	a.initializeCentroids(datasets[0].Data())
 	clusters := a.assignTuplesToCentroids(datasets[0].Data())
@@ -157,7 +157,7 @@ func TestKMeansEstimateCentroids(t *testing.T) {
 	datasets[0].ReadFromFile()
 
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "10"})
+	a.Configure(map[string]string{"partitions": "10"})
 	a.estimateWeights(datasets[0].Data())
 	a.initializeCentroids(datasets[0].Data())
 	clusters := a.assignTuplesToCentroids(datasets[0].Data())
@@ -173,7 +173,7 @@ func TestKMeansDeSerialize(t *testing.T) {
 	datasets[0].ReadFromFile()
 
 	a := new(KMeansPartitioner)
-	a.Configure(map[string]string{"k": "10"})
+	a.Configure(map[string]string{"partitions": "10"})
 	a.Construct(datasets[0].Data())
 
 	buff := a.Serialize()
@@ -185,7 +185,7 @@ func TestKMeansDeSerialize(t *testing.T) {
 		t.FailNow()
 	}
 	for i := range a.weights {
-		if b.weights==nil || len(b.weights) < i || a.weights[i] != b.weights[i] {
+		if b.weights == nil || len(b.weights) < i || a.weights[i] != b.weights[i] {
 			t.Log("weights do not match")
 			t.FailNow()
 		}
@@ -204,5 +204,69 @@ func TestKMeansDeSerialize(t *testing.T) {
 			}
 		}
 	}
+
+}
+
+func TestKDTreeOptions(t *testing.T) {
+	a := new(KDTreePartitioner)
+	o := a.Options()
+	if _, ok := o["partitions"]; !ok {
+		t.Log("partitions option does not exist")
+		t.Fail()
+	}
+	if _, ok := o["columns"]; !ok {
+		t.Log("columns option does not exist")
+		t.Fail()
+	}
+}
+
+func TestKDTreeConfigure(t *testing.T) {
+	a := new(KDTreePartitioner)
+	a.Configure(map[string]string{"partitions": "10"})
+	if a.partitions != 10 {
+		t.Log("partitions should be 10")
+		t.Fail()
+	}
+	if a.columns != nil {
+		t.Log("columns should be nil")
+		t.Fail()
+	}
+	a.Configure(map[string]string{"columns": "3,2,1"})
+	if a.partitions != 1 {
+		t.Log("k should be 1")
+		t.Fail()
+	}
+	if a.columns == nil ||
+		a.columns[0] != 3 ||
+		a.columns[1] != 2 ||
+		a.columns[2] != 1 {
+		t.Log("columns should be {3,2,1}")
+		t.Fail()
+	}
+
+}
+
+func TestKDTreeConstruction(t *testing.T) {
+	datasets := createPoolBasedDatasets(100, 1, 2)
+	datasets[0].ReadFromFile()
+	a := new(KDTreePartitioner)
+	a.Configure(map[string]string{"partitions": "9"})
+	a.Construct(datasets[0].Data())
+}
+
+func TestKDTreePartition(t *testing.T) {
+	datasets := createPoolBasedDatasets(10000, 1, 2)
+	datasets[0].ReadFromFile()
+	a := new(KDTreePartitioner)
+	a.Configure(map[string]string{"partitions": "1"})
+	a.Construct(datasets[0].Data())
+	clusters, _ := a.Partition(datasets[0].Data())
+
+	count := 0
+	for _, c := range clusters {
+		count += len(c)
+		t.Log(len(c))
+	}
+	t.Log(count, len(datasets[0].Data()))
 
 }

@@ -46,6 +46,7 @@ const KMeansMaxIteration = 10000
 func NewDataPartitioner(dpType DataPartitionerType, conf map[string]string) DataPartitioner {
 	var obj DataPartitioner
 	if dpType == DataPartitionerKDTree {
+		obj = new(KDTreePartitioner)
 	} else if dpType == DataPartitionerKMeans {
 		obj = new(KMeansPartitioner)
 	} else {
@@ -70,7 +71,7 @@ type KMeansPartitioner struct {
 // Options returns the configuration options of the KMeansPartitioner
 func (p *KMeansPartitioner) Options() map[string]string {
 	return map[string]string{
-		"k": "the number of centroids to use",
+		"partitions": "the number of partitions to use (k)",
 		"weights": "the weights of the columns to utilize for the comparison" +
 			"(default is to 1/(max - min) for each column)",
 	}
@@ -79,7 +80,7 @@ func (p *KMeansPartitioner) Options() map[string]string {
 // Configure provides the necessary configuration options to the
 // KMeansPartitioner struct
 func (p *KMeansPartitioner) Configure(conf map[string]string) {
-	if val, ok := conf["k"]; ok {
+	if val, ok := conf["partitions"]; ok {
 		v, err := strconv.ParseInt(val, 10, 32)
 		if err != nil {
 			log.Println(err)
@@ -276,8 +277,150 @@ func (p *KMeansPartitioner) Deserialize(b []byte) {
 		p.centroids[i] = *new(DatasetTuple)
 		p.centroids[i].Data = make([]float64, tupleDimensionality)
 		for j := 0; j < tupleDimensionality; j++ {
-				buff.Read(bytesFloat)
-				p.centroids[i].Data[j] = getFloatBytes(bytesFloat)
+			buff.Read(bytesFloat)
+			p.centroids[i].Data[j] = getFloatBytes(bytesFloat)
 		}
 	}
 }
+
+// KDTreePartitioner generates a kd-tree on the selected columns
+// and applies the partitioning to new datasets
+type KDTreePartitioner struct {
+	// the number of partitions to create
+	partitions int
+	// the datset columns to consider for the partitioning
+	columns []int
+	// kdtree is the tree structure
+	kdtree []*treeNode
+}
+
+// Options returns a list of options
+func (p *KDTreePartitioner) Options() map[string]string {
+	return map[string]string{
+		"partitions": "the number of partitions",
+		"columns":    "comma separated list of column ids to use (default is all)",
+	}
+}
+
+// Configure provides the necessary configuration params
+func (p *KDTreePartitioner) Configure(conf map[string]string) {
+	if val, ok := conf["partitions"]; ok {
+		v, err := strconv.ParseInt(val, 10, 32)
+		if err != nil {
+			log.Println(err)
+		} else {
+			p.partitions = int(v)
+		}
+	} else {
+		log.Println("Setting default k value")
+		p.partitions = 1
+	}
+
+	if val, ok := conf["columns"]; ok {
+		arr := strings.Split(val, ",")
+		p.columns = make([]int, len(arr))
+		for i := range arr {
+			v, err := strconv.ParseInt(arr[i], 10, 32)
+			if err != nil {
+				log.Println(err)
+			} else {
+				p.columns[i] = int(v)
+			}
+		}
+	}
+
+}
+
+// treeNode represents a node of the kd-tree
+type treeNode struct {
+	dim   int
+	value float64
+}
+
+func (p *KDTreePartitioner) partition(column int, tuples []DatasetTuple) ([]DatasetTuple, []DatasetTuple, float64) {
+	var left, right []DatasetTuple
+	values := make([]float64, len(tuples))
+	for i := range tuples {
+		values[i] = tuples[i].Data[column]
+	}
+	median := Percentile(values, 50)
+	for i := range tuples {
+		if tuples[i].Data[column] <= median {
+			left = append(left, tuples[i])
+		} else {
+			right = append(right, tuples[i])
+		}
+	}
+	return left, right, median
+}
+
+func (p *KDTreePartitioner) Construct(tuples []DatasetTuple) error {
+	if tuples == nil || len(tuples) == 0 {
+		return errors.New("tuples not provided")
+	}
+	if p.columns == nil {
+		p.columns = make([]int, len(tuples[0].Data))
+		for i := range p.columns {
+			p.columns[i] = i
+		}
+	}
+	p.kdtree = make([]*treeNode, p.partitions-1)
+	var createKDTree func(int, int, []DatasetTuple)
+	createKDTree = func(colIdx, treeIdx int, tuples []DatasetTuple) {
+		if treeIdx >= len(p.kdtree) {
+			return
+		}
+		if len(tuples) == 0 || tuples == nil {
+			p.kdtree[treeIdx] = nil
+			return
+		}
+		l, r, median := p.partition(p.columns[colIdx%len(p.columns)], tuples)
+		p.kdtree[treeIdx] = &treeNode{dim: p.columns[colIdx%len(p.columns)], value: median}
+		if len(l) > 0 && len(r) > 0 {
+			createKDTree(colIdx+1, 2*treeIdx+1, l)
+			createKDTree(colIdx+1, 2*treeIdx+2, r)
+		} else {
+			createKDTree(colIdx+1, 2*treeIdx+1, nil)
+			createKDTree(colIdx+1, 2*treeIdx+2, nil)
+		}
+		return
+	}
+	createKDTree(0, 0, tuples)
+	return nil
+}
+
+// Partition applies the previously constructed kd-tree in order to partition
+// the given dataset
+func (p *KDTreePartitioner) Partition(tuples []DatasetTuple) ([][]DatasetTuple, error) {
+	if len(tuples) == 0 {
+		return nil, errors.New("no tuples to partition")
+	}
+	if p.kdtree == nil {
+		return nil, errors.New("kdtree not estimated")
+	}
+
+	maxHeight := int(math.Floor(math.Log(float64(p.partitions)) + 1))
+	clusters := make([][]DatasetTuple, p.partitions)
+	for _, t := range tuples {
+		id, idx, bitOps := 0, 0, 0
+		for idx < len(p.kdtree) {
+			cur := p.kdtree[idx]
+			bitOps += 1
+			if t.Data[cur.dim] <= cur.value {
+				id = (id << 1) | 0
+				idx = 2*idx + 1
+			} else {
+				id = (id << 1) | 1
+				idx = 2*idx + 2
+			}
+		}
+		if bitOps < maxHeight {
+			id = (id << 1) | 0
+		}
+		clusters[id] = append(clusters[id], t)
+	}
+	return clusters, nil
+}
+
+func (p *KDTreePartitioner) Serialize() []byte  { return nil }
+func (p *KDTreePartitioner) Deserialize([]byte) {}
