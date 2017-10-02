@@ -56,6 +56,23 @@ func NewDataPartitioner(dpType DataPartitionerType, conf map[string]string) Data
 	return obj
 }
 
+// DeserializePartitioner returns instantiates a new partitioner from a serialized
+// version
+func DeserializePartitioner(b []byte) DataPartitioner {
+	buff := bytes.NewBuffer(b)
+	tempInt := make([]byte, 4)
+	buff.Read(tempInt)
+	t := uint8(getIntBytes(tempInt))
+	var res DataPartitioner
+	if t == uint8(DataPartitionerKMeans) {
+		res = new(KMeansPartitioner)
+	} else if t == uint8(DataPartitionerKDTree) {
+		res = new(KDTreePartitioner)
+	}
+	res.Deserialize(b)
+	return res
+}
+
 // KMeansPartitioner applies the k-means clustering algorithm to a given dataset
 // and using the calculated centroids, it partitions newly provided datasets
 // according to their distance from them
@@ -143,7 +160,7 @@ func (p *KMeansPartitioner) estimateWeights(tuples []DatasetTuple) {
 		if maxValues[i] == minValues[i] {
 			p.weights[i] = 0.0
 		} else {
-			p.weights[i] = 1.0 / (maxValues[i] - minValues[i])
+			p.weights[i] = 1.0 / ((maxValues[i] - minValues[i]) * (maxValues[i] - minValues[i]))
 		}
 	}
 }
@@ -246,6 +263,7 @@ func (p *KMeansPartitioner) Partition(tuples []DatasetTuple) (
 
 func (p *KMeansPartitioner) Serialize() []byte {
 	buffer := new(bytes.Buffer)
+	buffer.Write(getBytesInt(int(DataPartitionerKMeans)))
 	buffer.Write(getBytesInt(p.k))
 	buffer.Write(getBytesInt(len(p.weights)))
 	for i := range p.weights {
@@ -263,6 +281,7 @@ func (p *KMeansPartitioner) Deserialize(b []byte) {
 	buff := bytes.NewBuffer(b)
 	bytesInt := make([]byte, 4)
 	bytesFloat := make([]byte, 8)
+	buff.Read(bytesInt)	// consume kmeans
 	buff.Read(bytesInt)
 	p.k = getIntBytes(bytesInt)
 	buff.Read(bytesInt)
@@ -343,12 +362,20 @@ func (p *KDTreePartitioner) partition(column int, tuples []DatasetTuple) ([]Data
 	for i := range tuples {
 		values[i] = tuples[i].Data[column]
 	}
+	goesLeft := true
 	median := Percentile(values, 50)
 	for i := range tuples {
-		if tuples[i].Data[column] <= median {
+		if tuples[i].Data[column] < median {
 			left = append(left, tuples[i])
-		} else {
+		} else if tuples[i].Data[column] > median {
 			right = append(right, tuples[i])
+		} else { // equality
+			if goesLeft {
+				left = append(left, tuples[i])
+			} else {
+				right = append(left, tuples[i])
+			}
+			goesLeft = !goesLeft
 		}
 	}
 	return left, right, median
@@ -422,5 +449,43 @@ func (p *KDTreePartitioner) Partition(tuples []DatasetTuple) ([][]DatasetTuple, 
 	return clusters, nil
 }
 
-func (p *KDTreePartitioner) Serialize() []byte  { return nil }
-func (p *KDTreePartitioner) Deserialize([]byte) {}
+// Serialize returns a byte array with the serialized object
+func (p *KDTreePartitioner) Serialize() []byte {
+	buf := new(bytes.Buffer)
+	buf.Write(getBytesInt(int(DataPartitionerKDTree)))
+	buf.Write(getBytesInt(p.partitions))
+	buf.Write(getBytesInt(len(p.columns)))
+	for i := range p.columns {
+		buf.Write(getBytesInt(p.columns[i]))
+	}
+	buf.Write(getBytesInt(len(p.kdtree)))
+	for i := range p.kdtree {
+		buf.Write(getBytesInt(p.kdtree[i].dim))
+		buf.Write(getBytesFloat(p.kdtree[i].value))
+	}
+	return buf.Bytes()
+}
+
+// Deserialize parses a byte array and instantiates a new kdtree part. object
+func (p *KDTreePartitioner) Deserialize(b []byte) {
+	buff := bytes.NewBuffer(b)
+	tempInt, tempFloat := make([]byte, 4), make([]byte, 8)
+	buff.Read(tempInt)	// consume partitioner type
+	buff.Read(tempInt)
+	p.partitions = getIntBytes(tempInt)
+	buff.Read(tempInt)
+	cols := getIntBytes(tempInt)
+	p.columns = make([]int, cols)
+	for i := range p.columns {
+		buff.Read(tempInt)
+		p.columns[i] = getIntBytes(tempInt)
+	}
+	buff.Read(tempInt)
+	count := getIntBytes(tempInt)
+	p.kdtree = make([]*treeNode, count)
+	for i := range p.kdtree {
+		buff.Read(tempInt)
+		buff.Read(tempFloat)
+		p.kdtree[i] = &treeNode{dim: getIntBytes(tempInt), value: getFloatBytes(tempFloat)}
+	}
+}

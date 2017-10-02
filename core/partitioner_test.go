@@ -270,3 +270,65 @@ func TestKDTreePartition(t *testing.T) {
 	t.Log(count, len(datasets[0].Data()))
 
 }
+
+func TestKDTreeDeSerialize(t *testing.T) {
+	datasets := createPoolBasedDatasets(100, 1, 2)
+	datasets[0].ReadFromFile()
+
+	a := new(KDTreePartitioner)
+	a.Configure(map[string]string{"partitions": "10"})
+	a.Construct(datasets[0].Data())
+
+	buff := a.Serialize()
+
+	b := new(KDTreePartitioner)
+	b.Deserialize(buff)
+	if a.partitions != b.partitions {
+		t.Log("partitions values do not match")
+		t.FailNow()
+	}
+	for i := range a.columns {
+		if b.columns == nil || len(b.columns) < i || a.columns[i] != b.columns[i] {
+			t.Log("columns do not match")
+			t.FailNow()
+		}
+	}
+	for i := range a.kdtree {
+		if b.kdtree == nil || len(b.kdtree) < i {
+			t.Log("kdtree do not match")
+			t.FailNow()
+		} else {
+			if a.kdtree[i].dim != b.kdtree[i].dim ||
+				a.kdtree[i].value != b.kdtree[i].value {
+				t.Log("kdtree do not match")
+				t.FailNow()
+			}
+		}
+	}
+
+}
+
+func TestNewDatapartitioner(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 2, 2)
+	datasets[0].ReadFromFile()
+	datasets[1].ReadFromFile()
+	conf := map[string]string{"partitions": "10"}
+	for _, ty := range []DataPartitionerType{DataPartitionerKDTree, DataPartitionerKMeans} {
+		a := NewDataPartitioner(ty, conf)
+		a.Construct(datasets[0].Data())
+		foo := a.Serialize()
+		b := DeserializePartitioner(foo)
+		resB, _ := b.Partition(datasets[1].Data())
+		resA, _ := a.Partition(datasets[1].Data())
+		if len(resA) != len(resB) {
+			t.Log("Different number of clusters")
+			t.Fail()
+		}
+		for i := range resA {
+			if len(resA[i]) != len(resB[i]) {
+				t.Log("Different cardinalities")
+				t.Fail()
+			}
+		}
+	}
+}
