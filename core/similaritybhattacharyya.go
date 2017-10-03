@@ -20,7 +20,7 @@ type BhattacharyyaEstimator struct {
 	// determines the height of the kd tree to be used
 	maxPartitions int
 	// hold the portion of the data examined for constructing the tree
-	kdTreeSamplePerc float64
+	datasetSR float64
 	// kd tree, utilized for dataset partitioning
 	//	kdTree *kdTreeNode
 	partitioner DataPartitioner
@@ -105,12 +105,12 @@ func (e *BhattacharyyaEstimator) Configure(conf map[string]string) {
 	if val, ok := conf["dataset.sr"]; ok {
 		//conv, err := strconv.ParseInt(val, 10, 32)
 		conv, err := strconv.ParseFloat(val, 64)
-		e.kdTreeSamplePerc = conv
+		e.datasetSR = conv
 		if err != nil {
 			log.Println(err)
 		}
 	} else {
-		e.kdTreeSamplePerc = 0.1
+		e.datasetSR = 0.1
 	}
 
 	partitionerType := DataPartitionerKDTree
@@ -274,7 +274,7 @@ func (e *BhattacharyyaEstimator) sampledDataset() []DatasetTuple {
 	log.Println("Generating a sampled and merged dataset with all tuples")
 	var result []DatasetTuple
 	for _, d := range e.datasets {
-		tuplesToChoose := int(math.Floor(float64(len(d.Data())) * e.kdTreeSamplePerc))
+		tuplesToChoose := int(math.Floor(float64(len(d.Data())) * e.datasetSR))
 		log.Printf("%d/%d tuples chosen for %s\n", tuplesToChoose, len(d.Data()), d.path)
 		tuplesIdx := make(map[int]bool)
 		for len(tuplesIdx) < tuplesToChoose {

@@ -54,6 +54,7 @@ func TestKMeansConstruct(t *testing.T) {
 		t.Log("Centroids are null")
 		t.Fail()
 	}
+	cleanDatasets(datasets)
 }
 func TestKMeansPartition(t *testing.T) {
 	datasets := createPoolBasedDatasets(10000, 10, 2)
@@ -76,9 +77,9 @@ func TestKMeansPartition(t *testing.T) {
 		t.Fail()
 	}
 
-	other := createPoolBasedDatasets(10000, 1, 3)[0]
-	other.ReadFromFile()
-	clusters, err = a.Partition(other.Data())
+	other := createPoolBasedDatasets(10000, 1, 3)
+	other[0].ReadFromFile()
+	clusters, err = a.Partition(other[0].Data())
 	if err == nil || clusters != nil {
 		t.Log("should return an error")
 		t.Fail()
@@ -93,6 +94,8 @@ func TestKMeansPartition(t *testing.T) {
 		t.Log("wrong number of clusters")
 		t.Fail()
 	}
+	cleanDatasets(datasets)
+	cleanDatasets(other)
 }
 
 func TestKMeansEstimateWeights(t *testing.T) {
@@ -111,6 +114,7 @@ func TestKMeansEstimateWeights(t *testing.T) {
 			t.Fail()
 		}
 	}
+	cleanDatasets(datasets)
 }
 
 func TestKMeansInitializeCentroids(t *testing.T) {
@@ -135,6 +139,7 @@ func TestKMeansInitializeCentroids(t *testing.T) {
 			t.Fail()
 		}
 	}
+	cleanDatasets(datasets)
 }
 
 func TestKMeansAssignTuplesToCentroids(t *testing.T) {
@@ -150,6 +155,7 @@ func TestKMeansAssignTuplesToCentroids(t *testing.T) {
 		t.Log("wrong number of clusters")
 		t.Fail()
 	}
+	cleanDatasets(datasets)
 }
 
 func TestKMeansEstimateCentroids(t *testing.T) {
@@ -166,6 +172,7 @@ func TestKMeansEstimateCentroids(t *testing.T) {
 		t.Log("wrong number of clusters")
 		t.Fail()
 	}
+	cleanDatasets(datasets)
 }
 
 func TestKMeansDeSerialize(t *testing.T) {
@@ -204,6 +211,7 @@ func TestKMeansDeSerialize(t *testing.T) {
 			}
 		}
 	}
+	cleanDatasets(datasets)
 
 }
 
@@ -232,8 +240,8 @@ func TestKDTreeConfigure(t *testing.T) {
 		t.Fail()
 	}
 	a.Configure(map[string]string{"columns": "3,2,1"})
-	if a.partitions != 1 {
-		t.Log("k should be 1")
+	if a.partitions != 32 {
+		t.Log("k should be 32")
 		t.Fail()
 	}
 	if a.columns == nil ||
@@ -252,6 +260,7 @@ func TestKDTreeConstruction(t *testing.T) {
 	a := new(KDTreePartitioner)
 	a.Configure(map[string]string{"partitions": "9"})
 	a.Construct(datasets[0].Data())
+	cleanDatasets(datasets)
 }
 
 func TestKDTreePartition(t *testing.T) {
@@ -269,6 +278,7 @@ func TestKDTreePartition(t *testing.T) {
 	}
 	t.Log(count, len(datasets[0].Data()))
 
+	cleanDatasets(datasets)
 }
 
 func TestKDTreeDeSerialize(t *testing.T) {
@@ -305,6 +315,7 @@ func TestKDTreeDeSerialize(t *testing.T) {
 			}
 		}
 	}
+	cleanDatasets(datasets)
 
 }
 
@@ -331,4 +342,5 @@ func TestNewDatapartitioner(t *testing.T) {
 			}
 		}
 	}
+	cleanDatasets(datasets)
 }

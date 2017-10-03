@@ -14,7 +14,7 @@ func TestBhattacharyyaSampledDatasets(t *testing.T) {
 	est.datasets = datasets
 	conf := map[string]string{
 		"concurrency": "10",
-		"tree.sr":     fmt.Sprintf("%.2f", percentage),
+		"dataset.sr":     fmt.Sprintf("%.2f", percentage),
 		"partitions":  "16",
 	}
 	est.Configure(conf)
