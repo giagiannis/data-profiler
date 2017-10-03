@@ -24,7 +24,7 @@ const (
 )
 
 func init() {
-	//	log.SetOutput(ioutil.Discard)
+	log.SetOutput(ioutil.Discard)
 	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 	rand.Seed(int64(time.Now().Nanosecond()))
 }

@@ -52,8 +52,17 @@
 <table class='tablelist'>
 <tr><th>No. threads</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='concurrency' value='1'/></td></tr>
 <tr><th>Max No. Partitions</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='partitions' value='32'/></td></tr>
-<tr><th>Dataset sampling</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='tree.sr' value='0.1'/></td></tr>
-<tr><th>Dataset Columns</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='columns' value='all'/></td></tr>
+<tr><th>Dataset sampling</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='dataset.sr' value='0.1'/></td></tr>
+<tr><th>Partitioner Type</th>
+		<td>
+				<select name='partitioner.type'>
+						<option value='kdtree' selected>KDTree</option>
+						<option value='kmeans'>K-Means</option>
+				</select>
+		</td>
+</tr>
+<tr><th>Columns (kdtree)</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='partitioner.columns' value='all'/></td></tr>
+<tr><th>Weights (kmeans)</th><td><input class='ui-widget ui-widget-content ui-corner-all' type='text' name='partitioner.weights' value=''/></td></tr>
 <input type='hidden' name='estimatorType' value='bhattacharyya'/>
 </table>
 {{ template "appx" . }}

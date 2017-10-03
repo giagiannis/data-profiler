@@ -46,8 +46,11 @@ const KMeansMaxIteration = 10000
 func NewDataPartitioner(dpType DataPartitionerType, conf map[string]string) DataPartitioner {
 	var obj DataPartitioner
 	if dpType == DataPartitionerKDTree {
+		log.Println("Constructing KDTreePartitioner")
 		obj = new(KDTreePartitioner)
 	} else if dpType == DataPartitionerKMeans {
+		log.Println("Constructing KMeansPartitioner")
+		obj = new(KDTreePartitioner)
 		obj = new(KMeansPartitioner)
 	} else {
 		return nil
@@ -103,9 +106,10 @@ func (p *KMeansPartitioner) Configure(conf map[string]string) {
 			log.Println(err)
 		} else {
 			p.k = int(v)
+			log.Println("Setting k value", p.k)
 		}
 	} else {
-		log.Println("Setting default k value")
+		log.Println("Setting default k value (1)")
 		p.k = 1
 	}
 
@@ -116,10 +120,13 @@ func (p *KMeansPartitioner) Configure(conf map[string]string) {
 			v, err := strconv.ParseFloat(arr[i], 64)
 			if err != nil {
 				log.Println(err)
+				p.weights = nil
+				break
 			} else {
 				p.weights[i] = v
 			}
 		}
+		log.Println("Setting weights", p.weights)
 	}
 }
 
@@ -208,7 +215,9 @@ func (p *KMeansPartitioner) distance(a, b DatasetTuple) float64 {
 	sum := 0.0
 	for i := range a.Data {
 		diff := (a.Data[i] - b.Data[i])
-		sum += p.weights[i] * diff * diff
+		if i < len(p.weights) {
+			sum += p.weights[i] * diff * diff
+		}
 	}
 	return math.Sqrt(sum)
 }
@@ -281,7 +290,7 @@ func (p *KMeansPartitioner) Deserialize(b []byte) {
 	buff := bytes.NewBuffer(b)
 	bytesInt := make([]byte, 4)
 	bytesFloat := make([]byte, 8)
-	buff.Read(bytesInt)	// consume kmeans
+	buff.Read(bytesInt) // consume kmeans
 	buff.Read(bytesInt)
 	p.k = getIntBytes(bytesInt)
 	buff.Read(bytesInt)
@@ -331,21 +340,24 @@ func (p *KDTreePartitioner) Configure(conf map[string]string) {
 			p.partitions = int(v)
 		}
 	} else {
-		log.Println("Setting default k value")
-		p.partitions = 1
+		p.partitions = 32
 	}
+	log.Println("Set partitions", p.partitions)
 
-	if val, ok := conf["columns"]; ok {
+	if val, ok := conf["columns"]; ok && val != "all" {
 		arr := strings.Split(val, ",")
 		p.columns = make([]int, len(arr))
 		for i := range arr {
 			v, err := strconv.ParseInt(arr[i], 10, 32)
 			if err != nil {
 				log.Println(err)
+				p.columns = nil
+				break
 			} else {
 				p.columns[i] = int(v)
 			}
 		}
+		log.Println("Set columns", p.columns)
 	}
 
 }
@@ -470,7 +482,7 @@ func (p *KDTreePartitioner) Serialize() []byte {
 func (p *KDTreePartitioner) Deserialize(b []byte) {
 	buff := bytes.NewBuffer(b)
 	tempInt, tempFloat := make([]byte, 4), make([]byte, 8)
-	buff.Read(tempInt)	// consume partitioner type
+	buff.Read(tempInt) // consume partitioner type
 	buff.Read(tempInt)
 	p.partitions = getIntBytes(tempInt)
 	buff.Read(tempInt)

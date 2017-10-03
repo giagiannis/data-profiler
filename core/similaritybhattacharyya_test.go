@@ -2,9 +2,7 @@ package core
 
 import (
 	"fmt"
-	"log"
 	"math"
-	"math/rand"
 	"testing"
 )
 
@@ -45,56 +43,6 @@ func TestBhattacharyyaCompute(t *testing.T) {
 	}
 	s := est.SimilarityMatrix()
 	smSanityCheck(s, t)
-	cleanDatasets(datasets)
-}
-
-func TestKdTree(t *testing.T) {
-	datasets := createPoolBasedDatasets(20000, 1, 5)
-	dataset := datasets[0]
-	err := dataset.ReadFromFile()
-	if err != nil {
-		log.Println(err)
-		t.FailNow()
-	}
-	kd := newKDTreePartition(dataset.Data(), []int{0, 1, 2, 3, 4})
-	kd.Prune(kd.Height() - 2)
-	ids := kd.GetLeafIndex(dataset.Data())
-	sum := 0
-	for _, v := range ids {
-		sum += v
-	}
-	if sum != len(dataset.Data()) {
-		log.Println("Not all tuples are indexed!!")
-		t.FailNow()
-	}
-	cleanDatasets(datasets)
-
-}
-
-func TestKdPruning(t *testing.T) {
-	datasets := createPoolBasedDatasets(20000, 1, 5)
-	dataset := datasets[0]
-	err := dataset.ReadFromFile()
-	if err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
-	height := int(math.Log2(float64(len(dataset.Data())))) + 1
-	for i := 0; i < height; i++ {
-		kd := newKDTreePartition(dataset.Data(), []int{0, 1, 2, 3, 4})
-		if i < kd.Height() {
-			kd.Prune(kd.Height() - i)
-			ids := kd.GetLeafIndex(dataset.Data())
-			sum := .0
-			for _, v := range ids {
-				sum += math.Sqrt(float64(v * v))
-			}
-			if sum != math.Sqrt(float64(len(dataset.Data())*len(dataset.Data()))) {
-				t.FailNow()
-			}
-		}
-	}
-
 	cleanDatasets(datasets)
 }
 
@@ -145,32 +93,6 @@ func TestBhattacharyyaComputeAppxThres(t *testing.T) {
 
 	s := est.SimilarityMatrix()
 	smSanityCheck(s, t)
-	cleanDatasets(datasets)
-}
-
-func TestKdtreeNodeSerialization(t *testing.T) {
-	datasets := createPoolBasedDatasets(10000, 1, 2)
-	datasets[0].ReadFromFile()
-	tree := newKDTreePartition(datasets[0].Data(), []int{0, 1})
-	h := float64(tree.Height()) * (rand.NormFloat64()*0.2 + 0.5)
-	tree.Prune(int(math.Ceil(h)))
-	b := tree.Serialize()
-	newTree := new(kdTreeNode)
-	newTree.Deserialize(b)
-	var dfsTraversal func(treeA, treeB *kdTreeNode) bool
-	dfsTraversal = func(treeA, treeB *kdTreeNode) bool {
-		if treeA == nil && treeB == nil {
-			return true
-		}
-		if treeA.dim != treeB.dim || treeA.value != treeB.value {
-			return false
-		}
-		return dfsTraversal(treeA.left, treeB.left) && dfsTraversal(treeA.right, treeB.right)
-	}
-	if !dfsTraversal(tree, newTree) {
-		t.Log("Trees not equal")
-		t.FailNow()
-	}
 	cleanDatasets(datasets)
 }
 
