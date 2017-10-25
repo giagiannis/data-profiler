@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"sync"
+	"path"
 
 	"github.com/giagiannis/data-profiler/core"
 )
@@ -84,7 +85,7 @@ func trainRun() {
 			}
 			sort.Float64s(res)
 			lock.Lock()
-			results.Scores[d.Path()] = res[len(res)/2]
+			results.Scores[path.Base(d.Path())] = res[len(res)/2]
 			lock.Unlock()
 			c <- true
 			done <- true
