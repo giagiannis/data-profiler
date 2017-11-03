@@ -16,6 +16,7 @@ import (
 
 type expAccuracyParams struct {
 	output      *string          // output file path
+	appxOutput  *string          // output approximation files path
 	repetitions *int             // number of times to repeat experiment
 	threads     *int             // number of threads to utilize
 	datasets    []*core.Dataset  //datasets to use
@@ -49,6 +50,8 @@ func expAccuracyParseParams() *expAccuracyParams {
 		flag.String("sm", "", "similarity matrix (from knn ml)")
 	params.k =
 		flag.Int("k", 5, "k (from knn ml)")
+	params.appxOutput =
+		flag.String("a", "", "approximations output file")
 	loger :=
 		flag.String("l", "", "log file")
 	scoresFile :=
@@ -93,6 +96,7 @@ func expAccuracyParseParams() *expAccuracyParams {
 	} else if *modelerTypeStr == "knn" {
 		params.modelerType = core.KNNModelerType
 	}
+
 	return params
 }
 
@@ -102,6 +106,8 @@ func expAccuracyRun() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 	output := setOutput(*params.output)
 	defer output.Close()
+
+	writeAppxScoresToFile := *params.appxOutput != ""
 
 	results := make(map[float64][]map[string]float64)
 
@@ -133,6 +139,13 @@ func expAccuracyRun() {
 			results[v.sr] = make([]map[string]float64, 0)
 		}
 		results[v.sr] = append(results[v.sr], v.res)
+
+		if writeAppxScoresToFile {
+			err := writeAppxScores(i, params, &v)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	}
 	log.Println(results)
 
@@ -184,9 +197,28 @@ func writeResults(output *os.File, results map[float64][]map[string]float64, sam
 	return keysFinal
 }
 
+// writeAppxScores writes approximation scores to a file stored at a given path.
+func writeAppxScores(repetition int, params *expAccuracyParams, res *resChannelResult) error {
+	appxOutFilepath := fmt.Sprintf("%s_%f_%d.appx", *params.appxOutput, res.sr, repetition)
+
+	appxOutput := setOutput(appxOutFilepath)
+	defer appxOutput.Close()
+
+	b, err := res.appx.Serialize()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	appxOutput.Write(b)
+
+	return nil
+}
+
 type resChannelResult struct {
 	sr  float64
 	res map[string]float64
+	appx *core.DatasetScores
 }
 
 func runModeler(sr float64, modeler core.Modeler, sync chan bool, resChannel chan resChannelResult) {
@@ -200,6 +232,9 @@ func runModeler(sr float64, modeler core.Modeler, sync chan bool, resChannel cha
 	res := modeler.ErrorMetrics()
 	res["TimeExec"] = modeler.ExecTime()
 	res["TimeEval"] = modeler.EvalTime()
-	resChannel <- resChannelResult{sr, res}
+
+	appxScores := core.AppxScores(modeler)
+
+	resChannel <- resChannelResult{sr, res, appxScores}
 	sync <- true
 }

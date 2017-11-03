@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"path"
 )
 
 type ModelerType uint8
@@ -430,6 +431,19 @@ func createCSVFile(matrix [][]float64, output bool) string {
 	}
 	f.Close()
 	return f.Name()
+}
+
+// Return `modeler.AppxValues()` as a `DatasetScores` struct
+func AppxScores(modeler Modeler) *DatasetScores {
+	appxScores := NewDatasetScores()
+	datasets := modeler.Datasets()
+	appxValues := modeler.AppxValues()
+
+	for i := range datasets {
+		appxScores.Scores[path.Base(datasets[i].Path())] = appxValues[i]
+	}
+
+	return appxScores
 }
 
 // RootMeanSquaredError returns the RMSE of the actual vs the predicted values
