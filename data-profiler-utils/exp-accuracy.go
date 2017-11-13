@@ -30,6 +30,8 @@ type expAccuracyParams struct {
 	evaluator core.DatasetEvaluator // evaluator of the datasets
 
 	samplingRates []float64 // samplings rates to run
+
+	writeAppxScores bool // write approximations to file
 }
 
 func expAccuracyParseParams() *expAccuracyParams {
@@ -97,6 +99,9 @@ func expAccuracyParseParams() *expAccuracyParams {
 		params.modelerType = core.KNNModelerType
 	}
 
+	// write approximations to file
+	params.writeAppxScores = *params.appxOutput != ""
+
 	return params
 }
 
@@ -106,8 +111,6 @@ func expAccuracyRun() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 	output := setOutput(*params.output)
 	defer output.Close()
-
-	writeAppxScoresToFile := *params.appxOutput != ""
 
 	results := make(map[float64][]map[string]float64)
 
@@ -127,7 +130,7 @@ func expAccuracyRun() {
 				} else {
 					modeler.Configure(map[string]string{"k": fmt.Sprintf("%d", *params.k), "smatrix": *params.smpath})
 				}
-				go runModeler(sr, modeler, sync, resChannel)
+				go runModeler(sr, params.writeAppxScores, modeler, sync, resChannel)
 			}
 		}
 	}()
@@ -140,7 +143,7 @@ func expAccuracyRun() {
 		}
 		results[v.sr] = append(results[v.sr], v.res)
 
-		if writeAppxScoresToFile {
+		if params.writeAppxScores {
 			err := writeAppxScores(i, params, &v)
 			if err != nil {
 				log.Println(err)
@@ -199,7 +202,7 @@ func writeResults(output *os.File, results map[float64][]map[string]float64, sam
 
 // writeAppxScores writes approximation scores to a file stored at a given path.
 func writeAppxScores(repetition int, params *expAccuracyParams, res *resChannelResult) error {
-	appxOutFilepath := fmt.Sprintf("%s_%f_%d.appx", *params.appxOutput, res.sr, repetition)
+	appxOutFilepath := fmt.Sprintf("%s_%f_%d", *params.appxOutput, res.sr, repetition)
 
 	appxOutput := setOutput(appxOutFilepath)
 	defer appxOutput.Close()
@@ -221,7 +224,7 @@ type resChannelResult struct {
 	appx *core.DatasetScores
 }
 
-func runModeler(sr float64, modeler core.Modeler, sync chan bool, resChannel chan resChannelResult) {
+func runModeler(sr float64, writeAppxScores bool, modeler core.Modeler, sync chan bool, resChannel chan resChannelResult) {
 	<-sync
 	err := modeler.Run()
 	if err != nil {
@@ -233,7 +236,10 @@ func runModeler(sr float64, modeler core.Modeler, sync chan bool, resChannel cha
 	res["TimeExec"] = modeler.ExecTime()
 	res["TimeEval"] = modeler.EvalTime()
 
-	appxScores := core.AppxScores(modeler)
+	var appxScores *core.DatasetScores = nil
+	if writeAppxScores {
+		appxScores = core.AppxScores(modeler)
+	}
 
 	resChannel <- resChannelResult{sr, res, appxScores}
 	sync <- true
