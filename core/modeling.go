@@ -439,7 +439,7 @@ func AppxScores(modeler Modeler) *DatasetScores {
 	datasets := modeler.Datasets()
 	appxValues := modeler.AppxValues()
 
-	for i := range datasets {
+	for i := range appxValues {
 		appxScores.Scores[path.Base(datasets[i].Path())] = appxValues[i]
 	}
 
