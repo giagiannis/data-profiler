@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -179,6 +180,50 @@ func TestKNNModeler(t *testing.T) {
 		t.Log("Wrong number of approximated values")
 		t.Fail()
 	}
+	cleanDatasets(datasets)
+}
+
+func TestAppxScores(t *testing.T) {
+	datasets := createPoolBasedDatasets(1000, 50, 3)
+	m, err := createKNNModeler(datasets)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+
+	appxScores := AppxScores(m)
+	if len(appxScores.Scores) != 0 {
+		t.Log("Wrong number of approximated values")
+		t.Fail()
+	}
+
+	err = m.Run()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+
+	appxValues := m.AppxValues()
+	appxScores = AppxScores(m)
+
+	if len(appxValues) != len(appxScores.Scores) {
+		t.Log("Wrong number of approximated values")
+		t.Fail()
+	}
+
+	for i, v := range appxValues {
+		k := path.Base(datasets[i].Path())
+		if x, ok := appxScores.Scores[k]; ok {
+			if x != v {
+				t.Log("Mismatch in approximated values.")
+				t.Fail()
+			}
+		} else {
+			t.Log("Key does not exist.")
+			t.Fail()
+		}
+	}
+
 	cleanDatasets(datasets)
 }
 
