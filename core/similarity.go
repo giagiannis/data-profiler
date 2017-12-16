@@ -414,6 +414,8 @@ func NewDatasetSimilarityEstimator(
 		a.SetPopulationPolicy(policy)
 		a.datasets = datasets
 		return a
+	} else {
+		log.Println("Unsupported Similarity Type.")
 	}
 
 	return nil
@@ -447,6 +449,12 @@ func DeserializeSimilarityEstimator(b []byte) DatasetSimilarityEstimator {
 		a := new(SizeEstimator)
 		a.Deserialize(b)
 		return a
+	} else if estimatorType == SimilarityTypeScriptPair  {
+		a := new(ScriptPairSimilarityEstimator)
+		a.Deserialize(b)
+		return a
+	} else {
+		log.Println("Unsupported Estimator Type.")
 	}
 	return nil
 }
