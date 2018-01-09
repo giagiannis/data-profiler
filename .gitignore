@@ -5,3 +5,5 @@ TODO.txt
 _results
 *.db
 .Rhistory
+.RData
+_private/
