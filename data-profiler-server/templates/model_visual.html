@@ -5,6 +5,7 @@
 <div id='tabs'>
 		<ul>
 				<li><a href='#projection'>Projection</a></li>
+				<li><a href='#1dprojection'>Projection (1d)</a></li>
 				<li><a href='#errors'>Errors</a></li>
 				<li><a href='#residuals'>Residuals</a></li>
 		</ul>
@@ -95,6 +96,11 @@ $("#errortable").html(htmlString);
 <div id='residuals'>
 		<div id="container2" style="height: 800px"></div>
 </div>
+<div id='1dprojection'>
+<h2>Projection (1d)</h2>
+<div id="container3" style="height: 800px"></div>
+</div>
+
 </div>
 
 <script>
@@ -373,6 +379,96 @@ $.get("/scores/"+scoresID+"/text/", function(d) {
 						scores[t[0]] = t[1];
 				}
 		}
+		// order based on increasing scores order
+		actualOrdered = Object.keys(scores).map(function(k){return [k, parseFloat(scores[k])]});
+		actualOrdered.sort(function(a,b){return a[1]-b[1]});
+		appxMap = {};
+		for(i in approximatedValues) {
+				a = approximatedValues[i];
+				appxMap[a.name] = a.y;
+		}
+		appxOrdered = [];
+		for(i in actualOrdered) {
+				appxOrdered.push(appxMap[actualOrdered[i][0]]);
+		}
+		labelsOrdered = actualOrdered.map(function(a){return a[0]});
+		actualOrdered = actualOrdered.map(function(a){return a[1]});
+
+Highcharts.chart('container3', {
+    chart: {
+        type: 'scatter',
+        zoomType: 'xy'
+    },
+    title: {
+        text: 'Actual vs Approximated values'
+    },
+    xAxis: {
+        title: {
+            enabled: true,
+            text: 'Dataset'
+        },
+        startOnTick: true,
+        showLastLabel: true,
+		labels: {
+				formatter: function(){return labelsOrdered[this.value]},
+				rotation: 45
+		}
+    },
+    yAxis: {
+        title: {
+            text: 'Score value'
+        },
+		startOnTick: true,
+		stopOnTick: true,
+		showLastLabel: true
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        x: 100,
+        y: 70,
+        floating: true,
+        borderWidth: 1
+    },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 5,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)'
+                    }
+                }
+            },
+            states: {
+                hover: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            },
+            tooltip: {
+                headerFormat: '<b>{series.name}</b><br>',
+                pointFormatter: function(a){return labels[this.x]+", "+this.y}
+            },
+        }
+    },
+    series: [{
+        name: 'Actual values',
+        color: 'green',
+        data: actualOrdered
+
+    }, {
+        name: 'Approximated values',
+        color: 'red',
+        data: appxOrdered
+    }]
+});
+
+		
+
 		residuals = [];
 		for (o in approximatedValues) {
 				diff = Math.abs(approximatedValues[o].y - scores[approximatedValues[o].name]);
