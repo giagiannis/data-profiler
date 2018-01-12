@@ -393,6 +393,22 @@ $.get("/scores/"+scoresID+"/text/", function(d) {
 		}
 		labelsOrdered = actualOrdered.map(function(a){return a[0]});
 		actualOrdered = actualOrdered.map(function(a){return a[1]});
+		foo = {};
+		for(var i in samples){
+				foo[labels[i]] =samples[i];
+		}
+		console.log(foo);
+		samplesOrdered = [];
+		for(var i in labelsOrdered) {
+				if(labelsOrdered[i] in foo) {
+						console.log("foo");
+						a = []
+						a.push(parseFloat(i));
+						a.push(foo[labelsOrdered[i]])
+						samplesOrdered.push(a);
+				}
+		}
+		console.log(samplesOrdered)
 
 Highcharts.chart('container3', {
     chart: {
@@ -456,14 +472,18 @@ Highcharts.chart('container3', {
         }
     },
     series: [{
+        name: 'Approximated values',
+        color: 'red',
+        data: appxOrdered
+    }, {
+        name: 'Samples',
+        color: 'blue',
+        data: samplesOrdered
+    }, {
         name: 'Actual values',
         color: 'green',
         data: actualOrdered
 
-    }, {
-        name: 'Approximated values',
-        color: 'red',
-        data: appxOrdered
     }]
 });
 
