@@ -190,11 +190,12 @@ func (p *KMeansPartitioner) assignTuplesToCentroids(tuples []DatasetTuple) [][]D
 }
 
 // estimateCentroids estimates the new centroids based on the given clusters
+// the number of centroids may not be equal to the number of clusters
 func (p *KMeansPartitioner) estimateCentroids(clusters [][]DatasetTuple) []DatasetTuple {
 	var centroids []DatasetTuple
 	for _, c := range clusters {
 		var centroid []float64
-		if len(clusters) > 0 {
+		if len(c) > 0 {
 			centroid = make([]float64, len(c[0].Data))
 		}
 		for _, t := range c {
@@ -205,13 +206,19 @@ func (p *KMeansPartitioner) estimateCentroids(clusters [][]DatasetTuple) []Datas
 		for i := range centroid {
 			centroid[i] = centroid[i] / float64(len(c))
 		}
-		centroids = append(centroids, DatasetTuple{centroid})
+		if len(centroid) > 0 {
+			centroids = append(centroids, DatasetTuple{centroid})
+		}
 	}
 	return centroids
 }
 
 // distance returns the weighted distance between two tuples
 func (p *KMeansPartitioner) distance(a, b DatasetTuple) float64 {
+	if a.Data == nil || b.Data == nil {
+		log.Println("Nil tuple")
+		return math.NaN()
+	}
 	sum := 0.0
 	for i := range a.Data {
 		diff := (a.Data[i] - b.Data[i])
@@ -225,11 +232,20 @@ func (p *KMeansPartitioner) distance(a, b DatasetTuple) float64 {
 // centroidsDelta returns the difference between the new and old centroids
 func (p *KMeansPartitioner) centroidsDelta(a, b []DatasetTuple) float64 {
 	if len(a) != len(b) {
+		log.Println("Nil tuple")
 		return math.NaN()
 	}
 	sum := 0.0
 	for i := range a {
-		sum += p.distance(a[i], b[i])
+		minDst := math.Inf(1)
+		for j := range b {
+			dst := p.distance(a[i], b[j])
+			if dst < minDst {
+				minDst = dst
+			}
+		}
+		sum += minDst
+		//		sum += p.distance(a[i], b[i])
 	}
 	return sum
 }
