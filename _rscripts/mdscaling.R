@@ -4,8 +4,8 @@ library(MASS)
 args <- commandArgs(trailingOnly=TRUE)
 
 if (length(args) < 2 ) { 
-			cat("Please provide the similarities csv and the number of dimensions.\n") 
-	quit()
+		cat("Please provide the similarities csv and the number of dimensions.\n") 
+		quit()
 }
 
 #library(MASS)
@@ -30,26 +30,27 @@ cmd <- cmdscale(d, k=k, eig=TRUE)
 cat(cmd$GOF[2])
 cat("\n")
 
-# use only if cmdscaling only
-#cat(cmd$GOF[2])
-#cat("\n")
-#for(i in 1:nrow(cmd$points)) {
-#		for(j in 1:ncol(cmd$points)) {
-#				cat(cmd$points[i,j])
-#				cat(" ")
-#		}
-#		cat("\n")
-#}
-
-
-
-fit <-sammon(d,y=cmd$points, trace=FALSE, k=k)
-cat(fit$stress)
-cat("\n")
-for(i in 1:nrow(fit$points)) {
-		for(j in 1:ncol(fit$points)) {
-				cat(fit$points[i,j])
-				cat(" ")
-		}
+tryCatch({
+		fit <-sammon(d,y=cmd$points, trace=FALSE, k=k)
+		cat(fit$stress)
 		cat("\n")
-}
+		for(i in 1:nrow(fit$points)) {
+				for(j in 1:ncol(fit$points)) {
+						cat(fit$points[i,j])
+						cat(" ")
+				}
+				cat("\n")
+		}
+}, 
+error = function (e) {
+		# use only if cmdscaling only
+		cat(cmd$GOF[2])
+		cat("\n")
+		for(i in 1:nrow(cmd$points)) {
+				for(j in 1:ncol(cmd$points)) {
+						cat(cmd$points[i,j])
+						cat(" ")
+				}
+				cat("\n")
+		}
+})
