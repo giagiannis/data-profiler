@@ -411,6 +411,7 @@ func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 	modelType := r.Form["modeltype"][0]
 	matrixid := r.Form["matrixid"][0]
 	k := r.Form["k"][0]
+	regression := r.Form["regression"][0]
 	dataset := r.Form["datasetid"][0]
 	coordinates := r.Form["coordinatesid"][0]
 	sr, err := strconv.ParseFloat(r.Form["sr"][0], 64)
@@ -418,13 +419,13 @@ func controllerModelNew(w http.ResponseWriter, r *http.Request) Model {
 		log.Println(err)
 	}
 
-	log.Println(operator, mlScript, modelType, matrixid, k, dataset, coordinates)
+	log.Println(operator, mlScript, modelType, matrixid, k, dataset, coordinates, regression)
 	TEngine.Submit(
 		NewModelTrainTask(
 			dataset, operator, sr,
 			modelType,
 			coordinates, mlScript,
-			matrixid, k))
+			matrixid, k, regression))
 	http.Redirect(w, r, "/tasks/", 307)
 	return nil
 }

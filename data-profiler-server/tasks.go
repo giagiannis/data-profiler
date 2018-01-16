@@ -187,7 +187,7 @@ func NewOperatorRunTask(operatorID string) *Task {
 func NewModelTrainTask(datasetID, operatorID string, sr float64,
 	modelType string,
 	coordinatesID, mlScript string,
-	matrixID, k string) *Task {
+	matrixID, k,  regression string) *Task {
 	m := modelDatasetGetInfo(datasetID)
 	task := new(Task)
 	task.Description = fmt.Sprintf("Model training (%s for %s)", path.Base(mlScript), m.Name)
@@ -214,7 +214,7 @@ func NewModelTrainTask(datasetID, operatorID string, sr float64,
 			conf = map[string]string{"script": mlScript, "coordinates": c.Path}
 		} else if t == core.KNNModelerType {
 			m := modelSimilarityMatrixGet(matrixID)
-			conf = map[string]string{"k": k, "smatrix": m.Path}
+			conf = map[string]string{"k": k, "smatrix": m.Path, "regression": regression}
 		}
 		modeler.Configure(conf)
 		err = modeler.Run()

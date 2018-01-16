@@ -9,11 +9,11 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"path"
 )
 
 type ModelerType uint8
@@ -316,8 +316,9 @@ func (m *ScriptBasedModeler) executeMLScript(trainFile, testFile string) ([]floa
 // KNNModeler utilizes a similarity matrix in order to approximate the training set
 type KNNModeler struct {
 	AbstractModeler
-	k  int                      // the number of neighbors to check
-	sm *DatasetSimilarityMatrix // the similarity matrix
+	k          int                      // the number of neighbors to check
+	sm         *DatasetSimilarityMatrix // the similarity matrix
+	regression bool                     // true if doing regression
 }
 
 // Configure is the method used to provide the essential paremeters for the conf of the modeler
@@ -344,6 +345,13 @@ func (m *KNNModeler) Configure(conf map[string]string) error {
 	} else {
 		log.Println("No smatrix parameter provided")
 		return errors.New("No smatrix parameter provided")
+	}
+
+	if val, ok := conf["regression"]; ok {
+		m.regression = (val == "true")
+	} else {
+		log.Println("No argument for regression provided - assuming regression")
+		m.regression = true
 	}
 
 	return nil
@@ -375,12 +383,30 @@ func (k *KNNModeler) approximateValue(id int) float64 {
 	sort.Sort(sort.Reverse((pList)))
 	weights := 0.0
 	values := 0.0
-	for i := 0; i < len(pList) && i < k.k; i++ {
-		p := pList[i]
-		values += p.Similarity * k.samples[p.Id]
-		weights += p.Similarity
+	if k.regression {
+		for i := 0; i < len(pList) && i < k.k; i++ {
+			p := pList[i]
+			values += p.Similarity * k.samples[p.Id]
+			weights += p.Similarity
+		}
+		return values / weights
+	} else {
+		vals := make(map[float64]int)
+		for i := 0; i < len(pList) && i < k.k; i++ {
+			p := pList[i]
+			if _, ok := vals[k.samples[p.Id]]; !ok {
+				vals[k.samples[p.Id]] = 0
+			}
+			vals[k.samples[p.Id]] += 1
+		}
+		maxVal, maxOcc := 0.0, 0
+		for k, v := range vals {
+			if v > maxOcc {
+				maxVal, maxOcc = k, v
+			}
+		}
+		return maxVal
 	}
-	return values / weights
 }
 
 type pair struct {
@@ -591,7 +617,6 @@ func MaxAbsoluteCountPercentageError(actual, predicted []float64, percentile int
 		} else {
 			err = math.Abs((actual[i] - predicted[i]) / actual[i])
 		}
-
 
 		if err > percentage {
 			count += 1.0
