@@ -18,10 +18,7 @@ test.data <- read.csv(testfile)
 
 fit <- lm(class ~ ., data=train.data)
 pred <- predict(fit, test.data)
-#cat(sum((pred-test.data$class)^2)/length(test.data))
 for (i in 1:length(pred)) {
-#		cat(test.data$class[i])
-#		cat("\t")
 		cat(pred[i])
 		cat("\n")
 }
