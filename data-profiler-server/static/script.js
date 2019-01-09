@@ -210,8 +210,8 @@ function colorizePoints(obj) {
 				for(i=0;i<data.length;i++) {
 						data[i].color = ""
 				}
-				chart.series[0].update({data:data});
-				console.log($("#legend").html())
+				chart.addSeries({data:data});
+				chart.series[1].destroy();
 				$("#legend").remove();
 
 				return;
@@ -292,7 +292,8 @@ function colorizePoints(obj) {
 								of:$("#main"),
 						}
 				}).html(legendDiv).attr("id", "legend");
-				chart.series[0].update({data:data});
+				chart.addSeries({data:data});
+				chart.series[1].destroy();
 		});
 }
 
